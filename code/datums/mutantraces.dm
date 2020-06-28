@@ -493,6 +493,198 @@
 
 	say_filter(var/message)
 		return replacetext(message, "s", stutter("ss"))
+		
+/datum/mutantrace/doggo
+	name = "doggo"
+	icon_state = "doggo"
+	icon_override_static = 1
+	allow_fat = 1
+	override_attack = 0
+	voice_override = "doggo"
+	
+	New(var/mob/living/carbon/human/H)
+		..()
+		if(ishuman(mob))
+			var/datum/appearanceHolder/aH = mob.bioHolder.mobAppearance
+
+			detail_1 = image('icons/effects/genetics.dmi', icon_state="doggo_detail-1", layer = MOB_LIMB_LAYER+0.1)
+			detail_2 = image('icons/effects/genetics.dmi', icon_state="doggo_detail-2", layer = MOB_LIMB_LAYER+0.2)
+			detail_3 = image('icons/effects/genetics.dmi', icon_state="doggo_detail-3", layer = MOB_LIMB_LAYER+0.3)
+			detail_over_suit = image('icons/effects/genetics.dmi', icon_state="doggo_over_suit", layer = MOB_LAYER_BASE+0.3)
+
+			hex_to_rgb_list(aH.customization_first_color)
+
+			detail_1.color = fix_colors(aH.customization_first_color)
+			detail_2.color = fix_colors(aH.customization_second_color)
+			detail_3.color = fix_colors(aH.customization_third_color)
+			detail_over_suit.color = fix_colors(aH.customization_first_color)
+
+			mob.update_face()
+			mob.update_body()
+			mob.update_clothing()
+			
+		var/list/dogVisionColorMatrix = list(\
+			0.55,0.45,0.000,
+			0.55,0.45,0.000,
+			0.000,0.25,1.0,
+			0.0, 0.0, 0.0)	// Values modified from those obtained from https://gist.github.com/Lokno/df7c3bfdc9ad32558bb7
+		if(mob.client)
+			mob.client.color = dogVisionColorMatrix
+			mob.bioHolder.AddEffect("accent_scoob")
+			
+	disposing()
+		if(ishuman(mob))
+			mob.client.color = null
+			mob.bioHolder.RemoveEffect("accent_scoob")
+		..()
+
+	onLife()
+		if(mob.reagents && mob.reagents.get_reagent_amount("chocolate") > 10) 			// Chocolate bad for dogs!
+			mob.take_toxin_damage(mob.reagents.get_reagent_amount("chocolate") / 5)
+			if (prob(mob.reagents.get_reagent_amount("chocolate") * 0.1))
+				mob.contract_disease(/datum/ailment/malady/heartfailure,null,null,1)	// Can cause heart problems
+			if (prob(5))
+				mob.emote(pick("faint", "collapse", "cry","moan","gasp","shudder","shiver"))
+			if (prob(3))
+				mob.changeStatus("paralysis", 1 SECONDS)
+			if (prob(10))
+				mob.visible_message("<span class='alert'>[mob] pukes!</span>")
+				mob.vomit()
+			if (prob(1) && prob (1))
+				mob.visible_message("<span class='alert'>[mob] pukes all over \himself!</span>")
+				mob.vomit()
+				mob.reagents.del_reagent("chocolate")
+				
+		if(mob.reagents && mob.reagents.get_reagent_amount("water_holy") > 1) 			// Holy water comes from garlic...
+			mob.blood_volume -= 2														// ...which causes doggo anemia
+			if (prob(mob.reagents.get_reagent_amount("water_holy") * 1))
+				mob.contract_disease(/datum/ailment/malady/shock,null,null,1)
+			if (prob(5))
+				mob.emote(pick("faint", "collapse", "cry","moan","gasp","shudder","shiver"))
+			if (prob(3))
+				mob.changeStatus("paralysis", 1 SECONDS)
+
+		if(mob.reagents && mob.reagents.get_reagent_amount("guacamole") > 1) 			// Avocado is toxic to dogs
+			mob.take_toxin_damage(mob.reagents.get_reagent_amount("guacamole") / 5)
+			if (prob(mob.reagents.get_reagent_amount("water_holy") * 5))				// Messes up their guts
+				switch(rand(1,2))
+					if(1)
+						mob.organHolder.damage_organ(1, 0, 0, "stomach")
+					if(2)
+						mob.organHolder.damage_organ(1, 0, 0, "intestines")
+			if (prob(5))
+				mob.emote(pick("faint", "collapse", "cry","moan","gasp","shudder","shiver"))
+			if (prob(3))
+				mob.changeStatus("paralysis", 1 SECONDS)
+
+		if(mob.reagents && mob.reagents.get_reagent_amount("wine") > 10) 				// Wine is also toxic to dogs
+			mob.take_toxin_damage(mob.reagents.get_reagent_amount("wine") / 5)
+			if (prob(mob.reagents.get_reagent_amount("wine") * 5))						// Messes up their kidneys!
+				switch(rand(1,2))
+					if(1)
+						mob.organHolder.damage_organ(1, 0, 0, "left kidney")
+					if(2)
+						mob.organHolder.damage_organ(1, 0, 0, "right kidney")
+			if (prob(5))
+				mob.emote(pick("faint", "collapse", "cry","moan","gasp","shudder","shiver"))
+			if (prob(3))
+				mob.changeStatus("paralysis", 1 SECONDS)
+				
+		if(mob.reagents && mob.reagents.get_reagent_amount("milk") > 10) 				// While milk isnt exactly toxic to dogs...
+			if (prob(mob.reagents.get_reagent_amount("milk")))
+				mob.emote(pick("fart", "groan", "moan", "cry", "shudder"))				// Its not good for em.
+			if (prob(5) & mob.reagents.get_reagent_amount("milk") > 50)
+				mob.visible_message("<span class='alert'>[mob] pukes all over \himself!</span>")
+				mob.vomit()
+				mob.reagents.del_reagent("milk")
+
+		..()
+
+
+	firevuln = 1.1
+	
+
+	proc/fix_colors(var/hex)
+		var/list/L = hex_to_rgb_list(hex)
+		for (var/i in L)
+			L[i] = min(L[i], 250)
+			L[i] = max(L[i], 5)
+		if (L.len == 3)
+			return rgb(L["r"], L["g"], L["b"])
+		return rgb(22, 210, 22)
+
+	sight_modifier()
+		mob.see_in_dark = SEE_DARK_HUMAN + 1
+		mob.see_invisible = 0
+
+	say_filter(var/message)
+		return replacetext(message, "r", stutter("rr"))
+		
+	emote(var/act)
+		var/message = null
+		switch(act)
+			if("scream")
+				if (narrator_mode)
+					if(mob.emote_allowed)
+						mob.emote_allowed = 0
+						switch(rand(1, 11))
+							if (1) 
+								message = "<B>[mob]</B> sniffs."
+								playsound(get_turf(mob), "sound/voice/animal/gabe1.ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+							if (2) 
+								message = "<B>[mob]</B> barks?"
+								playsound(get_turf(mob), "sound/voice/animal/gabe2.ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+							if (3) 
+								message = "<B>[mob]</B> borks."
+								playsound(get_turf(mob), "sound/voice/animal/gabe3.ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+							if (4) 
+								message = "<B>[mob]</B> brorks."
+								playsound(get_turf(mob), "sound/voice/animal/gabe4.ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+							if (5) 
+								message = "<B>[mob]</B> hecks."
+								playsound(get_turf(mob), "sound/voice/animal/gabe5.ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+							if (6) 
+								message = "<B>[mob]</B> borfs."
+								playsound(get_turf(mob), "sound/voice/animal/gabe6.ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+							if (7) 
+								message = "<B>[mob]</B> bars?"
+								playsound(get_turf(mob), "sound/voice/animal/gabe7.ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+							if (8) 
+								message = "<B>[mob]</B> bjorks."
+								playsound(get_turf(mob), "sound/voice/animal/gabe8.ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+							if (9) 
+								message = "<B>[mob]</B> barks."
+								playsound(get_turf(mob), "sound/voice/animal/gabe9.ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+							if (10) 
+								message = "<B>[mob]</B> boos."
+								playsound(get_turf(mob), "sound/voice/animal/gabe10.ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+							if (11) 
+								message = "<B>[mob]</B> brehs."
+								playsound(get_turf(mob), "sound/voice/animal/gabe11.ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+						SPAWN_DBG(3 SECONDS)
+							mob.emote_allowed = 1
+				else
+					if(mob.emote_allowed)
+						mob.emote_allowed = 0
+						message = "<B>[mob]</B> [pick("barks","yaps","woofs","borks","burfs","arfs","woffs","wuffs")]!"
+						playsound(get_turf(mob), "sound/voice/animal/dogbark.ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+						SPAWN_DBG(3 SECONDS)
+							mob.emote_allowed = 1
+			if("howl")
+				if(mob.emote_allowed)
+					mob.emote_allowed = 0
+					if (prob(1))
+						message = "<span class='alert'><B>[mob] howls!</B></span>"
+						playsound(get_turf(mob), "sound/voice/animal/werewolf_howl.ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+						SPAWN_DBG(3 SECONDS)
+							mob.emote_allowed = 1
+					else
+						message = "<B>[mob]</B> howls!"
+						playsound(get_turf(mob), "sound/voice/animal/howl[pick("1","2","3","4","5","6")].ogg", 80, 0, 0, max(0.7, min(1.2, 1.0 + (30 - mob.bioHolder.age)/60)))
+						SPAWN_DBG(3 SECONDS)
+							mob.emote_allowed = 1
+		return message
+	
 
 /datum/mutantrace/zombie
 	name = "zombie"

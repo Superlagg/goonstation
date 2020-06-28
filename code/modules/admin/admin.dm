@@ -901,21 +901,6 @@ var/global/noir = 0
 			else
 				alert("You need to be at least a Secondary Adminstrator to jump to mobs.")
 
-		if ("observe")
-			if(src.level >= LEVEL_SA)
-				var/mob/M = locate(href_list["target"])
-				if (!M) return
-				if (isobserver(M))
-					boutput(usr, "<span class='alert'>You can't observe a ghost.</span>")
-				else
-					if (!istype(usr, /mob/dead/observer))
-						boutput(usr, "<span class='alert'>This command only works when you are a ghost.</span>")
-						return
-					var/mob/dead/observer/ghost = usr
-					ghost.insert_observer(M)
-			else
-				alert("You need to be at least a Secondary Adminstrator to observe mobs... For some reason.")
-
 		if ("jumptocoords")
 			if(src.level >= LEVEL_SA)
 				var/list/coords = splittext(href_list["target"], ",")
@@ -1065,7 +1050,7 @@ var/global/noir = 0
 					alert("This secret can only be used on human mobs.")
 					return
 				var/mob/living/carbon/human/H = M
-				var/which = input("Transform them into what?","Transform") as null|anything in list("Monkey","Cyborg","Lizardman","Squidman","Martian","Skeleton","Flashman", "Kudzuman","Ghostdrone","Flubber","Cow")
+				var/which = input("Transform them into what?","Transform") as null|anything in list("Monkey","Cyborg","Lizardman","Squidman","Martian","Skeleton","Flashman", "Kudzuman","Ghostdrone","Flubber","Cow","Dogman")
 				if (!which)
 					return
 				. = 0
@@ -1101,6 +1086,9 @@ var/global/noir = 0
 						H.set_mutantrace(/datum/mutantrace/flubber)
 					if ("Cow")
 						H.set_mutantrace(/datum/mutantrace/cow)
+					if ("Dogman")
+						H.set_mutantrace(/datum/mutantrace/doggo)
+						. = 1
 				if(.)
 					message_admins("<span class='internal'>[key_name(usr)] transformed [H.real_name] into a [which].</span>")
 			else
