@@ -18,6 +18,7 @@ var/datum/respawn_controls/respawn_controller
 	- Verification of mob-to-be respawned is in a valid state for respawning - DONE
 	- Giving a disconnected/reconnected client their Respawn button back - DONE
 
+	- Grant every dead person a respawn after the shuttle gets to centcom on endless - not done
 
 	============
 	Future

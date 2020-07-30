@@ -669,6 +669,7 @@ proc/default_frequency_color(freq)
 #define GAME_STATE_SETTING_UP	3
 #define GAME_STATE_PLAYING		4
 #define GAME_STATE_FINISHED		5
+#define GAME_STATE_INTERMISSION		6
 
 //States for airlock_control
 #define ACCESS_STATE_INTERNAL	-1

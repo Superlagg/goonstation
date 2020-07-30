@@ -16,6 +16,8 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 	var/event = 0
 
 	var/list/datum/mind/minds = list()
+	var/list/datum/mind/escaped_minds = list()
+	var/list/datum/mind/unalive_minds = list()
 	var/last_readd_lost_minds_to_ticker = 1 // In relation to world time.
 
 	var/pregame_timeleft = 0
@@ -378,6 +380,26 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 						logTheThing("debug", player, null, "<b>Gameticker setup:</b> added player to ticker.minds.")
 					ticker.minds.Add(player.mind)
 
+	proc/add_escaped_minds(var/periodic_check = 0)
+		for (var/mob/player in mobs)
+			if (player.mind && !istype(player, /mob/new_player) && player.client && in_centcom(player))
+				if (!(player.mind in ticker.escaped_minds))
+					if (periodic_check == 1)
+						logTheThing("debug", player, null, "<b>Gameticker fallback:</b> re-added player to ticker.escaped_minds.")
+					else
+						logTheThing("debug", player, null, "<b>Gameticker setup:</b> added player to ticker.escaped_minds.")
+					ticker.escaped_minds.Add(player.mind)
+
+	proc/add_unalive_minds(var/periodic_check = 0)
+		for (var/mob/player in mobs)
+			if (player.mind && !istype(player, /mob/new_player) && (player.client && in_centcom(player) || isdead(player) || isVRghost(player) || isghostcritter(player)))
+				if (!(player.mind in ticker.unalive_minds))
+					if (periodic_check == 1)
+						logTheThing("debug", player, null, "<b>Gameticker fallback:</b> re-added player to ticker.unalive_minds.")
+					else
+						logTheThing("debug", player, null, "<b>Gameticker setup:</b> added player to ticker.unalive_minds.")
+					ticker.unalive_minds.Add(player.mind)
+
 	proc/implant_skull_key()
 		//Hello, I will sneak in a solarium thing here.
 		if(!skull_key_assigned && ticker.minds.len > 5) //Okay enough gaming the system you pricks
@@ -443,7 +465,7 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 			src.add_minds(1)
 			src.last_readd_lost_minds_to_ticker = world.time
 
-		if(mode.check_finished())
+		if(mode.check_finished() == 1)
 			current_state = GAME_STATE_FINISHED
 
 			// This does a little more than just declare - it handles all end of round processing
@@ -493,6 +515,26 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 					ircbot.event("roundend")
 					//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] REBOOTING THE SERVER!!!!!!!!!!!!!!!!!")
 					Reboot_server()
+
+		return 1
+
+		if(mode.check_finished() == 2)
+			current_state = GAME_STATE_INTERMISSION
+
+			// This does a little more than just declare - it handles all end of round processing
+			//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] Starting declare_completion.")
+			try
+				declare_completion()
+			catch(var/exception/e)
+				logTheThing("debug", null, null, "Game Completion Runtime: [e.file]:[e.line] - [e.name] - [e.desc]")
+				logTheThing("diary", null, null, "Game Completion Runtime: [e.file]:[e.line] - [e.name] - [e.desc]", "debug")
+
+			//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] Finished declare_completion. The round is now over.")
+
+			SPAWN_DBG(5 SECONDS)
+				//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] game-ending spawn happening")
+
+				boutput(world, "<span class='bold notice'>We now return you to the shift already in progress.</span>")
 
 		return 1
 
@@ -552,10 +594,17 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 					if (H.limbs && (!H.limbs.l_arm && !H.limbs.r_arm))
 						H.unlock_medal("Mostly Armless", 1)
 
+	add_escaped_minds()
+
 #ifdef CREW_OBJECTIVES
 	//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] Processing crew objectives")
 	var/list/successfulCrew = list()
-	for (var/datum/mind/crewMind in minds)
+	var/typeOfMinds
+	if (current_state == GAME_STATE_INTERMISSION)
+		typeOfMinds = escaped_minds	// Only escapees get to see the results
+	else
+		typeOfMinds = minds
+	for (var/datum/mind/crewMind in typeOfMinds)
 		if (!crewMind.current || !crewMind.objectives.len)
 			continue
 
@@ -599,16 +648,17 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 	boutput(world, score_tracker.heisenhat_stats())
 
 	//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] ai law display")
-	for (var/mob/living/silicon/ai/aiPlayer in AIs)
-		if (!isdead(aiPlayer))
-			boutput(world, "<b>The AI, [aiPlayer.name] ([aiPlayer.get_message_mob().key]) had the following laws at the end of the game:</b>")
-		else
-			boutput(world, "<b>The AI, [aiPlayer.name] ([aiPlayer.get_message_mob().key]) had the following laws when it was deactivated:</b>")
+	if (current_state != GAME_STATE_INTERMISSION) // AI laws arent revealed on escape.
+		for (var/mob/living/silicon/ai/aiPlayer in AIs)
+			if (!isdead(aiPlayer))
+				boutput(world, "<b>The AI, [aiPlayer.name] ([aiPlayer.get_message_mob().key]) had the following laws at the end of the game:</b>")
+			else
+				boutput(world, "<b>The AI, [aiPlayer.name] ([aiPlayer.get_message_mob().key]) had the following laws when it was deactivated:</b>")
 
-		aiPlayer.show_laws(1)
+			aiPlayer.show_laws(1)
 
 	//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] resetting gauntlet (why? who cares! the game is over!)")
-	if (gauntlet_controller.state)
+	if (gauntlet_controller.state && (current_state != GAME_STATE_INTERMISSION))
 		gauntlet_controller.resetArena()
 #ifdef CREW_OBJECTIVES
 	//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] displaying completed crew objectives")
@@ -774,7 +824,7 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 			P.build_curr_contents()
 
 	award_archived_round_xp()
-	
+
 	SPAWN_DBG(0)
 		//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] creds/new")
 		var/chui/window/crew_credits/creds = new
@@ -796,7 +846,17 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 
 
 	//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] finished spacebux updates")
-
+	if (current_state == GAME_STATE_INTERMISSION) // Kick everyone back to work, it aint over yet
+		add_escaped_minds()
+		sleep(60 SECONDS)
+		var/mob/getBackToWork
+		for (var/datum/mind/escaped in escaped_minds)
+			getBackToWork = escaped.current
+			getBackToWork.gib()	// Make everyone in CentCom not be alive anymore
+		add_unalive_minds()
+		for (var/datum/mind/respawnThesePeople in unalive_minds)
+			subscribeNewRespawnee(unalive_minds.ckey)
+			doRespawn(unalive_minds.ckey)	// And then respawn everybody who isn't currently alive
 
 	return 1
 

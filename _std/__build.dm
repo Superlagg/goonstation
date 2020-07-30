@@ -109,7 +109,7 @@ o+`        `-` ``..-:yooos-..----------..`
 //#define MAP_OVERRIDE_GEHENNA			// Warcrimes WIP do not use
 //#define MAP_OVERRIDE_PAMGOC			// Pamgoc
 //#define MAP_OVERRIDE_WRESTLEMAP		// Wrestlemap by Overtone
-
+//#define MAP_OVERRIDE_EMPTYCOG		// Experimental gutted Cog1 for construction shit
 
 //////////// HOLIDAYS AND OTHER SUCH TOGGLES
 

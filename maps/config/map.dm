@@ -68,6 +68,9 @@
 #elif defined(MAP_OVERRIDE_WRESTLEMAP)
 #include "wrestlemap.dm"
 
+#elif defined(MAP_OVERRIDE_EMPTYCOG)
+#include "cogmap_empty.dmm"
+
 #elif defined(GOTTA_GO_FAST_BUT_ZLEVELS_TOO_SLOW)
 #include "gottagofast.dm"
 
