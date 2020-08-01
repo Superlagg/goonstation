@@ -19,6 +19,7 @@ var/datum/respawn_controls/respawn_controller
 	- Giving a disconnected/reconnected client their Respawn button back - DONE
 
 	- Allow a gamemode to force players to be able to respawn - DONE
+	- Make respawning free up the player's job's slot for latejoining - not done
 
 	============
 	Future
@@ -172,6 +173,10 @@ var/datum/respawn_controls/respawn_controller
 		M.key = the_client.key
 		M.Login()
 		master.unsubscribeRespawnee(src.ckey)
+		if (ticker.minds.Find(M.mind))
+			mind_wipe(M)	// Remove job info, antag status, etc
+			ticker.minds.Remove(M.mind)	// Update your mindlist entry
+			ticker.minds.Add(M.mind)		// So the credits dont pile up
 
 /client/proc/respawn_via_controller()
 	set name = "Respawn As New Character"

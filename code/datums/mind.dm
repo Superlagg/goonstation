@@ -220,3 +220,15 @@ proc/karma_update(var/karmavalue, var/sinorsaint, var/mob/M) // This did not eve
 			M.mind.karma = max((M.mind.karma - karmavalue),(M.mind.karma_min))
 		if(sinorsaint == "SAINT")
 			M.mind.karma = min((M.mind.karma + karmavalue),(M.mind.karma_max))
+
+proc/mind_wipe(var/mob/M)	// To clear out info that we dont need anymore
+	if(M && M.mind)
+		M.mind.memory = null
+		M.mind.violated_hippocratic_oath = 0
+		M.mind.completed_objs = 0
+		M.mind.all_objs = 0
+		M.mind.assigned_role = null
+		M.mind.special_role = null
+		M.mind.late_special_role = 0
+		M.mind.random_event_special_role = 0
+		M.job = null

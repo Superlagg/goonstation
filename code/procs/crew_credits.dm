@@ -5,9 +5,12 @@ var/global/crew_creds = null
 	windowSize = "500x500"
 	GetBody()
 		if(crew_creds)
-			logTheThing("debug", null, null, "Zamujasa/CREWCREDITS: [world.timeofday] returning already-generated crew credits")
-
-			return crew_creds
+			if(current_state == GAME_STATE_INTERMISSION)
+				logTheThing("debug", null, null, "Zamujasa/CREWCREDITS: [world.timeofday] endless mode requesting new crew credits")
+				crew_creds = null
+			else
+				logTheThing("debug", null, null, "Zamujasa/CREWCREDITS: [world.timeofday] returning already-generated crew credits")
+				return crew_creds
 
 		logTheThing("debug", null, null, "Zamujasa/CREWCREDITS: [world.timeofday] starting crew credits generation")
 
@@ -77,7 +80,11 @@ var/global/crew_creds = null
 			crew_creds += "<B>Antagonist[round_antags.len == 1 ? "" : "s"]:</B><BR>"
 			for(var/datum/mind/M in round_antags)
 				if(!M.current) continue
-				crew_creds += "[M.current.real_name][isdead(M.current) ? " \[[__red("DEAD")]\] " : ""] (played by [M.key]) as \an [M.special_role]<BR>"
+				if(current_state == GAME_STATE_INTERMISSION)	// Only add players who made it to centcom. Or are dead.
+					if (M.current && !istype(M.current, /mob/new_player) && (in_centcom(M.current)|| isdead(M.current) || isVRghost(M.current) || isghostcritter(M.current)))
+						crew_creds += "[M.current.real_name][isdead(M.current) ? " \[[__red("DEAD")]\] " : ""] (played by [M.key]) as \an [M.special_role]<BR>"
+				else
+					crew_creds += "[M.current.real_name][isdead(M.current) ? " \[[__red("DEAD")]\] " : ""] (played by [M.key]) as \an [M.special_role]<BR>"
 			crew_creds += "<HR>"
 
 		logTheThing("debug", null, null, "Zamujasa/CREWCREDITS: [world.timeofday] done antags")

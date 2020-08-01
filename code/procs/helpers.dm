@@ -1699,10 +1699,11 @@ var/list/english_num = list("0" = "zero", "1" = "one", "2" = "two", "3" = "three
 proc/countJob(rank)
 	var/jobCount = 0
 	for(var/mob/H in mobs)
-		if(H.mind && H.mind.assigned_role == rank)
+		if(H.mind && H.mind.assigned_role == rank && !istype(H, /mob/new_player))
 			jobCount++
 		LAGCHECK(LAG_REALTIME)
 	return jobCount
+	jobCount = 0
 
 //alldirs = list(NORTH, SOUTH, EAST, WEST, NORTHEAST, NORTHWEST, SOUTHEAST, SOUTHWEST)
 /atom/proc/letter_overlay(var/letter as text, var/lcolor, var/dir)
