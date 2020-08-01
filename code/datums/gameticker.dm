@@ -382,7 +382,7 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 
 	proc/add_escaped_minds(var/periodic_check = 0)
 		for (var/mob/player in mobs)
-			if (player.mind && !istype(player, /mob/new_player) && player.client && in_centcom(player))
+			if (player.mind && !istype(player, /mob/new_player) && player.client && in_centcom(player.mind.current))
 				if (!(player.mind in ticker.escaped_minds))
 					if (periodic_check == 1)
 						logTheThing("debug", player, null, "<b>Gameticker fallback:</b> re-added player to ticker.escaped_minds.")
@@ -392,7 +392,7 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 
 	proc/add_unalive_minds(var/periodic_check = 0)
 		for (var/mob/player in mobs)
-			if (player.mind && !istype(player, /mob/new_player) && (player.client && in_centcom(player) || isdead(player) || isVRghost(player) || isghostcritter(player)))
+			if (player.mind && !istype(player, /mob/new_player) && (player.client && in_centcom(player.mind.current) || isdead(player) || isVRghost(player) || isghostcritter(player)))
 				if (!(player.mind in ticker.unalive_minds))
 					if (periodic_check == 1)
 						logTheThing("debug", player, null, "<b>Gameticker fallback:</b> re-added player to ticker.unalive_minds.")
@@ -465,8 +465,14 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 			src.add_minds(1)
 			src.last_readd_lost_minds_to_ticker = world.time
 
-		if(mode.check_finished() == 1)
-			current_state = GAME_STATE_FINISHED
+		if(mode.check_finished())
+			switch (mode.check_finished())
+				if(1)
+					current_state = GAME_STATE_FINISHED
+				if(2)
+					current_state = GAME_STATE_INTERMISSION
+					boutput(world, "<h3>GAMESTATE INTERMISSION</h3><strong style='color: #393;'>This part works!</strong>")
+
 
 			// This does a little more than just declare - it handles all end of round processing
 			//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] Starting declare_completion.")
@@ -477,64 +483,44 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 				logTheThing("diary", null, null, "Game Completion Runtime: [e.file]:[e.line] - [e.name] - [e.desc]", "debug")
 
 			//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] Finished declare_completion. The round is now over.")
+			if(current_state == GAME_STATE_FINISHED)
+				// Official go-ahead to be an end-of-round asshole
+				boutput(world, "<h3>The round has ended!</h3><strong style='color: #393;'>Further actions will have no impact on round results. Go hog wild!</strong>")
 
-			// Official go-ahead to be an end-of-round asshole
-			boutput(world, "<h3>The round has ended!</h3><strong style='color: #393;'>Further actions will have no impact on round results. Go hog wild!</strong>")
+				// i feel like this should probably be a proc call somewhere instead but w/e
+				if (!ooc_allowed)
+					ooc_allowed = 1
+					boutput(world, "<B>OOC is now enabled.</B>")
 
-			// i feel like this should probably be a proc call somewhere instead but w/e
-			if (!ooc_allowed)
-				ooc_allowed = 1
-				boutput(world, "<B>OOC is now enabled.</B>")
+				SPAWN_DBG(5 SECONDS)
+					//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] game-ending spawn happening")
 
-			SPAWN_DBG(5 SECONDS)
-				//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] game-ending spawn happening")
+					boutput(world, "<span class='bold notice'>A new round will begin soon.</span>")
 
-				boutput(world, "<span class='bold notice'>A new round will begin soon.</span>")
+					var/datum/hud/roundend/roundend_countdown = new()
 
-				var/datum/hud/roundend/roundend_countdown = new()
+					for (var/client/C in clients)
+						roundend_countdown.add_client(C)
 
-				for (var/client/C in clients)
-					roundend_countdown.add_client(C)
+					var/roundend_time = 60
+					while (roundend_time >= 0)
+						roundend_countdown.update_time(roundend_time)
+						sleep(1 SECONDS)
+						roundend_time--
 
-				var/roundend_time = 60
-				while (roundend_time >= 0)
-					roundend_countdown.update_time(roundend_time)
-					sleep(1 SECONDS)
-					roundend_time--
+					//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] one minute delay, game should restart now")
+					if (game_end_delayed == 1)
+						roundend_countdown.update_delayed()
 
-				//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] one minute delay, game should restart now")
-				if (game_end_delayed == 1)
-					roundend_countdown.update_delayed()
-
-					message_admins("<span class='internal>Server would have restarted now, but the restart has been delayed[game_end_delayer ? " by [game_end_delayer]" : null]. Remove the delay for an immediate restart.</span>")
-					game_end_delayed = 2
-					var/ircmsg[] = new()
-					ircmsg["msg"] = "Server would have restarted now, but the restart has been delayed[game_end_delayer ? " by [game_end_delayer]" : null]."
-					ircbot.export("admin", ircmsg)
-				else
-					ircbot.event("roundend")
-					//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] REBOOTING THE SERVER!!!!!!!!!!!!!!!!!")
-					Reboot_server()
-
-		return 1
-
-		if(mode.check_finished() == 2)
-			current_state = GAME_STATE_INTERMISSION
-
-			// This does a little more than just declare - it handles all end of round processing
-			//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] Starting declare_completion.")
-			try
-				declare_completion()
-			catch(var/exception/e)
-				logTheThing("debug", null, null, "Game Completion Runtime: [e.file]:[e.line] - [e.name] - [e.desc]")
-				logTheThing("diary", null, null, "Game Completion Runtime: [e.file]:[e.line] - [e.name] - [e.desc]", "debug")
-
-			//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] Finished declare_completion. The round is now over.")
-
-			SPAWN_DBG(5 SECONDS)
-				//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] game-ending spawn happening")
-
-				boutput(world, "<span class='bold notice'>We now return you to the shift already in progress.</span>")
+						message_admins("<span class='internal>Server would have restarted now, but the restart has been delayed[game_end_delayer ? " by [game_end_delayer]" : null]. Remove the delay for an immediate restart.</span>")
+						game_end_delayed = 2
+						var/ircmsg[] = new()
+						ircmsg["msg"] = "Server would have restarted now, but the restart has been delayed[game_end_delayer ? " by [game_end_delayer]" : null]."
+						ircbot.export("admin", ircmsg)
+					else
+						ircbot.event("roundend")
+						//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] REBOOTING THE SERVER!!!!!!!!!!!!!!!!!")
+						Reboot_server()
 
 		return 1
 
@@ -843,21 +829,21 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 				SPAWN_DBG(0) show_xp_summary(E.key, E)
 
 		//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] done showing tickets/scores")
-
-
 	//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] finished spacebux updates")
+
 	if (current_state == GAME_STATE_INTERMISSION) // Kick everyone back to work, it aint over yet
 		add_escaped_minds()
-		sleep(60 SECONDS)
-		var/mob/getBackToWork
-		for (var/datum/mind/escaped in escaped_minds)
-			getBackToWork = escaped.current
-			getBackToWork.gib()	// Make everyone in CentCom not be alive anymore
-		add_unalive_minds()
+		sleep(5 SECONDS)	// Change this to about a minute
+		for(var/mob/living/escapee in mobs)
+			if (escapee.client && !isdead(escapee) && in_centcom(escapee))
+				escapee.elecgib()	// Make everyone in CentCom not be alive anymore
+		add_unalive_minds()		// And try to make sure they dont leave behind anything interesting
 		for (var/datum/mind/respawnThesePeople in unalive_minds)
-			subscribeNewRespawnee(unalive_minds.ckey)
-			doRespawn(unalive_minds.ckey)	// And then respawn everybody who isn't currently alive
-
+			respawn_controller.subscribeNewRespawnee(respawnThesePeople.ckey)
+			respawn_controller.giveRespawnVerb(respawnThesePeople.ckey)	// And then respawn everybody who isn't currently alive
+		emergency_shuttle.location = SHUTTLE_LOC_CENTCOM	// So we can call it again later
+		emergency_shuttle.endtime = null
+		current_state = GAME_STATE_PLAYING
 	return 1
 
 /////

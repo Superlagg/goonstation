@@ -719,6 +719,7 @@ var/global/noir = 0
 							<A href='?src=\ref[src];action=[cmd];type=assday'>Ass Day Classic (For testing only.)</A><br>
 							<A href='?src=\ref[src];action=[cmd];type=construction'>Construction (For testing only. Don't select this!)</A><br>
 							<A href='?src=\ref[src];action=[cmd];type=football'>Football (this only works if built with FOOTBALL_MODE sorry too lazy to ifdef here)</A>
+							<A href='?src=\ref[src];action=[cmd];type=endless'>endless</A>
 							</body></html>
 						"}
 				usr.Browse(dat, "window=c_mode")
@@ -732,7 +733,7 @@ var/global/noir = 0
 
 				var/list/valid_modes = list("secret","action","intrigue","random","traitor","meteor","extended","monkey",
 				"nuclear","blob","restructuring","wizard","revolution", "revolution_extended","malfunction",
-				"spy","gang","disaster","changeling","vampire","mixed","mixed_rp", "construction","conspiracy","spy_theft","battle_royale", "vampire","assday", "football", "flock")
+				"spy","gang","disaster","changeling","vampire","mixed","mixed_rp", "construction","conspiracy","spy_theft","battle_royale", "vampire","assday", "football", "flock", "endless")
 
 				var/requestedMode = href_list["type"]
 				if (requestedMode in valid_modes)

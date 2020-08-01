@@ -18,7 +18,7 @@ var/datum/respawn_controls/respawn_controller
 	- Verification of mob-to-be respawned is in a valid state for respawning - DONE
 	- Giving a disconnected/reconnected client their Respawn button back - DONE
 
-	- Grant every dead person a respawn after the shuttle gets to centcom on endless - not done
+	- Allow a gamemode to force players to be able to respawn - DONE
 
 	============
 	Future
@@ -85,10 +85,15 @@ var/datum/respawn_controls/respawn_controller
 			R.dispose()
 			R = null
 
-	proc/doRespawn(var/ckey)
+	proc/doRespawn(var/ckey, var/just_let_them_respawn)
 		if(!ckey) return
 		var/datum/respawnee/R = respawnees[ckey]
-		if(R) R.doRespawn()
+		if(R) R.doRespawn(just_let_them_respawn)
+
+	proc/giveRespawnVerb(var/ckey)
+		if(!ckey) return
+		var/datum/respawnee/R = respawnees[ckey]
+		if(R) R.notifyAndGrantVerb(1)
 
 /datum/respawnee
 	var/ckey
@@ -137,8 +142,8 @@ var/datum/respawn_controls/respawn_controller
 
 		return RESPAWNEE_STATE_WAITING
 
-	proc/notifyAndGrantVerb()
-		if(!client_processed && checkValid())
+	proc/notifyAndGrantVerb(var/respawn_anyway = 0)
+		if(!client_processed && (checkValid() || respawn_anyway))
 			// Send a message to the client
 			SPAWN_DBG(0)
 				alert(the_client.mob, "You are now eligible for respawn. Check the Commands tab.")
@@ -148,14 +153,16 @@ var/datum/respawn_controls/respawn_controller
 			if(master.rp_alert)
 				boutput(the_client.mob, "<span class='alert'>Remember that you <B>must spawn as a <u>new character</u></B> and <B>have no memory of your past life!</B></span>")
 
-			the_client.verbs |= /client/proc/respawn_via_controller
+			if(respawn_anyway)
+				the_client.verbs |= /client/proc/respawn_via_controller_forced
+			else
+				the_client.verbs |= /client/proc/respawn_via_controller
 			client_processed = 1
 
-	proc/doRespawn()
-		if(checkValid() != RESPAWNEE_STATE_ELIGIBLE)
+	proc/doRespawn(var/just_do_it_anyway = 0)
+		if(checkValid() != RESPAWNEE_STATE_ELIGIBLE && !just_do_it_anyway)
 			SPAWN_DBG(0)
 				alert("You are not eligible for a respawn, bub!")
-
 			return
 
 		logTheThing("diary", usr, null, "used a timed respawn.", "game")
@@ -171,6 +178,12 @@ var/datum/respawn_controls/respawn_controller
 	set desc = "When you're tired of being dead."
 
 	respawn_controller.doRespawn(src.ckey)
+
+/client/proc/respawn_via_controller_forced()
+	set name = "Respawn As New Character"
+	set desc = "Hop on the next flight back to the station. Get back to work!"
+
+	respawn_controller.doRespawn(src.ckey, 1)
 
 #undef RESPAWNEE_STATE_WAITING
 #undef RESPAWNEE_STATE_ELIGIBLE
