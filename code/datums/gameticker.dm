@@ -16,8 +16,6 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 	var/event = 0
 
 	var/list/datum/mind/minds = list()
-	var/list/datum/mind/escaped_minds = list()
-	var/list/datum/mind/unalive_minds = list()
 	var/last_readd_lost_minds_to_ticker = 1 // In relation to world time.
 
 	var/pregame_timeleft = 0
@@ -380,26 +378,6 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 						logTheThing("debug", player, null, "<b>Gameticker setup:</b> added player to ticker.minds.")
 					ticker.minds.Add(player.mind)
 
-	proc/add_escaped_minds(var/periodic_check = 0)
-		for (var/mob/player in mobs)
-			if (player.mind && !istype(player, /mob/new_player) && player.client && in_centcom(player.mind.current))
-				if (!(player.mind in ticker.escaped_minds))
-					if (periodic_check == 1)
-						logTheThing("debug", player, null, "<b>Gameticker fallback:</b> re-added player to ticker.escaped_minds.")
-					else
-						logTheThing("debug", player, null, "<b>Gameticker setup:</b> added player to ticker.escaped_minds.")
-					ticker.escaped_minds.Add(player.mind)
-
-	proc/add_unalive_minds(var/periodic_check = 0)
-		for (var/mob/player in mobs)
-			if (player.mind && !istype(player, /mob/new_player) && (player.client && in_centcom(player.mind.current) || isdead(player) || isVRghost(player) || isghostcritter(player)))
-				if (!(player.mind in ticker.unalive_minds))
-					if (periodic_check == 1)
-						logTheThing("debug", player, null, "<b>Gameticker fallback:</b> re-added player to ticker.unalive_minds.")
-					else
-						logTheThing("debug", player, null, "<b>Gameticker setup:</b> added player to ticker.unalive_minds.")
-					ticker.unalive_minds.Add(player.mind)
-
 	proc/implant_skull_key()
 		//Hello, I will sneak in a solarium thing here.
 		if(!skull_key_assigned && ticker.minds.len > 5) //Okay enough gaming the system you pricks
@@ -537,14 +515,12 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 
 /datum/controller/gameticker/proc/declare_completion()
 	//End of round statistic collection for goonhub
-
 	//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] statlog_traitors")
 	statlog_traitors()
 	//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] statlog_ailaws")
 	statlog_ailaws(0)
 	//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] round_end_data")
 	round_end_data(1) //Export round end packet (normal completion)
-
 	var/pets_rescued = 0
 	for(var/pet in pets)
 		if(iscritter(pet))
@@ -553,7 +529,6 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 		else if(ismobcritter(pet))
 			var/mob/living/critter/P = pet
 			if(isalive(P) && in_centcom(P)) pets_rescued++
-
 	//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] Processing end-of-round generic medals")
 	for(var/mob/living/player in mobs)
 		if (player.client)
@@ -580,20 +555,28 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 					if (H.limbs && (!H.limbs.l_arm && !H.limbs.r_arm))
 						H.unlock_medal("Mostly Armless", 1)
 
-	add_escaped_minds()
-
 #ifdef CREW_OBJECTIVES
 	//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] Processing crew objectives")
 	var/list/successfulCrew = list()
-	var/typeOfMinds
+	var/typeOfMinds = null	// So the gamemode can draw from either everyone, or just a select few
+	var/outputToTheseClients = world	// So the gamemode can output to every client, or just a select few
+	var/list/escaped_minds = list()
+
 	if (current_state == GAME_STATE_INTERMISSION)
+		var/list/clientsWhoGetThis = list()	// Change "world" to "a list of something else"
+		for (var/mob/escapedPlayer in mobs)
+			if (escapedPlayer.mind && !istype(escapedPlayer, /mob/new_player) && (escapedPlayer.client && in_centcom(escapedPlayer) || isdead(escapedPlayer) || isVRghost(escapedPlayer) || isghostcritter(escapedPlayer)))
+				clientsWhoGetThis.Add(escapedPlayer.client)
+		outputToTheseClients = clientsWhoGetThis	// Stuff the list of escaped players' clients in here
+		for (var/mob/escapeds in mobs)
+			if (escapeds.mind && !istype(escapeds, /mob/new_player) && escapeds.client && in_centcom(escapeds))
+				escaped_minds.Add(escapeds.mind)
 		typeOfMinds = escaped_minds	// Only escapees get to see the results
 	else
-		typeOfMinds = minds
+		typeOfMinds = minds	// Everyone gets to see the results
 	for (var/datum/mind/crewMind in typeOfMinds)
 		if (!crewMind.current || !crewMind.objectives.len)
 			continue
-
 		var/count = 0
 		var/allComplete = 1
 		crewMind.all_objs = 1
@@ -601,12 +584,12 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 			count++
 			if(CO.check_completion())
 				crewMind.completed_objs++
-				boutput(crewMind.current, "<B>Objective #[count]</B>: [CO.explanation_text] <span class='success'><B>Success</B></span>")
+				boutput(outputToTheseClients, "<B>Objective #[count]</B>: [CO.explanation_text] <span class='success'><B>Success</B></span>")
 				logTheThing("diary",crewMind,null,"completed objective: [CO.explanation_text]")
 				if (!isnull(CO.medal_name) && !isnull(crewMind.current))
 					crewMind.current.unlock_medal(CO.medal_name, CO.medal_announce)
 			else
-				boutput(crewMind.current, "<B>Objective #[count]</B>: [CO.explanation_text] <span class='alert'>Failed</span>")
+				boutput(outputToTheseClients, "<B>Objective #[count]</B>: [CO.explanation_text] <span class='alert'>Failed</span>")
 				logTheThing("diary",crewMind,null,"failed objective: [CO.explanation_text]. Bummer!")
 				allComplete = 0
 				crewMind.all_objs = 0
@@ -832,18 +815,20 @@ var/global/current_state = GAME_STATE_WORLD_INIT
 	//logTheThing("debug", null, null, "Zamujasa: [world.timeofday] finished spacebux updates")
 
 	if (current_state == GAME_STATE_INTERMISSION) // Kick everyone back to work, it aint over yet
-		add_escaped_minds()
 		sleep(5 SECONDS)	// Change this to about a minute
+		boutput(world, "We now return you to the round already in progress.")
 		for(var/mob/living/escapee in mobs)
 			if (escapee.client && !isdead(escapee) && in_centcom(escapee))
 				escapee.elecgib()	// Make everyone in CentCom not be alive anymore
-		add_unalive_minds()		// And try to make sure they dont leave behind anything interesting
-		for (var/datum/mind/respawnThesePeople in unalive_minds)
-			respawn_controller.subscribeNewRespawnee(respawnThesePeople.ckey)
-			respawn_controller.giveRespawnVerb(respawnThesePeople.ckey)	// And then respawn everybody who isn't currently alive
+		for (var/mob/deadAndEscaped in mobs)
+			if (deadAndEscaped.mind && !istype(deadAndEscaped, /mob/new_player) && (deadAndEscaped.client && in_centcom(deadAndEscaped) || isdead(deadAndEscaped) || isVRghost(deadAndEscaped) || isghostcritter(deadAndEscaped)))
+				respawn_controller.subscribeNewRespawnee(deadAndEscaped.mind.ckey)
+				respawn_controller.giveRespawnVerb(deadAndEscaped.mind.ckey)	// And then respawn everybody who isn't currently alive
 		emergency_shuttle.location = SHUTTLE_LOC_CENTCOM	// So we can call it again later
 		emergency_shuttle.endtime = null
 		current_state = GAME_STATE_PLAYING
+		if (escaped_minds)
+			del(escaped_minds)
 	return 1
 
 /////
