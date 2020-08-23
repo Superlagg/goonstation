@@ -624,13 +624,6 @@ var/list/samostrel_warps = list()
 	var/tmp/dialogChecklist = 0
 	var/tmp/last_idle_dialog = 0
 
-	var/tmp/new_destination		// pending new destination (waiting for beacon response)
-	var/tmp/destination			// destination description tag
-	var/tmp/next_destination	// the next destination in the patrol route
-	var/tmp/nearest_beacon			// the nearest beacon's tag
-	var/tmp/turf/nearest_beacon_loc	// the nearest beacon's location
-	var/tmp/awaiting_beacon = 0
-	var/tmp/patrol_delay = 5
 
 	task_act()
 		if (..())
@@ -690,7 +683,7 @@ var/list/samostrel_warps = list()
 
 		return
 
-	proc/find_patrol_target()
+	find_patrol_target()
 		if(awaiting_beacon)			// awaiting beacon response
 			awaiting_beacon--
 			if(awaiting_beacon <= 0)
@@ -706,7 +699,7 @@ var/list/samostrel_warps = list()
 			find_nearest_beacon()
 		return
 
-	proc/find_nearest_beacon()
+	find_nearest_beacon()
 		nearest_beacon = null
 		new_destination = "__nearest__"
 		master.post_status("!BEACON!", "findbeacon", "patrol")
@@ -724,7 +717,7 @@ var/list/samostrel_warps = list()
 				target = null
 				return
 
-	proc/set_destination(var/new_dest)
+	set_destination(var/new_dest)
 		new_destination = new_dest
 		master.post_status("!BEACON!", "findbeacon", "patrol")
 		awaiting_beacon = 5
