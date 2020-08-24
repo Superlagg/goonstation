@@ -64,7 +64,10 @@
 	var/image/detail_1
 	var/image/detail_2
 	var/image/detail_3
-	var/image/detail_over_suit
+	var/image/detail_over_suit_1
+	var/image/detail_over_suit_2
+	var/image/detail_over_suit_3
+	var/image/detail_over_suit_4
 
 	var/datum/movement_modifier/movement_modifier
 
@@ -287,7 +290,7 @@
 				detail_1 = null
 				detail_2 = null
 				detail_3 = null
-				detail_over_suit = null
+				detail_over_suit_1 = null
 
 				H.set_face_icon_dirty()
 				H.set_body_icon_dirty()
@@ -461,14 +464,14 @@
 			detail_1 = image('icons/effects/genetics.dmi', icon_state="lizard_detail-1", layer = MOB_LIMB_LAYER+0.1)
 			detail_2 = image('icons/effects/genetics.dmi', icon_state="lizard_detail-2", layer = MOB_LIMB_LAYER+0.2)
 			detail_3 = image('icons/effects/genetics.dmi', icon_state="lizard_detail-3", layer = MOB_LIMB_LAYER+0.3)
-			detail_over_suit = image('icons/effects/genetics.dmi', icon_state="lizard_over_suit", layer = MOB_LAYER_BASE+0.3)
+			detail_over_suit_1 = image('icons/effects/genetics.dmi', icon_state="lizard_over_suit", layer = MOB_LAYER_BASE+0.3)
 
 			hex_to_rgb_list(aH.customization_first_color)
 
 			detail_1.color = fix_colors(aH.customization_first_color)
 			detail_2.color = fix_colors(aH.customization_second_color)
 			detail_3.color = fix_colors(aH.customization_third_color)
-			detail_over_suit.color = fix_colors(aH.customization_first_color)
+			detail_over_suit_1.color = fix_colors(aH.customization_first_color)
 
 			// detail_1.color = aH.customization_first_color
 			// detail_2.color = aH.customization_second_color
@@ -496,51 +499,71 @@
 
 /datum/mutantrace/shark
 	name = "space shark"
-	// icon_state = "lizard"
 	icon_state = "shark"
 	icon_override_static = 1
 	allow_fat = 1
 	override_attack = 0
 	voice_override = "lizard"
 	aquatic = 1
-	var/obj/item/gun/kinetic/gutgun = obj/item/gun/kinetic/minigun/shark
+	var/deployed = 0
+	var/obj/item/gun/kinetic/gutgun = /obj/item/gun/kinetic/minigun/shark
 
 	New(var/mob/living/carbon/human/H)
 		..()
-		if(ishuman(mob))
-			H.gutgun = new inside_gun(H)
-			var/datum/appearanceHolder/aH = mob.bioHolder.mobAppearance
-
-			detail_1 = image('icons/effects/genetics.dmi', icon_state="lizard_detail-1", layer = MOB_LIMB_LAYER+0.1)
-			detail_2 = image('icons/effects/genetics.dmi', icon_state="lizard_detail-2", layer = MOB_LIMB_LAYER+0.2)
-			detail_3 = image('icons/effects/genetics.dmi', icon_state="lizard_detail-3", layer = MOB_LIMB_LAYER+0.3)
-			detail_over_suit = image('icons/effects/genetics.dmi', icon_state="shark_over_suit_tail", layer = MOB_LAYER_BASE+0.3)
-			detail_over_suit = image('icons/effects/genetics.dmi', icon_state="shark_over_suit_fin", layer = MOB_LAYER_BASE+0.3)
+		if(ishuman(H))
+			src.add_ability(H)
+			H.insidegun = new gutgun(H)
+			var/datum/appearanceHolder/aH = H.bioHolder.mobAppearance
+			detail_1 = image('icons/effects/genetics.dmi', icon_state="shark_detail-1", layer = MOB_LIMB_LAYER+0.1)
+			detail_2 = image('icons/effects/genetics.dmi', icon_state="shark_detail-2", layer = MOB_LIMB_LAYER+0.2)
+			detail_3 = image('icons/effects/genetics.dmi', icon_state="shark_detail-3", layer = MOB_LIMB_LAYER+0.3)
+			detail_over_suit_1 = image('icons/effects/genetics.dmi', icon_state="shark_over_suit_1", layer = MOB_LAYER_BASE+0.3)
+			detail_over_suit_2 = image('icons/effects/genetics.dmi', icon_state="shark_over_suit_2", layer = MOB_LAYER_BASE+0.4)
+			detail_over_suit_3 = image('icons/effects/genetics.dmi', icon_state="shark_over_suit_3", layer = MOB_LAYER_BASE+0.5)
+			detail_over_suit_4 = image('icons/effects/genetics.dmi', icon_state="shark_over_suit_4", layer = MOB_LAYER_BASE+0.6)
 
 			hex_to_rgb_list(aH.customization_first_color)
 
-			detail_1.color = fix_colors(aH.customization_first_color)
-			detail_2.color = fix_colors(aH.customization_second_color)
-			detail_3.color = fix_colors(aH.customization_third_color)
-			detail_over_suit.color = fix_colors(aH.customization_first_color)
+			update_colors(aH)
 
-			mob.update_face()
-			mob.update_body()
-			mob.update_clothing()
+			H.update_face()
+			H.update_body()
+			H.update_clothing()
 
-	proc/fix_colors(var/hex)
+	proc/update_colors(var/datum/appearanceHolder/aH)
+		detail_1.color = fix_colors(aH.customization_first_color, 1)
+		detail_2.color = fix_colors(aH.customization_second_color)
+		detail_3.color = fix_colors(aH.customization_third_color)
+		detail_over_suit_1.color = fix_colors(aH.customization_first_color, 1)
+		detail_over_suit_2.color = fix_colors(aH.customization_second_color)
+		detail_over_suit_3.color = fix_colors(aH.customization_third_color)
+		detail_over_suit_4.color = fix_colors(aH.customization_first_color, 1)
+
+	proc/toggle_deploy()
+		deployed = !deployed
+		if(deployed)
+			detail_1 = image('icons/effects/genetics.dmi', icon_state="shark_detail-1-gun", layer = MOB_LIMB_LAYER+0.1)
+			detail_2 = image('icons/effects/genetics.dmi', icon_state="shark_detail-2-gun", layer = MOB_LIMB_LAYER+0.2)
+		else
+			detail_1 = image('icons/effects/genetics.dmi', icon_state="shark_detail-1", layer = MOB_LIMB_LAYER+0.1)
+			detail_2 = image('icons/effects/genetics.dmi', icon_state="shark_detail-2", layer = MOB_LIMB_LAYER+0.2)
+		update_colors()
+		mob.update_body()
+
+	proc/fix_colors(var/hex, var/clamp_harder)
 		var/list/L = hex_to_rgb_list(hex)
 		for (var/i in L)
-			L[i] = min(L[i], 190)
-			L[i] = max(L[i], 50)
+			L[i] = min(L[i], clamp_harder? 255 : 190)
+			L[i] = max(L[i], clamp_harder? 200 : 50)
 		if (L.len == 3)
 			return rgb(L["r"], L["g"], L["b"])
 		return rgb(22, 210, 22)
 
-	add_ability(var/mob/living/carbon/human/H)
-		H.abilityHolder = new /datum/abilityHolder/critter(src) //lol
+	proc/add_ability(var/mob/living/carbon/human/H)
+		H.abilityHolder = new /datum/abilityHolder/shark(H)
 		H.abilityHolder.owner = H
-		H.abilityHolder.addAbility(/datum/targetable/critter/zombify)
+		H.abilityHolder.addAbility(/datum/targetable/shark/bite)
+		H.abilityHolder.addAbility(/datum/targetable/shark/gun)
 
 	sight_modifier()
 		mob.see_in_dark = SEE_DARK_HUMAN + 1
@@ -555,7 +578,14 @@
 	New(var/mob/living/carbon/human/H)
 		..()
 		if (ishuman(H) && H?.insidegun?.current_projectile)
-			H.current_projectile = new/datum/projectile/special/meowitzer // sure that'll gib someone
+			H.insidegun.current_projectile = new/datum/projectile/special/meowitzer // sure that'll gib someone
+			detail_1.color = "#FFFFFF"
+			detail_2.color = "#FFFFFF"
+			detail_3.color = "#FFFFFF"
+			detail_over_suit_1.color = "#FFFFFF"
+			detail_over_suit_2.color = "#FFFFFF"
+			detail_over_suit_3.color = "#FFFFFF"
+			detail_over_suit_4.color = "#FFFFFF"
 
 /datum/mutantrace/zombie
 	name = "zombie"
@@ -1626,7 +1656,7 @@
 			var/datum/appearanceHolder/aH = mob.bioHolder.mobAppearance
 
 			detail_1 = image('icons/effects/genetics.dmi', icon_state="cow_detail-1", layer = MOB_LIMB_LAYER+0.1)
-			detail_over_suit = image('icons/effects/genetics.dmi', icon_state="cow_over_suit", layer = MOB_LAYER_BASE+0.3)
+			detail_over_suit_1 = image('icons/effects/genetics.dmi', icon_state="cow_over_suit", layer = MOB_LAYER_BASE+0.3)
 
 			hex_to_rgb_list(aH.customization_first_color)
 

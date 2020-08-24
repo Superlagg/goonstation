@@ -1191,10 +1191,13 @@ var/list/update_body_limbs = list("r_arm" = "stump_arm_right", "l_arm" = "stump_
 			human_image.color = "#fff"
 		else
 			src.body_standing.overlays += image(src.mutantrace.icon, src.mutantrace.icon_state, MOB_LIMB_LAYER)
-			src.body_standing.overlays += mutantrace.detail_1//image(src.mutantrace.icon, src.mutantrace.icon_state, MOB_LIMB_LAYER)
-			src.body_standing.overlays += mutantrace.detail_2//image(src.mutantrace.icon, src.mutantrace.icon_state, MOB_LIMB_LAYER)
-			src.body_standing.overlays += mutantrace.detail_3//image(src.mutantrace.icon, src.mutantrace.icon_state, MOB_LIMB_LAYER)
-		src.body_standing.overlays += mutantrace.detail_over_suit// used by lizards so that when they're facing upwards their tail doesn't look awkward.
+			src.body_standing.overlays += mutantrace.detail_1
+			src.body_standing.overlays += mutantrace.detail_2
+			src.body_standing.overlays += mutantrace.detail_3
+			src.body_standing.overlays += mutantrace.detail_over_suit_1// used by lizards so that when they're facing upwards their tail doesn't look awkward.
+			src.body_standing.overlays += mutantrace.detail_over_suit_2
+			src.body_standing.overlays += mutantrace.detail_over_suit_3
+			src.body_standing.overlays += mutantrace.detail_over_suit_4
 
 #if ASS_JAM
 	src.maptext_y = 32

@@ -1,3 +1,11 @@
+/datum/abilityHolder/shark
+	usesPoints = 0
+	regenRate = 0
+	tabName = "Shark"
+	notEnoughPointsMessage = "<span class='alert'>You aren't strong enough to use this ability.</span>"
+
+
+
 // -----------------
 // Shark person abilities
 // -----------------
@@ -33,29 +41,30 @@
 		holder.owner.visible_message("<span class='combat'><b>[holder.owner] bites [MT]!</b></span>", "<span class='combat'>You bite [MT]!</span>")
 		return 0
 
-/datum/targetable/shark/guntoggle
+/datum/targetable/shark/gun
 	name = "Use Gun"
 	desc = "Deploy and fire your internal gun."
 	cooldown = 10
-	targeted = 0
+	targeted = 1
 	can_target_ghosts = 1
 	check_range = 0
 	sticky = 1
 	ignore_sticky_cooldown = 1
 	var/deployed = 0
+	var/deploying = 0
 	var/is_sharkgun = 0
 
 	proc/deploy_gun()
 		if (!holder)
 			return 0
 
-		var/mob/living/M = holder.owner
+		var/mob/living/carbon/human/M = holder.owner
 
 		if (!M)
 			return 0
 
 		if(ishuman(M))
-			if (H.head || H.wear_mask || H.glasses)
+			if (M.head || M.wear_mask || M.glasses)
 				boutput(M, "<span class='notice'>You need to take off all your headgear first.</span>")
 				return
 
@@ -67,7 +76,7 @@
 			if (!istype(M.insidegun, /obj/item/gun))
 				M.visible_message("\An [M.insidegun] flies out of [M]'s mouth!", "<span class='alert'>You try to move your [M.insidegun] into firing position, but its odd shape makes it fly out of your mouth!</span>")
 				M.emote("burp")
-				var/item/urp = M.insidegun
+				var/obj/item/urp = M.insidegun
 				urp.set_loc(get_turf(M))
 				//something something throw it
 				return
@@ -83,6 +92,7 @@
 
 
 	proc/CheckMagCellWhatever()
+		var/mob/living/carbon/human/M = src.holder.owner
 		if(!M.insidegun)
 			return 0 // You're just trying to puke on them, arent you?
 
@@ -122,10 +132,11 @@
 				return 0 // maybe try putting batteries in it next time
 
 	proc/ShootTheGun(var/target as mob|turf|null, var/thing2shoot as null)
+		var/mob/living/carbon/human/M = src.holder.owner
 		if (!target) // if no target, then pick something!
 			if (!thing2shoot || !istype(thing2shoot, /datum/projectile/))
-				if(src?.budgun?.current_projectile)
-					thing2shoot = src.budgun.current_projectile
+				if(M?.insidegun?.current_projectile)
+					thing2shoot = M.insidegun.current_projectile
 				else
 					thing2shoot = new/datum/projectile/bullet/revolver_38/stunners
 			var/list/mob/nearby_dorks = list()
@@ -141,47 +152,70 @@
 
 		var/target_turf = get_turf(target)
 		var/my_turf = get_turf(src)
-		budgun.shoot(target_turf, my_turf, src)
+		M.insidegun.shoot(target_turf, my_turf, src)
 		return 1
 
 	cast(atom/target)
+		var/mob/living/carbon/human/M = src.holder.owner
 		if (..())
 			return 1
 		if(!deployed)
 			deploy_gun()
 			return
-
+		if (src.deploying)
+			boutput(holder.owner, "<span class='alert'>Your gun isn't ready yet!</span>")
+			return
 		else
-			if (!M.insidegun || )
+			if (!M.insidegun)
 				return
 			if (CheckMagCellWhatever())
 				ShootTheGun(target)
-				src.visible_message("<span class='alert'><B>[src] fires [src.budgun] at [target]!</B></span>")
+				M.visible_message("<span class='alert'><B>[M] fires [M.insidegun] at [target]!</B></span>")
 			else
-				playsound(src, "sound/weapons/Gunclick.ogg", 60, 1)
+				playsound(M, "sound/weapons/Gunclick.ogg", 60, 1)
 		return
+
+/obj/screen/ability/topBar/shark
+	clicked(params)
+		var/datum/targetable/shark/gun/sharkgun = owner
+		var/datum/abilityHolder/holder = owner.holder
+
+		if (!istype(sharkgun))
+			return
+		if (!sharkgun.holder)
+			return
+
+		if (!isturf(usr.loc))
+			return
+		if (world.time < sharkgun.last_cast)
+			return
+		if (sharkgun.targeted && usr.targeting_ability == owner)
+			sharkgun.deployed = 0
+			boutput(holder.owner, "You put your gun away.")
+			usr.targeting_ability = null
+			usr.update_cursor()
+			return
+		if (sharkgun.targeted)
+			usr.targeting_ability = owner
+			usr.update_cursor()
+		else
+			SPAWN_DBG(0)
+				sharkgun.handleCast()
 
 /datum/action/bar/sharkdeploy
 	duration = 2 SECONDS
 	interrupt_flags = INTERRUPT_MOVE | INTERRUPT_ACT | INTERRUPT_STUNNED | INTERRUPT_ACTION
 	id = "sharkdeploy"
 	var/mob/living/carbon/human/M
-	var/item/gun/sharkgun
-	var/datum/targetable/shark/guntoggle/thisability
+	var/obj/item/gun/sharkgun
+	var/datum/targetable/shark/gun/thisability
 	var/issharkgun
 
-	New(var/mob/living/carbon/human/S, var/datum/targetable/shark/guntoggle/ability, var/item/gun/shark_gun, var/is_sharkgun)
+	New(var/mob/living/carbon/human/S, var/datum/targetable/shark/gun/ability, var/obj/item/gun/shark_gun, var/is_sharkgun)
 		M = S
 		sharkgun = shark_gun
 		issharkgun = is_sharkgun
 		thisability = ability
-
-		M.visible_message("[M] throws [his_or_her(M)] head back and starts retching!",\
-		"<span class='notice'>You open your mouth and start moving your gun into firing position!</span>")
-		if (!issharkgun)
-			boutput(M, "<span class='notice'>\The [sharkgun]'s unfamiliar shape makes it difficult to deploy!</span>")
-			duration *= 2
-		..()
 
 	onUpdate()
 		..()
@@ -189,13 +223,22 @@
 	onStart()
 		..()
 
+		M.visible_message("[M] throws [his_or_her(M)] head back and starts retching!",\
+		"<span class='notice'>You open your mouth and start moving your gun into firing position!</span>")
+		if (!issharkgun)
+			boutput(M, "<span class='notice'>\The [sharkgun]'s unfamiliar shape makes it difficult to deploy!</span>")
+			duration *= 2
+		thisability.deploying = 1
+		..()
+
 	onEnd()
 		thisability.deployed = 1
 		M.visible_message("\A [sharkgun] pokes its way out of [M]'s mouth!",\
 		"<span class='notice'>Your [sharkgun] slides its way into firing position!</span>")
-
+		thisability.deploying = 0
 
 	onInterrupt()
 		M.visible_message("[M] swallows [his_or_her(M)] [sharkgun].",\
 		"<span class='alert'>You were interrupted! Your [sharkgun] slides back to where it came from.</span>")
+		thisability.deploying = 0
 		..()
