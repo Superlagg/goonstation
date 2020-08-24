@@ -57,6 +57,8 @@
 	var/obj/item/chest_item = null	// Item stored in chest cavity
 	var/chest_item_sewn = 0			// Item is sewn in or is loose
 
+	var/obj/item/gun/insidegun // So we can have a gun inside us that we can shoot for some reason
+
 	var/cust_one_state = "short"
 	var/cust_two_state = "None"
 	var/cust_three_state = "none"

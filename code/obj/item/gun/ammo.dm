@@ -832,6 +832,12 @@
 		amount_left = 25.0
 		max_amount = 25.0
 
+	shark
+		sname = "7.62×25mm SHATO"
+		name = "semi-organic LMG belt"
+		ammo_type = new/datum/projectile/bullet/lmg/shark
+		amount_left = 25.0
+		max_amount = 100.0
 
 //////////////////////////////////// Power cells for eguns //////////////////////////
 

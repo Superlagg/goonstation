@@ -554,6 +554,16 @@ toxic - poisons
 	slow = 0
 	implanted = null
 
+/datum/projectile/bullet/lmg/shark
+	power = 1
+	cost = 1
+	shot_number = 4
+	shot_delay = 1.1
+	dissipation_delay = 8
+	nomsg = 1
+	slow = 0
+	implanted = null
+
 /datum/projectile/bullet/ak47
 	name = "bullet"
 	shot_sound = 'sound/weapons/ak47shot.ogg'

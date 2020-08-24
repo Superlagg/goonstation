@@ -494,6 +494,69 @@
 	say_filter(var/message)
 		return replacetext(message, "s", stutter("ss"))
 
+/datum/mutantrace/shark
+	name = "space shark"
+	// icon_state = "lizard"
+	icon_state = "shark"
+	icon_override_static = 1
+	allow_fat = 1
+	override_attack = 0
+	voice_override = "lizard"
+	aquatic = 1
+	var/obj/item/gun/kinetic/gutgun = obj/item/gun/kinetic/minigun/shark
+
+	New(var/mob/living/carbon/human/H)
+		..()
+		if(ishuman(mob))
+			H.gutgun = new inside_gun(H)
+			var/datum/appearanceHolder/aH = mob.bioHolder.mobAppearance
+
+			detail_1 = image('icons/effects/genetics.dmi', icon_state="lizard_detail-1", layer = MOB_LIMB_LAYER+0.1)
+			detail_2 = image('icons/effects/genetics.dmi', icon_state="lizard_detail-2", layer = MOB_LIMB_LAYER+0.2)
+			detail_3 = image('icons/effects/genetics.dmi', icon_state="lizard_detail-3", layer = MOB_LIMB_LAYER+0.3)
+			detail_over_suit = image('icons/effects/genetics.dmi', icon_state="shark_over_suit_tail", layer = MOB_LAYER_BASE+0.3)
+			detail_over_suit = image('icons/effects/genetics.dmi', icon_state="shark_over_suit_fin", layer = MOB_LAYER_BASE+0.3)
+
+			hex_to_rgb_list(aH.customization_first_color)
+
+			detail_1.color = fix_colors(aH.customization_first_color)
+			detail_2.color = fix_colors(aH.customization_second_color)
+			detail_3.color = fix_colors(aH.customization_third_color)
+			detail_over_suit.color = fix_colors(aH.customization_first_color)
+
+			mob.update_face()
+			mob.update_body()
+			mob.update_clothing()
+
+	proc/fix_colors(var/hex)
+		var/list/L = hex_to_rgb_list(hex)
+		for (var/i in L)
+			L[i] = min(L[i], 190)
+			L[i] = max(L[i], 50)
+		if (L.len == 3)
+			return rgb(L["r"], L["g"], L["b"])
+		return rgb(22, 210, 22)
+
+	add_ability(var/mob/living/carbon/human/H)
+		H.abilityHolder = new /datum/abilityHolder/critter(src) //lol
+		H.abilityHolder.owner = H
+		H.abilityHolder.addAbility(/datum/targetable/critter/zombify)
+
+	sight_modifier()
+		mob.see_in_dark = SEE_DARK_HUMAN + 1
+		mob.see_invisible = 1
+
+	say_filter(var/message)
+		return replacetext(message, "r", stutter("rr"))
+
+/datum/mutantrace/shark/gib
+	name = "gib shark"
+
+	New(var/mob/living/carbon/human/H)
+		..()
+		if (ishuman(H) && H?.insidegun?.current_projectile)
+			H.current_projectile = new/datum/projectile/special/meowitzer // sure that'll gib someone
+
 /datum/mutantrace/zombie
 	name = "zombie"
 	icon_state = "zombie"

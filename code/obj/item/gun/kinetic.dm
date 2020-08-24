@@ -310,6 +310,32 @@
 		..()
 		setProperty("movespeed", 0.4)
 
+/obj/item/gun/kinetic/minigun/shark
+	name = "Shark Gun"
+	desc = "A small, rotory machine gun designed to fit inside a human-sized shark...? Looks kind of fleshy."
+	icon_state = "minigun"
+	item_state = "heavy"
+	force = 5
+	caliber = 0.308
+	max_ammo_capacity = 100
+	auto_eject = 1
+
+	flags =  FPRINT | TABLEPASS | CONDUCT | USEDELAY | EXTRADELAY
+
+	spread_angle = 25
+	can_dual_wield = 0
+
+	slowdown = 5
+	slowdown_time = 15
+
+	two_handed = 0
+	w_class = 2
+
+	New()
+		ammo = new/obj/item/ammo/bullets/lmg/shark
+		current_projectile = new/datum/projectile/bullet/lmg/shark
+		..()
+
 /obj/item/gun/kinetic/revolver
 	name = "CPA Predator MKII"
 	desc = "A hefty combat revolver developed by Cormorant Precision Arms. Uses .357 caliber rounds."
