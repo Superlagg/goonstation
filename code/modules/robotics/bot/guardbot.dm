@@ -2585,7 +2585,7 @@
 		purge //Arrest anyone who isn't a DWAINE superuser.
 			name = "purge"
 			task_id = "PURGE"
-			behavior_flags = (PURGING | CARES_ABOUT_PEOPLE | PATROLS | CARES_ABOUT_CONTRABAND)
+			behavior_flags = (PURGING | PATROLS | CARES_ABOUT_CONTRABAND)
 
 
 		area_guard
@@ -2608,6 +2608,8 @@
 		name = "tourguide"
 		task_id = "TOUR"
 		handle_beacons = 1
+		behavior_flags = (CARES_ABOUT_PEOPLE)
+
 
 		New()
 			..()
