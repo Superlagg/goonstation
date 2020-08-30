@@ -2557,17 +2557,19 @@
 		name = "secure"
 		handle_beacons = 1
 		task_id = "SECURE"
+		mode = MODE_DEFAULT
 
 		patrol
 			name = "patrol"
 			task_id = "PATROL"
-
+			mode = MODE_DEFAULT
 
 		crazy
 			name = "patr#(003~"
 			task_id = "ERR0xF00F"
 			lethal = 1
 			behavior_flags = (LETHAL | PANIC | PATROLS)
+			mode = MODE_DEFAULT
 
 		single_use
 			behavior_flags = null
@@ -2591,6 +2593,8 @@
 		area_guard
 			name = "areaguard"
 			task_id = "AREAG"
+			mode = MODE_DEFAULT
+			behavior_flags = (CARES_ABOUT_CONTRABAND | CARES_ABOUT_PEOPLE)
 
 	//Bodyguard Task -- Guard some dude's personal space
 	bodyguard
