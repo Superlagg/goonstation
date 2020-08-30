@@ -203,7 +203,7 @@
 	var/last_comm = 0 //World time of last transmission
 	var/reply_wait = 0
 
-	var/list/memory = null // A buddy never forgets
+	var/list/memory = null // A buddy never forgets. Stores a name and a thing it did
 
 	var/botcard_access = "Captain" //Job access for doors.
 									//It's not like they can be pushed into airlocks anymore
@@ -2222,13 +2222,12 @@
 #define NT_GAFFE 32768 //Note: this is the last one the bitfield can fit.  Thanks, byond!!
 
 //Task Modes
-#define MODE_DEFAULT 1 // wander around looking for people to hug or kill
-#define MODE_ATTACK 2 // Use gun / tool on person, or cry if we cant
-#define MODE_BREAKTIME_START 3 // Time to go on break!
-#define MODE_BREAKTIME_GOTO_BAR 4 // Enroute to bar
-#define MODE_BREAKTIME_FIND_SEAT 5 // Wander over to a chair you can't reach
-#define MODE_BREAKTIME_FUCKOFF 6 // goof off
-#define MODE_BREAKTIME_BEEPSKY_LEFT 7 // Oh beepsky was here, now he isnt
+#define MODE_BREAKTIME_START 1 // Time to go on break!
+#define MODE_BREAKTIME_GOTO_BAR 2 // Enroute to bar
+#define MODE_BREAKTIME_FIND_SEAT 3 // Wander over to a chair you can't reach
+#define MODE_BREAKTIME_FUCKOFF 4 // goof off
+#define MODE_BREAKTIME_BEEPSKY_LEFT 5 // Oh beepsky was here, now he isnt
+
 #define MODE_SHEETED 8 // Uh oh, we've got a bedsheet!
 #define MODE_THREATS 9 // Looking for threats??
 #define MODE_FOUND_CORPSE 10 // Oh no, a dead guy!
@@ -2242,18 +2241,21 @@
 #define BREAK_ROUTINE_URGENT 2	// interrupt the routine and run process(), to react quicker
 
 //Behavior Flags
-#define LETHAL (1<<0)
-#define PANIC (1<<1)
-#define PATROLS (1<<2)
-#define BUDDY_HURT_ME (1<<3)
-#define BUDDY_SUX (1<<4)
-#define IS_HALLOWEEN (1<<5)
-#define IS_SPACEMAS (1<<6)
-#define CARES_ABOUT_PEOPLE (1<<7)
-#define CARES_ABOUT_CONTRABAND (1<<8)
-#define PURGING (1<<9)
-#define HUGGY (1<<10)
-#define CARES_ABOUT_STUFF (1<<11)
+#define LETHAL (1<<0)	// Tool mode set to murder
+#define PANIC (1<<1)	// If man it be, then man it dies
+#define PATROLS (1<<2)	// Wander around if you've got nothing better to do
+#define BUDDY_HURT_ME (1<<3)	// Do it again and you'll be seeing spots
+#define BUDDY_SUX (1<<4)	// my buddy's a dork...
+#define IS_HALLOWEEN (1<<5)	// Trick or treat!
+#define IS_SPACEMAS (1<<6)	// Spread that cheer
+#define CARES_ABOUT_PEOPLE (1<<7)	// Consider the people around you
+#define CARES_ABOUT_CONTRABAND (1<<8)	// Consider the stuff people are carrying
+#define CARES_ABOUT_STUFF (1<<9)	// Consider the stuff around you
+#define PURGING (1<<10)	// If head it ain't, then lead it gain't
+#define HUGGY (1<<11)	// Likes to hug people
+#define VERY_HUGGY (1<<12)	// dead or alive, you're getting hugged
+#define HANGS_OUT (1<<13)	// Isn't so busy that it can't spend time with it new Best Friend (tm)
+#define IS_DRAGON (1<<14)	// Rawr. Hoards garbage and growls at people like an idiot
 
 //Accessory Flags
 #define HAS_MEDSCANNER 1
@@ -2291,6 +2293,7 @@
 
 	var/rumpus_emotion = "joy" //Emotion to express during buddytime.
 	var/rumpus_location_tag = "buddytime" //Tag of the bar beacon
+	var/rumpus_state = 0
 
 	var/announced = 0
 
@@ -2351,7 +2354,7 @@
 			if ((istype(hug_target) && isdead(hug_target)) || (istype(hug_target, /obj/critter) && hug_target.health <= 0) || !src.hug_target)
 				hug_target = null
 				master.set_emotion("sad")
-				return
+				return CONTINUE_ROUTINE
 
 			if(get_dist(master, hug_target) <= 1)
 				if (behavior_flags & IS_HALLOWEEN)
@@ -2379,19 +2382,25 @@
 					drop_hug_target()
 					master.set_emotion("love")
 					master.moving = 0
-				return
+				return CONTINUE_ROUTINE
 
-		buddy_routine()
+		buddy_routine() // generic buddy loop; kill, fuck off, gawk, or wander
 			if(!master || !master.on || master.task != src || master.stunned)
-				return 1
+				return BREAK_ROUTINE_NORMAL
 
-			. = arrest_target && combat_mode()	// Time 2 fite
+			. = combat_mode()	// Time 2 fite
 			if (.)
 				if (. == BREAK_ROUTINE_URGENT)
 					master.process()
 				return	// maybe
 
-			. = check_surroundings())	// look 4 things
+			. = break_time()
+			if (.)
+				if (. == BREAK_ROUTINE_URGENT)
+					master.process()
+				return	// maybe
+
+			. = check_surroundings()	// look 4 things
 			if (.)
 				if (. == BREAK_ROUTINE_URGENT)
 					master.process()
@@ -2406,11 +2415,11 @@
 
 		combat_mode()
 			if(!arrest_target || !master.tool) //nobody to kill, nothing to kill with
-				return 0
+				return CONTINUE_ROUTINE
 
 			if (!isliving(arrest_target) || isdead(arrest_target)) // GOTTEM, or they're a ghost or something
 				drop_arrest_target()
-				return 0	// neat, back to whatever we were doing
+				return CONTINUE_ROUTINE	// neat, back to whatever we were doing
 
 			// Angry at someone, we can't see them, we arent moving?
 			if(!(arrest_target in view(7,master)) && !master.moving)
@@ -2419,7 +2428,7 @@
 					master.mover.master = null
 					master.mover = null
 				master.navigate_to(arrest_target,ARREST_DELAY, 0, 0) // goto: them
-				return 1 // Break routine, go get em
+				return BREAK_ROUTINE_NORMAL // Break routine, go get em
 
 			// Angry at someone, we can see them, we arent moving?
 			else
@@ -2434,7 +2443,130 @@
 				if(!master.path || !master.path.len || (4 < get_dist(arrest_target,master.path[master.path.len])) )
 					master.moving = 0
 					master.navigate_to(arrest_target,ARREST_DELAY, 0,0) // go get em...?
-				return 1 // Still mad, still combat
+				return BREAK_ROUTINE_NORMAL // Still mad, still combat
+
+		break_time()
+			if(!master || !master.on || master.task != src || master.stunned)
+				return 0
+
+			switch(rumpus_state)
+				if (0)
+					return CONTINUE_ROUTINE // back2work
+				if (MODE_BREAKTIME_START)
+					master.speak("Break time. Rumpus protocol initiated.")
+					src.rumpus_state = MODE_BREAKTIME_GOTO_BAR
+					return BREAK_ROUTINE_URGENT // Breaks are serious business!
+
+				if (MODE_BREAKTIME_GOTO_BAR)	//Seeking the bar.
+					if (src.awaiting_beacon)
+						src.awaiting_beacon--
+						if (src.awaiting_beacon <= 0)
+							src.master.speak("Error: Bar not found. Break canceled.")
+							src.master.set_emotion("sad")
+							src.master.remove_current_task()
+							src.rumpus_state = 0
+					return BREAK_ROUTINE_NORMAL
+
+					if(istype(src.bar_beacon_turf, /turf/simulated))
+						if (get_area(src.master) == get_area(bar_beacon_turf)) // yay we're here!
+							src.rumpus_state = MODE_BREAKTIME_FIND_SEAT
+							master.moving = 0
+
+						if (!master.moving)
+							if (nav_delay > 0)
+								var/nap_nav = nav_delay
+								nav_delay = 0
+								sleep(nap_nav)
+							master.navigate_to(src.bar_beacon_turf)
+							nav_delay = 5
+
+					else
+						if(!master.last_comm || (world.time >= master.last_comm + 100) )
+							src.awaiting_beacon = 10
+							master.post_status("!BEACON!", "findbeacon", "patrol")
+							master.reply_wait = 2
+					return BREAK_ROUTINE_NORMAL
+
+				if (MODE_BREAKTIME_FIND_SEAT)	//Seeking a seat.
+					if (!istype(src.target, /obj/stool))
+						src.secondary_targets.len = 0
+						for (var/obj/stool/S in view(7, master))
+							secondary_targets += S
+
+						if (secondary_targets.len)
+							src.target = pick(secondary_targets)
+						else
+							master.speak("Error: No seating available. Break canceled.")
+							src.master.set_emotion("sad")
+							src.master.remove_current_task()
+							src.rumpus_state = 0
+
+					else
+						if(src.target.loc == src.master.loc)
+							src.master.set_emotion(rumpus_emotion)
+							src.rumpus_state = MODE_BREAKTIME_FUCKOFF // woo partytime
+							src.our_seat = src.target
+							src.party_idle_counter = rand(4,14)
+							if (!its_beepsky)
+								src.locate_beepsky()
+
+						if(!master.moving)
+							master.navigate_to(src.target, 2.5)
+					return BREAK_ROUTINE_NORMAL
+
+				if (MODE_BREAKTIME_FUCKOFF) //IT IS RUMPUS TIME
+					if (its_beepsky && (get_area(master) == get_area(its_beepsky)))
+						beepsky_check_delay = 8
+						src.rumpus_state = MODE_BREAKTIME_BEEPSKY_LEFT
+						src.master.set_emotion("ugh")
+						if (its_beepsky.emagged == 2)
+							src.master.speak(pick("Oh, look at the time.", "I need to go.  I have a...dentist appointment.  Yes", "Oh, is the break over already? I better be off.", "I'd best be leaving."))
+							src.master.remove_current_task()
+							src.rumpus_state = 0
+							return BREAK_ROUTINE_URGENT
+
+					if (party_counter-- <= 0)
+						src.master.set_emotion()
+						src.master.speak("Break complete.")
+						src.master.remove_current_task()
+						src.rumpus_state = 0
+						return BREAK_ROUTINE_NORMAL
+
+					if (our_seat && our_seat.loc != src.master.loc)
+						our_seat = null
+						src.rumpus_state = MODE_BREAKTIME_FIND_SEAT
+
+					if (src.master.emotion != rumpus_emotion)
+						src.master.set_emotion(rumpus_emotion)
+
+					if (party_idle_counter-- <= 0)
+						party_idle_counter = rand(4,14)
+						if (prob(50))
+							src.master.speak(pick("Yay!", "Woo-hoo!", "Yee-haw!", "Oh boy!", "Oh yeah!", "My favorite color is probably [pick("red","green","mauve","anti-flash white", "aureolin", "coquelicot")].", "I'm glad we have the opportunity to relax like this.", "Imagine if I had two arms. I could hug twice as much!", "I like [pick("tea","coffee","hot chocolate","soda", "diet soda", "milk", "almond milk", "soy milk", "horchata", "hot cocoa with honey mixed in", "green tea", "black tea")]. I have no digestive system or even a mouth, but I'm pretty sure I would like it.", "Sometimes I wonder what it would be like if I could fly."))
+
+						else
+							var/actiontext = pick_string("buddystrings.txt", "rumpus_actions")
+							if (src.master.hat && prob(8))
+								actiontext = "adjusts its hat."
+							else if (prob(1))
+								actiontext = "looks directly at <span class='alert'>you</span>, the viewer."
+							src.master.visible_message("<b>[src.master.name]</b> [actiontext]")
+
+				if (MODE_BREAKTIME_BEEPSKY_LEFT)
+					if (beepsky_check_delay-- > 0)
+						return
+
+					if (!its_beepsky || get_area(master) != get_area(its_beepsky))
+						if (prob(10))
+							src.master.speak(pick("Took long enough.", "Thought he'd never leave.", "Thought he'd never leave.  Too bad it smells like him in here now."))
+
+						src.master.set_emotion(rumpus_emotion)
+						src.mode = MODE_BREAKTIME_FUCKOFF
+						return
+
+					beepsky_check_delay = 8
+
+
 
 		check_surroundings() // generic look-around-you check
 			if(!master || !master.on || master.task != src || master.stunned)
@@ -2445,12 +2577,12 @@
 					return
 
 			if (src.behavior_flags & CARES_ABOUT_PEOPLE)
-				look_for_people()
+				. = look_for_people()
 				if (.)
 					return
 
 			if (src.behavior_flags & CARES_ABOUT_STUFF)
-				look_for_things()
+				. = look_for_things()
 				if (.)
 					return
 
@@ -2510,113 +2642,6 @@
 
 		task_act()
 
-				if (MODE_BREAKTIME_START)
-					master.speak("Break time. Rumpus protocol initiated.")
-					src.mode = MODE_BREAKTIME_GOTO_BAR
-
-				if (MODE_BREAKTIME_GOTO_BAR)	//Seeking the bar.
-					if (src.awaiting_beacon)
-						src.awaiting_beacon--
-						if (src.awaiting_beacon <= 0)
-							src.master.speak("Error: Bar not found. Break canceled.")
-							src.master.set_emotion("sad")
-							src.master.remove_current_task()
-							return
-
-					if(istype(src.bar_beacon_turf, /turf/simulated))
-						if (get_area(src.master) == get_area(bar_beacon_turf)) // yay we're here!
-							src.mode = MODE_BREAKTIME_FIND_SEAT
-							master.moving = 0
-							return
-
-						if (!master.moving)
-							if (nav_delay > 0)
-								nav_delay--
-								return
-							master.navigate_to(src.bar_beacon_turf)
-							nav_delay = 5
-
-					else
-						if(!master.last_comm || (world.time >= master.last_comm + 100) )
-							src.awaiting_beacon = 10
-							master.post_status("!BEACON!", "findbeacon", "patrol")
-							master.reply_wait = 2
-
-				if (MODE_BREAKTIME_FIND_SEAT)	//Seeking a seat.
-					if (!istype(src.target, /obj/stool))
-						src.secondary_targets.len = 0
-						for (var/obj/stool/S in view(7, master))
-							secondary_targets += S
-
-						if (secondary_targets.len)
-							src.target = pick(secondary_targets)
-						else
-							master.speak("Error: No seating available. Break canceled.")
-							src.master.set_emotion("sad")
-							src.master.remove_current_task()
-							return
-
-					else
-						if(src.target.loc == src.master.loc)
-							src.master.set_emotion(rumpus_emotion)
-							src.mode = MODE_BREAKTIME_FUCKOFF // woo partytime
-							src.our_seat = src.target
-							src.party_idle_counter = rand(4,14)
-							if (!its_beepsky)
-								src.locate_beepsky()
-							return
-
-						if(!master.moving)
-							master.navigate_to(src.target, 2.5)
-						return
-
-				if (MODE_BREAKTIME_FUCKOFF) //IT IS RUMPUS TIME
-					if (its_beepsky && (get_area(master) == get_area(its_beepsky)))
-						beepsky_check_delay = 8
-						src.mode = MODE_BREAKTIME_BEEPSKY_LEFT
-						src.master.set_emotion("ugh")
-						if (its_beepsky.emagged == 2)
-							src.master.speak(pick("Oh, look at the time.", "I need to go.  I have a...dentist appointment.  Yes", "Oh, is the break over already? I better be off.", "I'd best be leaving."))
-							src.master.remove_current_task()
-						return
-
-					if (party_counter-- <= 0)
-						src.master.set_emotion()
-						src.master.speak("Break complete.")
-						src.master.remove_current_task()
-						return
-
-					if (our_seat && our_seat.loc != src.master.loc)
-						our_seat = null
-						src.mode = MODE_BREAKTIME_FIND_SEAT
-
-					if (src.master.emotion != rumpus_emotion)
-						src.master.set_emotion(rumpus_emotion)
-
-					if (party_idle_counter-- <= 0)
-						party_idle_counter = rand(4,14)
-						if (prob(50))
-							src.master.speak(pick("Yay!", "Woo-hoo!", "Yee-haw!", "Oh boy!", "Oh yeah!", "My favorite color is probably [pick("red","green","mauve","anti-flash white", "aureolin", "coquelicot")].", "I'm glad we have the opportunity to relax like this.", "Imagine if I had two arms. I could hug twice as much!", "I like [pick("tea","coffee","hot chocolate","soda", "diet soda", "milk", "almond milk", "soy milk", "horchata", "hot cocoa with honey mixed in", "green tea", "black tea")]. I have no digestive system or even a mouth, but I'm pretty sure I would like it.", "Sometimes I wonder what it would be like if I could fly."))
-
-						else
-							var/actiontext = pick("does a little dance. It's not very good but there's good effort there.", "slowly rotates around in a circle.", "attempts to do a flip, but is unable to jump.", "hugs an invisible being only it can see.", "rocks back and forth repeatedly.", "tilts side to side.", "claps.  Whaaat.", prob(1);"looks directly at you, the viewer.")
-							if (src.master.hat && prob(8))
-								actiontext = "adjusts its hat."
-							src.master.visible_message("<b>[src.master.name]</b> [actiontext]")
-
-				if (MODE_BREAKTIME_BEEPSKY_LEFT)
-					if (beepsky_check_delay-- > 0)
-						return
-
-					if (!its_beepsky || get_area(master) != get_area(its_beepsky))
-						if (prob(10))
-							src.master.speak(pick("Took long enough.", "Thought he'd never leave.", "Thought he'd never leave.  Too bad it smells like him in here now."))
-
-						src.master.set_emotion(rumpus_emotion)
-						src.mode = MODE_BREAKTIME_FUCKOFF
-						return
-
-					beepsky_check_delay = 8
 
 				if (MODE_GUARDBUDDY)
 
@@ -3252,7 +3277,7 @@
 	name = "rumpus"
 	handle_beacons = 1
 	task_id = "RUMPUS"
-	mode = MODE_BREAKTIME_START
+	rumpus_state = MODE_BREAKTIME_START
 	behavior_flags = (CARES_ABOUT_PEOPLE)
 
 	//Security/Patrol task -- Essentially secbot emulation.
