@@ -2179,7 +2179,7 @@ obj/machinery/embedded_controller/radio/maintpanel/mnx
 
 		return ..()
 
-
+#define PANIC 2
 /datum/computer/file/guardbot_task/security/crazy/moon
 	var/tmp/chastised = 0
 
@@ -2190,7 +2190,7 @@ obj/machinery/embedded_controller/radio/maintpanel/mnx
 		if (input == "chastise")
 			if (!chastised)
 				chastised = 1
-				panic = 0
+				behavior_flags &= ~PANIC
 
 				master.speak( pick("Um...oh.  Sorry about that.","I was just afraid it was more of those armed NT men...sorry...","You're....you're right.  I'm sorry.") )
 				master.visible_message("<b>[src.master]</b> looks ashamed!")
@@ -2202,3 +2202,4 @@ obj/machinery/embedded_controller/radio/maintpanel/mnx
 				return 1
 
 		return 0
+#undef PANIC
