@@ -14,6 +14,92 @@
 #define GUARDBOT_RADIO_RANGE 75
 #define GUARDBOT_DOCK_RESET_DELAY 40
 
+#define ARREST_DELAY 2.5 //Delay between movements when chasing a criminal, slightly faster than usual. (2.5 vs 3)
+#define TIME_BETWEEN_CUTE_ACTIONS 1800 //Tenths of a second between cute actions
+#define SEARCH_EMOTION "look"
+#define GUARDING_EMOTION "cool"
+#define GUARDING_DORK_EMOTION "coolugh"
+#define CHASING_EMOTION "angry"
+
+#define STATE_FINDING_BEACON 0//Byond, enums, lack thereof, etc
+#define STATE_PATHING_TO_BEACON 1
+#define STATE_AT_BEACON 2
+#define STATE_POST_TOUR_IDLE 3
+
+#define TOUR_FACE "happy"
+#define ANGRY_FACE "angry"
+
+//Neat things we've seen on this trip
+#define NT_WIZARD 1
+#define NT_CAPTAIN 2
+#define NT_JONES 4
+#define NT_BEE 8
+#define NT_SECBOT 16
+#define NT_BEEPSKY 32
+#define NT_OTHERBUDDY 64
+#define NT_SPACE 128
+#define NT_DORK 256
+#define NT_CLOAKER 1024
+#define NT_GEORGE 2048
+#define NT_DRONE 4096
+#define NT_AUTOMATON 8192
+#define NT_CHEGET 16384
+#define NT_GAFFE 32768 //Note: this is the last one the bitfield can fit.  Thanks, byond!!
+
+//Breaktime script stuff
+#define MODE_BREAKTIME_START 1 // Time to go on break!
+#define MODE_BREAKTIME_GOTO_BAR 2 // Enroute to bar
+#define MODE_BREAKTIME_FIND_SEAT 3 // Wander over to a chair you can't reach
+#define MODE_BREAKTIME_FUCKOFF 4 // goof off
+#define MODE_BREAKTIME_BEEPSKY_LEFT 5 // Oh beepsky was here, now he isnt
+
+//behavior override stuff, if we want to do a specific thing instead of everything else
+#define MODE_DEFAULT 0 // Carry on as normal
+#define MODE_SHEETED (1<<0) // Uh oh, we've got a bedsheet!
+#define MODE_FOUND_CORPSE (1<<1) // Oh no, a dead guy!
+#define MODE_FOUND_WOUNDED (1<<2) // Oh no, a hurt guy!
+#define MODE_NAPTIME (1<<3) // Time for bed!
+#define MODE_DRAGON (1<<4)	// Rawr. Hoards garbage and growls at people like an idiot
+#define MODE_TOURBOT (1<<5)	// Wander around and show rooms to literally nobody
+
+//Task return do-things
+#define CONTINUE_ROUTINE 0	// don't bother interrupting the routine
+#define BREAK_ROUTINE_NORMAL 1	// interrupt the routine, but dont bother doing anything fancy
+#define BREAK_ROUTINE_URGENT 2	// interrupt the routine and run process(), to react quicker
+
+//Fight / Sec behavior flags - Buddy targeting and combat engagement modes
+#define LETHAL (1<<0)	// Tool mode set to murder
+#define PANIC (1<<1)	// If man it be, then man it dies
+#define PURGING (1<<2)	// If head it ain't, then lead it gain't
+#define GHOSTBUSTER (1<<3)	// Target and engage ghosts. please have a ghostgun...
+
+//Basic Behavior flags - general deciders on what to say or where to go
+#define PATROLS (1<<1)	// Wander around if you've got nothing better to do
+#define BUDDY_HURT_ME (1<<2)	// Do it again and you'll be seeing spots
+#define BUDDY_SUX (1<<3)	// my buddy's a dork...
+#define IS_HALLOWEEN (1<<4)	// Trick or treat!
+#define IS_SPACEMAS (1<<5)	// Spread that cheer
+#define CARES_ABOUT_PEOPLE (1<<6)	// Consider the people around you
+#define CARES_ABOUT_CONTRABAND (1<<7)	// Consider the stuff people are carrying
+#define CARES_ABOUT_STUFF (1<<8)	// Consider the stuff around you
+#define HUGGY (1<<9)	// Likes to hug people
+#define VERY_HUGGY (1<<10)	// dead or alive, you're getting hugged
+#define HANGS_OUT (1<<11)	// Isn't so busy that it can't spend time with it new Best Friend (tm)
+#define GUARDBUDDY (1<<12)	// We want to guard a person
+#define STAYS_IN_BED (1<<13)	// If we're in a charger, don't leave unless something ejects us
+
+//Accessory Flags
+#define HAS_MEDSCANNER 1
+#define HAS_GPS 2
+#define HAS_RADIO 4
+
+//Priority flags
+#define PRIORITY_NORMAL (1<<0)	// Adds to the end of the top of the list
+#define PRIORITY_HIGH (1<<1)
+#define PRIORITY_HIGHEST (1<<2)
+
+//Hurt people flags -- for people who are hurt, not just the ones we've hurt
+
 //movement datum
 /datum/guardbot_mover
 	var/obj/machinery/bot/guardbot/master = null
@@ -93,6 +179,9 @@
 #define HURT_ME "hurt_me"
 #define EMAGGED_ME "emagd_me"
 #define EMAGGED_ME_GOLD "gold_emagd_me"
+#define WAS_GUARDED "i_guarded_them"
+#define FOUND_HURT "found_them_hurt"
+#define FOUND_DEAD "found_them_dead"
 
 /obj/machinery/bot/guardbot
 	name = "Guardbuddy"
@@ -125,7 +214,7 @@
 	var/warm_boot = 0 //Have we already done the full startup procedure?
 	var/obj/item/cell/cell //We have limited power! Immersion!!
 	var/obj/item/device/guardbot_tool/tool //What weapon do we have?
-	var/obj/machinery/guardbot_dock/charge_dock
+	var/obj/machinery/guardbot_dock/charge_dock // Are we plugged into something?
 	var/last_dock_id = null
 	var/obj/item/clothing/head/hat = null
 	var/hat_shown = 0
@@ -180,7 +269,6 @@
 	var/obj/item/gun/setup_gun = null	// Lets spawn with a gun
 	var/gunt = new /obj/item/device/guardbot_tool/gun	// We give this to Buddies lacking a module so they don't get self-conscious about lacking a module
 	var/arrest_target = null	// uhh
-	var/lethal = 0				// uhhh
 	var/said_dumb_things = 0	// So we say that thing about spacelaw once...ish
 	var/slept_through_becoming_the_law = 0 // If we gave em a lawbringer and they were fast asleep
 	var/slept_through_laser_class = 0	// If we gave em a gun that can shoot lasers and they were fast asleep
@@ -213,6 +301,7 @@
 	var/setup_charge_maximum = 1500 //Max charge of internal cell.  1500 ~25 minutes
 	var/setup_charge_percentage = 90 //Percentage charge of internal cell
 	var/setup_default_tool_path = /obj/item/device/guardbot_tool/flash //Starting tool.
+	var/master_task = /datum/computer/file/guardbot_task/task_holder // Tasks tell this to tell the bot what to do
 #ifdef HALLOWEEN
 	var/setup_default_startup_task = /datum/computer/file/guardbot_task/security/halloween
 #else
@@ -1525,9 +1614,7 @@
 			add_simple_light("guardbot", list(src.flashlight_red*255, src.flashlight_green*255, src.flashlight_blue*255, (src.flashlight_lum / 7) * 255))
 			if(src.bedsheet == 1)
 				src.add_task(new /datum/computer/file/guardbot_task/bedsheet_handler, 1, 0)
-				return
-			if(src.tasks.len)
-				src.task = src.tasks[1]
+			load_tasks_into_holder()
 			return
 
 		snooze(var/timer = 0, var/cleartasks = 1)
@@ -1542,13 +1629,8 @@
 			icon_needs_update = 1
 			if(cleartasks)
 				src.tasks.len = 0
-				remove_current_task()
-				//src.secondary_targets.len = 0
-			else
-				if(src.task)
-					src.task.task_input("snooze")
-
-			src.task = null
+				load_tasks_into_holder()
+			src.master_task.task_input("snooze")
 			return
 
 		turn_on()
@@ -1557,7 +1639,6 @@
 			src.on = 1
 			src.idle = 0
 			src.moving = 0
-			src.task = null
 			src.wakeup_timer = 0
 			src.last_dock_id = null
 			icon_needs_update = 1
@@ -1566,12 +1647,7 @@
 				src.speak("Guardbuddy V1.4 Online.")
 				if (src.health < initial(src.health))
 					src.speak("Self-check indicates [src.health < (initial(src.health) / 2) ? "severe" : "moderate"] structural damage!")
-
-				if(!src.tasks.len && (src.model_task || src.setup_default_startup_task))
-					if(!src.model_task)
-						src.model_task = new src.setup_default_startup_task
-
-					src.tasks.Add(src.model_task.copy_file())
+				load_tasks_into_holder()
 				src.warm_boot = 1
 			src.wakeup()
 
@@ -1682,10 +1758,77 @@
 			else
 				radio_connection.post_signal(src, signal, GUARDBOT_RADIO_RANGE)
 
-		add_task(var/datum/computer/file/guardbot_task/newtask, var/high_priority = 0, var/clear_others = 0)
-			if(clear_others)
-				src.tasks.len = 0
+		load_tasks_into_holder()
+			src.master_task.behavior_flags = null
+			src.master_task.combat_flags = null
+			src.master_task.primary_behavior = MODE_DEFAULT
+			src.master_task.things_to_care_about = null
+			src.master_task.place_to_put_things = null
+			src.master_task.all_tasks = null
+			if (!src.tasks.len) // list is empty? Throw in the default
+				src.master_task.behavior_flags = src.setup_default_startup_task.behavior_flags
+				src.master_task.combat_flags = src.setup_default_startup_task.combat_flags
+				src.master_task.primary_behavior = src.setup_default_startup_task.primary_behavior
+				src.master_task.things_to_care_about = src.setup_default_startup_task.things_to_care_about
+				src.master_task.place_to_put_things = src.setup_default_startup_task.place_to_put_things
+				src.master_task.all_tasks += src.setup_default_startup_task.task_id
+				return
+			else if (src.tasks.len == 1) // We have one job, we're going to DO it
+				var/datum/computer/file/guardbot_task/one_job = src.tasks[1]
+				src.master_task.behavior_flags = one_job.behavior_flags
+				src.master_task.combat_flags = one_job.combat_flags
+				src.master_task.primary_behavior = one_job.primary_behavior
+				src.master_task.things_to_care_about = one_job.things_to_care_about
+				src.master_task.place_to_put_things = one_job.place_to_put_things
+				src.master_task.all_tasks += one_job.task_id
+				return
+			else // multiple tasks? Let's combine them!
+			 	var/list/normal_priority_tasks = null // They get added first
+				var/list/high_priority_tasks = null // They get added last, overriding conflicting instructions
+				var/datum/computer/file/guardbot_task/highest_priority_task = null // The first one of these it finds overwrites *everything*
+				//presort out the higher priority tasks
+				for(var/datum/computer/file/guardbot_task/presort_task in src.tasks)
+					if (!istype(presort_task, var/datum/computer/file/guardbot_task))
+						continue // pls no garbage
+					else if (presort_task.priority & PRIORITY_HIGHEST)	// if you apply multiple flags, only the highest counts
+						highest_priority_task = presort_task
+						break
+					else if (presort_task.priority & PRIORITY_HIGH)
+						high_priority_tasks += presort_task
+					else
+						normal_priority_tasks += presort_task
+				//first apply the normal priority tasks
+				if (highest_priority_task)
+					src.master_task.behavior_flags = highest_priority_task.behavior_flags
+					src.master_task.combat_flags = highest_priority_task.combat_flags
+					src.master_task.primary_behavior = highest_priority_task.primary_behavior
+					src.master_task.things_to_care_about = highest_priority_task.things_to_care_about
+					src.master_task.place_to_put_things = highest_priority_task.place_to_put_things
+					return
+				else
+					if (normal_priority_tasks)
+						for (var/datum/computer/file/guardbot_task/normal_tasks in normal_priority_tasks)
+							if (normal_tasks.behavior_flags)
+								src.master_task.behavior_flags = normal_tasks.behavior_flags
+							src.master_task.combat_flags |= normal_tasks.combat_flags
+							src.master_task.primary_behavior |= normal_tasks.primary_behavior
+							src.master_task.things_to_care_about += normal_tasks.things_to_care_about
+							src.master_task.all_tasks += normal_tasks.task_id
+							if (normal_tasks.place_to_put_things)
+								src.master_task.place_to_put_things = normal_tasks.place_to_put_things
+					if (high_priority_tasks)
+						for (var/datum/computer/file/guardbot_task/high_tasks in high_priority_tasks)
+							if (high_tasks.behavior_flags)
+								src.master_task.behavior_flags = high_tasks.behavior_flags
+							src.master_task.combat_flags |= high_tasks.combat_flags
+							src.master_task.primary_behavior |= high_tasks.primary_behavior
+							src.master_task.things_to_care_about += high_tasks.things_to_care_about
+							src.master_task.all_tasks += high_tasks.task_id
+							if (high_tasks.place_to_put_things)
+								src.master_task.place_to_put_things = high_tasks.place_to_put_things
 
+
+		add_task(var/datum/computer/file/guardbot_task/newtask, var/high_priority = PRIORITY_NORMAL, var/clear_others = 0)
 			if(!newtask)
 				return
 
@@ -1697,29 +1840,23 @@
 
 			newtask.master = src
 
-			if(clear_others)
-				qdel(src.task)
-				src.task = newtask
-				src.tasks.len = 0
-				src.tasks += src.task
-				return
+			if(high_priority == 1)
+				newtask.priority = PRIORITY_HIGH
+			else if(high_priority == 2)
+				newtask.priority = PRIORITY_HIGHEST
 
-			if(high_priority)
-				src.tasks.Insert(1, newtask)
-				src.task = newtask
-				return
+			if(clear_others)
+				src.tasks.len = 0
 
 			src.tasks += newtask
-			if (src.tasks.len == 1)
-				src.task = newtask
+			load_tasks_into_holder()
 			return
 
 
 		remove_current_task()
-			if(!src.tasks.len) return
-
 			if(!src.tasks)
 				src.tasks = list()
+				load_tasks_into_holder()
 				return
 
 			src.tasks.Cut(1,2)
@@ -1728,6 +1865,7 @@
 			if(src.tasks.len)
 				src.task = src.tasks[1]
 			qdel(old_task)
+			load_tasks_into_holder()
 			return
 
 		set_emotion(var/new_emotion=null)
@@ -1896,14 +2034,10 @@
 		if(src.on && !src.idle && src.slept_through_laser_class)	// Rise and shine, buddy
 			CheckSafety(src.budgun, src.emagged)	// Look at your gun!
 
-		if(!src.tasks.len && (src.model_task || setup_default_startup_task))
-			if(!src.model_task)
-				src.model_task = new setup_default_startup_task
+		if(!src.tasks.len)
+			load_tasks_into_holder()
 
-			src.add_task(src.model_task.copy_file(),1)
-
-		if(istype(src.task))
-			src.task.task_act()
+		src.master_task.buddy_routine()
 
 		return
 
@@ -2189,84 +2323,12 @@
 		tool_id = "AMMOFAB - if you see this, please tell Superlagg their thing broke =0"
 
 //Task Datums
-#define ARREST_DELAY 2.5 //Delay between movements when chasing a criminal, slightly faster than usual. (2.5 vs 3)
-#define TIME_BETWEEN_CUTE_ACTIONS 1800 //Tenths of a second between cute actions
-#define SEARCH_EMOTION "look"
-#define GUARDING_EMOTION "cool"
-#define GUARDING_DORK_EMOTION "coolugh"
-#define CHASING_EMOTION "angry"
 
-#define STATE_FINDING_BEACON 0//Byond, enums, lack thereof, etc
-#define STATE_PATHING_TO_BEACON 1
-#define STATE_AT_BEACON 2
-#define STATE_POST_TOUR_IDLE 3
-
-#define TOUR_FACE "happy"
-#define ANGRY_FACE "angry"
-
-//Neat things we've seen on this trip
-#define NT_WIZARD 1
-#define NT_CAPTAIN 2
-#define NT_JONES 4
-#define NT_BEE 8
-#define NT_SECBOT 16
-#define NT_BEEPSKY 32
-#define NT_OTHERBUDDY 64
-#define NT_SPACE 128
-#define NT_DORK 256
-#define NT_CLOAKER 1024
-#define NT_GEORGE 2048
-#define NT_DRONE 4096
-#define NT_AUTOMATON 8192
-#define NT_CHEGET 16384
-#define NT_GAFFE 32768 //Note: this is the last one the bitfield can fit.  Thanks, byond!!
-
-//Task Modes
-#define MODE_BREAKTIME_START 1 // Time to go on break!
-#define MODE_BREAKTIME_GOTO_BAR 2 // Enroute to bar
-#define MODE_BREAKTIME_FIND_SEAT 3 // Wander over to a chair you can't reach
-#define MODE_BREAKTIME_FUCKOFF 4 // goof off
-#define MODE_BREAKTIME_BEEPSKY_LEFT 5 // Oh beepsky was here, now he isnt
-
-#define MODE_SHEETED 8 // Uh oh, we've got a bedsheet!
-#define MODE_THREATS 9 // Looking for threats??
-#define MODE_FOUND_CORPSE 10 // Oh no, a dead guy!
-#define MODE_FOUND_WOUNDED 11 // Oh no, a hurt guy!
-#define MODE_GUARDBUDDY 12 // Let's guard someone
-#define MODE_NAPTIME 13 // Time for bed!
-
-//Task return do-things
-#define CONTINUE_ROUTINE 0	// don't bother interrupting the routine
-#define BREAK_ROUTINE_NORMAL 1	// interrupt the routine, but dont bother doing anything fancy
-#define BREAK_ROUTINE_URGENT 2	// interrupt the routine and run process(), to react quicker
-
-//Behavior Flags
-#define LETHAL (1<<0)	// Tool mode set to murder
-#define PANIC (1<<1)	// If man it be, then man it dies
-#define PATROLS (1<<2)	// Wander around if you've got nothing better to do
-#define BUDDY_HURT_ME (1<<3)	// Do it again and you'll be seeing spots
-#define BUDDY_SUX (1<<4)	// my buddy's a dork...
-#define IS_HALLOWEEN (1<<5)	// Trick or treat!
-#define IS_SPACEMAS (1<<6)	// Spread that cheer
-#define CARES_ABOUT_PEOPLE (1<<7)	// Consider the people around you
-#define CARES_ABOUT_CONTRABAND (1<<8)	// Consider the stuff people are carrying
-#define CARES_ABOUT_STUFF (1<<9)	// Consider the stuff around you
-#define PURGING (1<<10)	// If head it ain't, then lead it gain't
-#define HUGGY (1<<11)	// Likes to hug people
-#define VERY_HUGGY (1<<12)	// dead or alive, you're getting hugged
-#define HANGS_OUT (1<<13)	// Isn't so busy that it can't spend time with it new Best Friend (tm)
-#define IS_DRAGON (1<<14)	// Rawr. Hoards garbage and growls at people like an idiot
-
-//Accessory Flags
-#define HAS_MEDSCANNER 1
-#define HAS_GPS 2
-#define HAS_RADIO 4
-
-//Hurt people flags -- for people who are hurt, not the ones we've hurt
 
 /datum/computer/file/guardbot_task //Computer datum so it can be transmitted over radio
 	name = "idle"
 	var/task_id = "IDLE" //Small allcaps id for task
+	var/list/all_tasks = list("IDLE")
 	var/obj/machinery/bot/guardbot/master = null
 	var/atom/target = null
 	var/list/secondary_targets = list()
@@ -2284,8 +2346,13 @@
 	var/party_idle_counter = 0
 	var/obj/machinery/bot/secbot/its_beepsky = null
 
-	var/behavior_flags = (CARES_ABOUT_PEOPLE | PATROLS | CARES_ABOUT_CONTRABAND)
-	var/accessory_flag = null
+	// Task behavior vars
+	var/primary_behavior = MODE_DEFAULT
+	var/behavior_flags = (CARES_ABOUT_PEOPLE | CARES_ABOUT_CONTRABAND | HUGGY)
+	var/combat_flags = null
+	var/accessory_flags = null
+
+	var/priority = PRIORITY_NORMAL
 
 	var/list/things_to_care_about = null	// Look for these things
 	var/has_thing = 0	// Has a thing we care about
@@ -2297,6 +2364,10 @@
 
 	var/announced = 0
 
+	var/script_stage_dead = 0
+	var/script_stage_hurt = 0
+
+	// pathing vars
 	var/new_destination		// pending new destination (waiting for beacon response)
 	var/destination			// destination description tag
 	var/next_destination	// the next destination in the patrol route
@@ -2304,23 +2375,25 @@
 	var/turf/nearest_beacon_loc	// the nearest beacon's location
 	var/patrol_delay = 0
 
+	//people to murder or hug
 	var/mob/living/carbon/arrest_target = null
 	var/mob/living/carbon/hug_target = null
+	var/mob/living/carbon/human/dead_target = null
+	var/mob/living/carbon/human/hurt_target = null
 	var/list/target_names = list() //Dudes we are preprogrammed to arrest.
 	var/arrest_attempts = 0
 	var/cuffing = 0
 	var/last_cute_action = 0
 
+
 	var/weapon_access = access_carrypermit //These guys can use guns, ok!
 	var/contraband_access = access_contrabandpermit
 	var/accepted_access = access_dwaine_superuser
-	var/lethal = 0 //Do we use lethal force (if possible) ?
 	var/list/arrested_messages = list()
 	var/single_use = 0
 
 	var/mob/living/carbon/protected = null
 	var/follow_attempts = 0
-	var/mode = MODE_DEFAULT // what script are we following right now?
 
 	var/desired_emotion = "look"
 
@@ -2354,6 +2427,7 @@
 			if ((istype(hug_target) && isdead(hug_target)) || (istype(hug_target, /obj/critter) && hug_target.health <= 0) || !src.hug_target)
 				hug_target = null
 				master.set_emotion("sad")
+				master.speak("Aww...")
 				return CONTINUE_ROUTINE
 
 			if(get_dist(master, hug_target) <= 1)
@@ -2379,30 +2453,86 @@
 				if (master.mover)
 					master.mover.master = null
 					master.mover = null
-					drop_hug_target()
+					hug_target = null
 					master.set_emotion("love")
 					master.moving = 0
 				return CONTINUE_ROUTINE
+
+		do_cute_shit()
+			if (behavior_flags & VERY_HUGGY)
+				do_hugs()
+				return CONTINUE_ROUTINE
+			if (!last_cute_action || ((last_cute_action + TIME_BETWEEN_CUTE_ACTIONS) < world.time))
+				if (prob(10))
+					last_cute_action = world.time
+					switch(behavior_flags & HUGGY ? rand(1,5) : rand(1,3))
+						if (1)
+							master.visible_message("<b>[master]</b> waves at [C.name].")
+						if (2)
+							master.visible_message("<b>[master]</b> rotates slowly around in a circle.")
+						if (3)
+							master.visible_message("<b>[master]</b> appears to be having a [pick("great","swell","rad","wonderful")] day!")
+							if (prob(50))
+								master.speak("Woo!")
+						if (4,5)
+							//hugs!!
+							master.visible_message("<b>[master]</b> points at [C.name]!")
+							master.speak( pick("Level [rand(1,32)] hug deficiency alert!", "Somebody needs a hug!", "Cheer up!") )
+							src.hug_target = C
+							do_hugs()
+			return CONTINUE_ROUTINE
+
+		someone_died(var/mob/living/carbon/human/H, var/stage = 0)
+			if(!master || !master.on || master.task != src || master.stunned)
+				return BREAK_ROUTINE_NORMAL
+
+			if(isdead(H))
+				if (!src.script_stage_dead)
+					master.speak("Uh oh...")
+					if (master.mover)
+						master.mover.master = null
+						master.mover = null
+					master.navigate_to(H,ARREST_DELAY, 0, 0) // goto: them
+					src.script_stage_dead = 1
+
+		someone_hurt(var/mob/living/carbon/human/H)
+			if(!master || !master.on || master.task != src || master.stunned)
+				return BREAK_ROUTINE_NORMAL
+
 
 		buddy_routine() // generic buddy loop; kill, fuck off, gawk, or wander
 			if(!master || !master.on || master.task != src || master.stunned)
 				return BREAK_ROUTINE_NORMAL
 
-			. = combat_mode()	// Time 2 fite
-			if (.)
-				if (. == BREAK_ROUTINE_URGENT)
+			var/break_routine
+
+			break_routine = check_battery()	// Bedtime?
+			if (break_routine)
+				if (break_routine == BREAK_ROUTINE_URGENT)
+					master.process()
+				return	// time for bed
+
+			break_routine = combat_mode()	// Time 2 fite
+			if (break_routine)
+				if (break_routine == BREAK_ROUTINE_URGENT)
 					master.process()
 				return	// maybe
 
-			. = break_time()
-			if (.)
-				if (. == BREAK_ROUTINE_URGENT)
+			break_routine = primary_behavior()	// Thing 2 do?
+			if (break_routine)
+				if (break_routine == BREAK_ROUTINE_URGENT)
 					master.process()
 				return	// maybe
 
-			. = check_surroundings()	// look 4 things
-			if (.)
-				if (. == BREAK_ROUTINE_URGENT)
+			break_routine = break_time() // is it breaktime yet?
+			if (break_routine)
+				if (break_routine == BREAK_ROUTINE_URGENT)
+					master.process()
+				return	// yay it is probably
+
+			break_routine = check_surroundings()	// look 4 things
+			if (break_routine)
+				if (break_routine == BREAK_ROUTINE_URGENT)
 					master.process()
 				return	// might be interesting
 
@@ -2413,22 +2543,65 @@
 					sleep(nap_patrol SECONDS)
 				find_patrol_target()
 
-		combat_mode()
+		check_battery()
+			if(!master || !master.on || master.task != src || master.stunned)
+				return BREAK_ROUTINE_NORMAL
+
+			if(master.cell.charge <= (GUARDBOT_LOWPOWER_ALERT_LEVEL))
+				src.primary_behavior |= MODE_NAPTIME // go2bed
+
+			if (src.primary_behavior & MODE_NAPTIME)
+				if(istype(src.target, /turf/simulated))
+					var/obj/machinery/guardbot_dock/dock = locate() in src.target
+					if(dock && dock.loc == master.loc)
+						if(!isnull(dock.current) && dock.current != src)
+							src.next_target()
+						else
+							var/auto_eject = 1
+							if(src.behavior_flags & STAYS_IN_BED)
+								auto_eject = 0
+							dock.connect_robot(master,auto_eject)
+						return
+					else if (src.target == master.loc)
+						src.target = null
+						src.last_found = world.time
+						src.next_target()
+
+					if(!master.moving)
+						master.navigate_to(src.target)
+				else
+					if(!master.last_comm || (world.time >= master.last_comm + 100) )
+						master.post_status("recharge","data","[master.cell.charge]")
+						master.reply_wait = 2
+						if(!announced)
+							announced++
+							master.speak("Low battery.")
+							master.set_emotion("battery")
+						else
+							announced = 1
+
+
+		combat_mode(var/urgent = 0)
 			if(!arrest_target || !master.tool) //nobody to kill, nothing to kill with
 				return CONTINUE_ROUTINE
 
 			if (!isliving(arrest_target) || isdead(arrest_target)) // GOTTEM, or they're a ghost or something
-				drop_arrest_target()
-				return CONTINUE_ROUTINE	// neat, back to whatever we were doing
+				if (!(combat_flags & GHOSTBUSTER)) // dead or alive, you're coming with me
+					drop_arrest_target()
+					return CONTINUE_ROUTINE	// neat, back to whatever we were doing
+
+			. = BREAK_ROUTINE_NORMAL
+			if (urgent)
+				. = BREAK_ROUTINE_URGENT
 
 			// Angry at someone, we can't see them, we arent moving?
-			if(!(arrest_target in view(7,master)) && !master.moving)
+			if(!(arrest_target in view(7,master)) && !master.moving) // TODO: let robots see ghosts
 				master.frustration += 2
 				if (master.mover)
 					master.mover.master = null
 					master.mover = null
 				master.navigate_to(arrest_target,ARREST_DELAY, 0, 0) // goto: them
-				return BREAK_ROUTINE_NORMAL // Break routine, go get em
+				return // Break routine, go get em
 
 			// Angry at someone, we can see them, we arent moving?
 			else
@@ -2443,7 +2616,7 @@
 				if(!master.path || !master.path.len || (4 < get_dist(arrest_target,master.path[master.path.len])) )
 					master.moving = 0
 					master.navigate_to(arrest_target,ARREST_DELAY, 0,0) // go get em...?
-				return BREAK_ROUTINE_NORMAL // Still mad, still combat
+				return // Still mad, still combat
 
 		break_time()
 			if(!master || !master.on || master.task != src || master.stunned)
@@ -2557,11 +2730,9 @@
 						return
 
 					if (!its_beepsky || get_area(master) != get_area(its_beepsky))
-						if (prob(10))
-							src.master.speak(pick("Took long enough.", "Thought he'd never leave.", "Thought he'd never leave.  Too bad it smells like him in here now."))
+						src.master.speak(pick("Took long enough.", "Thought he'd never leave.", "Thought he'd never leave.  Too bad it smells like him in here now."))
 
 						src.master.set_emotion(rumpus_emotion)
-						src.mode = MODE_BREAKTIME_FUCKOFF
 						return
 
 					beepsky_check_delay = 8
@@ -2602,166 +2773,149 @@
 				if(threat >= 4)
 					src.arrest_target = C
 					src.oldtarget_name = C.name
-					src.mode = 1
 					src.master.frustration = 0
 					master.set_emotion("angry")
 					SPAWN_DBG(0)
 						master.speak("Level [threat] infraction alert!")
 						master.visible_message("<b>[master]</b> points at [C.name]!")
+					if (!(C in src.master.memory))
+						src.master.memory.Add (C.name, MEMORY_)
 					return BREAK_ROUTINE_NORMAL
 
 		look_for_people()
-			for (var/mob/living/carbon/C in view(7,master)) // let's see who's around
-				if (isliving(C) && isdead(C))
+			var/break_routine
 
-				else if (!last_cute_action || ((last_cute_action + TIME_BETWEEN_CUTE_ACTIONS) < world.time))
-					if (prob(10))
-						last_cute_action = world.time
-						switch(behavior_flags & HUGGY ? rand(1,5) : rand(1,3))
-							if (1)
-								master.visible_message("<b>[master]</b> waves at [C.name].")
-							if (2)
-								master.visible_message("<b>[master]</b> rotates slowly around in a circle.")
-							if (3)
-								master.visible_message("<b>[master]</b> appears to be having a [pick("great","swell","rad","wonderful")] day!")
-								if (prob(50))
-									master.speak("Woo!")
-							if (4,5)
-								//hugs!!
-								if
-								master.visible_message("<b>[master]</b> points at [C.name]!")
-								master.speak( pick("Level [rand(1,32)] hug deficiency alert!", "Somebody needs a hug!", "Cheer up!") )
-								src.hug_target = C
-								do_hugs()
-				return
-
-
-
-
-		look_for_things()
-
-		task_act()
-
-
-				if (MODE_GUARDBUDDY)
-
-					if(master.emotion != desired_emotion)
-						master.set_emotion(desired_emotion)
-
-					if(arrest_target) //Priority one: Arrest a jerk who hurt our buddy. Or us.
-						desired_emotion = CHASING_EMOTION
-						master.set_emotion(CHASING_EMOTION)
-
-						handle_arrest_function()
-						return
-
-					if(!protected) //Priority one: Assess status of buddy.
-						src.desired_emotion = SEARCH_EMOTION
-						src.look_for_protected() // They're not here. Go find em!
-						return
-					else // Found em!
-						src.desired_emotion = (src.behavior_flags & BUDDY_SUX) ? GUARDING_DORK_EMOTION : GUARDING_EMOTION
-
-						if(src.check_buddy()) //Should ONLY return true when we pick up a new arrest target.
-							master.set_emotion(CHASING_EMOTION)
-							handle_arrest_function() //So we don't have to wait for the next process. LIVES ARE ON THE LINE HERE!
-							return
-
-						if(!(protected in view(7,master)) && !master.moving)
-							master.frustration++
-							if (master.mover)
-								master.mover.master = null
-								master.mover = null
-							master.navigate_to(protected,3,1,1)
-							return
-						else
-
-							if(isdead(protected))
-								protected = null
-								if (src.behavior_flags & BUDDY_SUX && prob(50))
-									master.speak(pick("Rest in peace.  I guess", "At least that's over.", "I didn't have the courage to tell you this, but you smelled like rotten ham."))
-								else
-									master.speak(pick("Rest in peace.","Guard protocol...inactive.","I'm sorry it had to end this way.","It was an honor to serve alongside you."))
-								return
-
-							if(!master.path || !master.path.len || (3 < get_dist(protected,master.path[master.path.len])) )
-								master.moving = 0
-								if (master.mover)
-									master.mover.master = null
-									master.mover = null
-								master.navigate_to(protected,3,1,1)
-
-					if (src.protected && prob(10) && src.behavior_flags & BUDDY_SUX)
-						master.speak( pick_string("buddystrings.txt", "rude") )
-						master.visible_message("<b>[master]</b> points at [src.protected.name]!")
+			if(src.script_stage_dead && src.dead_target)
+				break_routine = someone_died() // did they died??
+				if (break_routine)	// oh no they did!
+					if (break_routine == BREAK_ROUTINE_URGENT)
+						master.process()
 					return
 
-				if (MODE_SHEETED)
-					if (master.bedsheet != 1) // mustve fallen off
-						src.master.remove_current_task()
-						return
+			if(src.script_stage_hurt && src.hurt_target)
+				break_routine = someone_hurt() // did they hurt??
+				if (break_routine)	// oh no they did!
+					if (break_routine == BREAK_ROUTINE_URGENT)
+						master.process()
+					return
 
-					if (!announced)
-						announced = 1
-						master.speak(pick("Hey, who turned out the lights?","Error: Visual sensor impaired!","Whoa hey, what's the big deal?","Where did everyone go?"))
+			for (var/mob/living/carbon/C in view(7,master)) // let's see who's around
+				if (ishuman(C))
+					var/mob/living/carbon/human/H = C
 
-					if (escape_counter-- > 0)
-						flick("robuddy-ghostfumble", master)
-						master.visible_message("<span class='alert'>[master] fumbles around in the sheet!</span>")
-					else
-						master.visible_message("[master] cuts a hole in the sheet!")
-						master.speak(pick("Problem solved.","Oh, alright","There we go!"))
-						master.bedsheet = 2
-						master.overlays.len = 0
-						master.hat_shown = 0
-						master.update_icon()
-						src.master.remove_current_task()
-						return
-
-				if (MODE_THREATS)
-					var/mob/living/newThreat = look_for_threat()
-					if (istype(newThreat))
-						master.scratchpad["threat"] = newThreat
-						master.scratchpad["threat_time"] = "[time2text(world.timeofday, "hh:mm:ss")]"
-
-						src.master.remove_current_task()
-						return
-				if (MODE_NAPTIME)
-					if(!dock_return && master.cell.charge >= (GUARDBOT_LOWPOWER_ALERT_LEVEL * 2))
-						master.remove_current_task()
-						src.mode = MODE_NAPTIME
-						return
-
-					if(istype(src.target, /turf/simulated))
-						var/obj/machinery/guardbot_dock/dock = locate() in src.target
-						if(dock && dock.loc == master.loc)
-							if(!isnull(dock.current) && dock.current != src)
-								src.next_target()
-							else
-								var/auto_eject = 0
-								if(!dock_return && master.tasks.len >= 2)
-									auto_eject = 1
-								dock.connect_robot(master,auto_eject)
+						if(!(H.name in master.memory))
+						break_routine = someone_died(H) // did they died??
+						if (break_routine)	// oh no they did!
+							if (break_routine == BREAK_ROUTINE_URGENT)
+								master.process()
 							return
-						else if (src.target == master.loc)
-							src.target = null
-							src.last_found = world.time
-							src.next_target()
 
-						if(!master.moving)
-							master.navigate_to(src.target)
-					else
-						if(!master.last_comm || (world.time >= master.last_comm + 100) )
-							master.post_status("recharge","data","[master.cell.charge]")
-							master.reply_wait = 2
-							if(!announced)
-								announced++
-								master.speak("Low battery.")
-								master.set_emotion("battery")
-							else
-								announced = 1
+						break_routine = someone_hurt(H) // did they hurt??
+						if (break_routine)	// oh no they did!
+							if (break_routine == BREAK_ROUTINE_URGENT)
+								master.process()
+							return
 
+						break_routine = hang_out_with_them(H) // Want to chill?
+						if (break_routine)	// let's hang out!
+							if (break_routine == BREAK_ROUTINE_URGENT)
+								master.process()
+							return
+
+						break_routine = do_cute_shit(H) // maybe do some cute?
+						if (break_routine)	// oh no we did!
+							if (break_routine == BREAK_ROUTINE_URGENT)
+								master.process()
+							return
+
+		look_for_things()
+			// put tstuff here
+		guard_buddy()
+
+			if(master.emotion != desired_emotion)
+				master.set_emotion(desired_emotion)
+
+			var/break_routine
+
+			break_routine = combat_mode() // If we're mad at someone, go get em!
+			if (break_routine)
+				if (break_routine == BREAK_ROUTINE_URGENT)
+					master.process()
+				return	// maybe
+
+			if(!protected) //Priority one: Assess status of buddy.
+				src.desired_emotion = SEARCH_EMOTION
+				src.look_for_protected() // They're not here. Go find em!
+				return
+			else // Found em!
+				src.desired_emotion = (src.behavior_flags & BUDDY_SUX) ? GUARDING_DORK_EMOTION : GUARDING_EMOTION
+
+				if(src.check_buddy()) //Should ONLY return true when we pick up a new arrest target.
+					master.set_emotion(CHASING_EMOTION)
+					combat_mode()
+					return
+
+				if(!(protected in view(7,master)) && !master.moving) // Cant see em? Go find em!
+					master.frustration++
+					if (master.mover)
+						master.mover.master = null
+						master.mover = null
+					master.navigate_to(protected,3,1,1)
+					if(prob(25))
+						master.speak("Hey! Wait up!")
+					return
+
+				else // Oh there they are!
+					if(isdead(protected)) // We were too late!
+						protected = null
+						if (src.behavior_flags & BUDDY_SUX && prob(50))
+							master.speak(pick("Rest in peace.  I guess",\
+							"At least that's over.",\
+							"I didn't have the courage to tell you this, but you smelled like rotten ham."))
+						else
+							master.speak(pick("Rest in peace.",\
+							"Guard protocol...inactive.",\
+							"I'm sorry it had to end this way.",\
+							"It was an honor to serve alongside you."))
+						return
+
+					if(!master.path || !master.path.len || (3 < get_dist(protected,master.path[master.path.len])) )
+						master.moving = 0
+						if (master.mover)
+							master.mover.master = null
+							master.mover = null
+						master.navigate_to(protected,3,1,1)
+
+			if (src.protected && prob(10) && src.behavior_flags & BUDDY_SUX)
+				master.speak( pick_string("buddystrings.txt", "rude") )
+				master.visible_message("<b>[master]</b> points at [src.protected.name]!")
 			return
+
+
+		do_sheet_stuff()
+				if (master.bedsheet != 1) // mustve fallen off
+					src.master.remove_current_task()
+					return
+
+				if (!announced)
+					announced = 1
+					master.speak(pick("Hey, who turned out the lights?",\
+					"Error: Visual sensor impaired!",\
+					"Whoa hey, what's the big deal?",\
+					"Where did everyone go?"))
+
+				if (escape_counter-- > 0)
+					flick("robuddy-ghostfumble", master)
+					master.visible_message("<span class='alert'>[master] fumbles around in the sheet!</span>")
+				else
+					master.visible_message("[master] cuts a hole in the sheet!")
+					master.speak(pick("Problem solved.","Oh, alright","There we go!"))
+					master.bedsheet = 2
+					master.overlays.len = 0
+					master.hat_shown = 0
+					master.update_icon()
+					src.master.remove_current_task()
+					return
 
 		task_input(var/input)
 			if(!master || !input || !master.on) return 1
@@ -2773,13 +2927,12 @@
 						src.last_found = world.time
 						src.arrest_attempts++
 						if(src.arrest_attempts >= 2)
-							src.cuffing = 0
-							src.target = null
+							drop_arrest_target()
 						return
-					if(src.mode >= MODE_BREAKTIME_START && src.mode <= MODE_BREAKTIME_BEEPSKY_LEFT)
+					if(src.rumpus_state)
 						src.master.speak("Error: Destination unreachable. Break canceled.")
 						src.master.set_emotion("sad")
-						src.master.remove_current_task()
+						src.rumpus_state = 0 // :(
 						return
 					if (src.protected)
 						if(!(src.protected in view(7,master)))
@@ -2790,7 +2943,6 @@
 								master.speak("...now where'd they go?")
 						return
 					else
-						src.mode = 0
 						src.arrest_attempts = 0
 						master.set_emotion("look")
 				if("snooze")
@@ -2807,7 +2959,7 @@
 					src.arrest_attempts = 0
 					src.cuffing = 0
 					master.speak("Initiating naptime protocol.")
-					src.mode = MODE_NAPTIME
+					src.primary_behavior = MODE_NAPTIME
 				if("hugged")
 					switch(master.emotion)
 						if(null)
@@ -2826,21 +2978,22 @@
 			if(!master || master.task != src || !master.on || master.stunned || master.idle || !istype(attacker))
 				return 1
 
-			if(attacker == src.protected && src.behavior_flags & ~BUDDY_HURT_ME)
+			if(attacker == src.protected && !(src.behavior_flags & BUDDY_HURT_ME))
 				src.behavior_flags |= BUDDY_HURT_ME
 				master.speak(pick("Check your fire!","Watch it!","Friendly fire will not be tolerated!"))
-				SPAWN_DBG(5 SECONDS)
-					src.behavior_flags &= ~BUDDY_HURT_ME // Maybe it was a mistake
+				SPAWN_DBG(30 SECONDS)
+					if(src?.behavior_flags & BUDDY_HURT_ME)
+						src.behavior_flags &= ~BUDDY_HURT_ME // We are willing to forgive a mistake
 				return
 
+			if (!(attacker.name in master.memory))
+				master.memory.Add(attacker.name, HURT_ME)
 			src.arrest_target = attacker
-			src.mode = MODE_ATTACK
 			src.oldtarget_name = attacker.name
 			master.set_emotion("angry")
 			src.arrest_target = attacker
 			if(attacker == src.protected)
 				src.protected = null
-			handle_arrest_function()
 
 		assess_perp(mob/living/carbon/human/perp as mob)
 
@@ -2862,7 +3015,7 @@
 				return 9
 
 			if(ckey(perp.name) in target_names) // We've been ordered to kill you, specifically
-				return 7
+				return 9
 
 			if(src.behavior_flags & CARES_ABOUT_CONTRABAND)
 
@@ -3021,18 +3174,20 @@
 				if (!isnull(patrol_stat))
 					if (patrol_stat)
 						behavior_flags |= PATROLS
+						master.speak("Patrol mode set.")
 					else
 						behavior_flags &= ~PATROLS
+						master.speak("Patrol mode unset.")
 
 			if (confList["lethal"] && (confList["acc_code"] == netpass_heads))
 				var/lethal_stat = text2num(confList["lethal"])
 				if (!isnull(lethal_stat))
-					if (lethal_stat && !src.lethal)
-						src.lethal = 1
+					if (lethal_stat && src.combat_flags & ~LETHAL)
+						src.combat_flags |= LETHAL
 						if (src.master)
 							master.speak("Notice: Lethal force authorized.")
-					else if (src.lethal)
-						src.lethal = 0
+					else if (src.combat_flags & LETHAL)
+						src.combat_flags &= ~LETHAL
 						if (src.master)
 							master.speak("Notice: Lethal force is no longer authorized.")
 
@@ -3043,6 +3198,7 @@
 						src.target_names = list(target_name)
 				else
 					src.protected_name = ckey(confList["name"])
+					master.speak("[target_name]...")
 
 			if (confList["command"])
 				switch(lowertext(confList["command"]))
@@ -3102,15 +3258,10 @@
 			src.last_found = world.time
 			src.cuffing = 0
 			src.master.frustration = 0
-			master.set_emotion()
-			if(single_use)
-				src.master.remove_current_task()
 			return
 
 		drop_hug_target()
 			src.hug_target = null
-			if(single_use)
-				src.master.remove_current_task()
 			return
 
 		find_patrol_target()
@@ -3152,7 +3303,7 @@
 
 
 		look_for_protected() //Search for a mob in view with the name we are programmed to guard.
-			if(src.protected) return //We have someone to protect!
+			if(src.protected) return // Already found em!
 			for (var/mob/living/C in view(7,master))
 				if (isdead(C)) //We were too late!
 					continue
@@ -3168,101 +3319,54 @@
 					if (C.client && C.client.IsByondMember())
 						behavior_flags |= BUDDY_SUX
 					SPAWN_DBG(0)
-						if(behavior_flags & BUDDY_SUX)
-							master.speak("Level 9F [pick("dork","nerd","weenie","doofus","loser","dingus","dorkus")] detected!")
-							master.visible_message("<b>[master]</b> points at [C.name]!")
+						if (C.name in master.memory)
+							if (master.memory[C.name] == WAS_GUARDED)
+								if(behavior_flags & BUDDY_SUX)
+									master.speak("Hey [pick("dork","nerd","weenie","doofus","loser","dingus","dorkus")]! You ain't ditching me that easily!")
+									master.visible_message("<b>[master]</b> points at [C.name]!")
+								else
+									master.speak(pick("Hey, wait up!","Please don't run, my little wheel nubs aren't as fast as yours!","Thank goodness you're okay! I turned around and you weren't there, and I feared the worst!","It's okay! You're safe now! I'm here!"))
+									master.visible_message("<b>[master]</b> points at [C.name]!")
+							else
+								if(behavior_flags & BUDDY_SUX)
+									master.speak("Level 9F [pick("dork","nerd","weenie","doofus","loser","dingus","dorkus")] detected!")
+									master.visible_message("<b>[master]</b> points at [C.name]!")
+								else
+									master.speak(pick("I am here to protect you.","I have been instructed to guard you.","You are now under guard.","Come with me if you want to live!"))
+									master.visible_message("<b>[master]</b> points at [C.name]!")
 						else
-							master.speak(pick("I am here to protect you.","I have been instructed to guard you.","You are now under guard.","Come with me if you want to live!"))
-							master.visible_message("<b>[master]</b> points at [C.name]!")
+							master.memory.Add(C.name, WAS_GUARDED)
 					break
-
-				if (!initial_seek_complete)
-					initial_seek_complete = 1
-					master.scratchpad["targetname"] = ckey(src.protected_name)
-					src.master.add_task(/datum/computer/file/guardbot_task/security/seek, 1, 0)
-
 			return
 
 		check_buddy()
-			//Out of sight, out of mind.
+			// Cant check on em if we can't see em
 			if(!(protected in view(7,master)))
 				return 0
-			//Has our buddy been attacked??
-			if(protected.lastattacker && (protected.lastattackertime + 40) >= world.time)
-				if(protected.lastattacker != protected)
+			//Has our buddy been attacked any time in the last... 10 minutes? fuck
+			if(protected.lastattacker && (protected.lastattackertime + 600) >= world.time)
+				if(protected.lastattacker != protected) // ...and the attacker isnt themself...
 					master.moving = 0
-					//qdel(master.mover)
 					if (master.mover)
 						master.mover.master = null
 						master.mover = null
-					src.arrest_target = protected.lastattacker
+					src.arrest_target = protected.lastattacker // Go beat their ass!
 					src.follow_attempts = 0
 					src.arrest_attempts = 0
 					return 1
 			return 0
 
-		handle_arrest_function()
-
-			var/datum/computer/file/guardbot_task/security/single_use/beatdown = new
-			beatdown.arrest_target = src.arrest_target
-			beatdown.mode = 1
-			beatdown.arrested_messages = src.arrested_messages
-			src.arrest_target = null
-			src.master.add_task(beatdown, 1, 0)
-
-			return
-
-		assess_threat_potential(mob/living/carbon/human/potentialThreat as mob)
-			var/threatcount = 0
-
-
-			var/obj/item/card/id/worn_id = potentialThreat.equipped()
-			if (!istype(worn_id))
-				worn_id = potentialThreat.wear_id
-
-			if(worn_id)
-				if(weapon_access in worn_id.access)
-					return 0
-
-			if(istype(potentialThreat.l_hand, /obj/item/gun) || istype(potentialThreat.l_hand, /obj/item/baton) || istype(potentialThreat.l_hand, /obj/item/sword))
-				threatcount += 4
-
-			if(istype(potentialThreat.r_hand, /obj/item/gun) || istype(potentialThreat.r_hand, /obj/item/baton) || istype(potentialThreat.r_hand, /obj/item/sword))
-				threatcount += 4
-
-			if (ishuman(potentialThreat))
-				if(istype(potentialThreat:belt, /obj/item/gun) || istype(potentialThreat:belt, /obj/item/baton) || istype(potentialThreat:belt, /obj/item/sword))
-					threatcount += 2
-
-				if(istype(potentialThreat:wear_suit, /obj/item/clothing/suit/wizrobe))
-					threatcount += 4
-
-				if(istype(potentialThreat.mutantrace, /datum/mutantrace/abomination))
-					return 5
-
-			return threatcount
-
-		look_for_threat()
-			for (var/mob/living/carbon/C in view(7,master)) //Let's find us a criminal
-				if ((C.stat) || (C.hasStatus("handcuffed")))
-					continue
-
-				var/threat = 0
-				if(ishuman(C))
-					threat = src.assess_threat_potential(C)
-
-				if(threat >= 4)
-					master.scratchpad["threat_level"] = threat
-					return C
-
-			return null
-
+	//The BuddyBrain, defines the Buddy's behavior based off of its list of tasks.
+	//Allows multiple tasks to operate at once if the tasks allow it!
+/datum/computer/file/guardbot_task/task_holder
+	name = "recharge"
+	task_id = "RECHARGE"
 
 	//Recharge task
 /datum/computer/file/guardbot_task/recharge
 	name = "recharge"
 	task_id = "RECHARGE"
-	mode = MODE_NAPTIME
+	primary_behavior = MODE_NAPTIME
 	behavior_flags = null
 
 /datum/computer/file/guardbot_task/recharge/dock_sync
@@ -3270,7 +3374,6 @@
 	task_id = "SYNC"
 	dock_return = 1
 	announced = 1
-	mode = MODE_NAPTIME
 
 	//Buddytime task -- Even buddies need to relax sometimes!
 /datum/computer/file/guardbot_task/buddy_time
@@ -3285,38 +3388,40 @@
 	name = "secure"
 	handle_beacons = 1
 	task_id = "SECURE"
-	mode = MODE_DEFAULT
+	primary_behavior = MODE_DEFAULT
 
 /datum/computer/file/guardbot_task/security/patrol
 	name = "patrol"
 	task_id = "PATROL"
 
+	New()
+		. = ..()
+		src.behavior_flags |= (PATROLS)
 
-/datum/computer/file/guardbot_task/security/crazy
+
+/datum/computer/file/guardbot_task/security/crazy // Just go kill everyone
 	name = "patr#(003~"
 	task_id = "ERR0xF00F"
-	lethal = 1
-	behavior_flags = (LETHAL | PANIC | PATROLS)
-
-/datum/computer/file/guardbot_task/security/single_use
-	behavior_flags = null
-	single_use = 1
-
-/datum/computer/file/guardbot_task/security/seek
-	name = "seek"
-	task_id = "SEEK"
+	priority = PRIORITY_HIGHEST // crime4life
+	combat_flags = (LETHAL | PANIC)
+	behavior_flags = (PATROLS)
 
 /datum/computer/file/guardbot_task/security/halloween //Go trick or treating!
 	name = "candy"
 	task_id = "CANDY"
-	behavior_flags = (IS_HALLOWEEN | CARES_ABOUT_PEOPLE | PATROLS | CARES_ABOUT_CONTRABAND)
+
+		New()
+		. = ..()
+		src.behavior_flags |= (PATROLS | IS_HALLOWEEN)
 
 /datum/computer/file/guardbot_task/security/purge //Arrest anyone who isn't a DWAINE superuser.
 	name = "purge"
 	task_id = "PURGE"
-	behavior_flags = (PURGING | PATROLS | CARES_ABOUT_CONTRABAND)
+	priority = PRIORITY_HIGHEST // crime4life
+	combat_flags = (LETHAL | PURGING)
+	behavior_flags = (PATROLS)
 
-/datum/computer/file/guardbot_task/security/area_guard
+/datum/computer/file/guardbot_task/security/area_guard // currently doesnt do anything
 	name = "areaguard"
 	task_id = "AREAG"
 
@@ -3324,19 +3429,27 @@
 /datum/computer/file/guardbot_task/bodyguard
 	name = "bodyguard"
 	task_id = "GUARD"
-	mode = MODE_GUARDBUDDY
+	primary_behavior = MODE_GUARDBUDDY
+
+	New()
+		. = ..()
+		src.behavior_flags |= (PATROLS)
 
 /datum/computer/file/guardbot_task/bodyguard/heckle
 	name = "heckle"
 	task_id = "HECKLE"
-	behavior_flags = (BUDDY_SUX | CARES_ABOUT_PEOPLE | PATROLS | CARES_ABOUT_CONTRABAND)
-	mode = MODE_GUARDBUDDY
+	primary_behavior = MODE_GUARDBUDDY
+
+	New()
+		. = ..()
+		src.behavior_flags |= (BUDDY_SUX)
 
 /datum/computer/file/guardbot_task/tourguide
 	name = "tourguide"
 	task_id = "TOUR"
 	handle_beacons = 1
-	behavior_flags = (CARES_ABOUT_PEOPLE)
+	primary_behavior = MODE_TOURBOT
+	behavior_flags = (CARES_ABOUT_PEOPLE) // Doesn't mind people with guns, but worries about the wounded
 
 
 	New()
@@ -3697,13 +3810,7 @@
 /datum/computer/file/guardbot_task/bedsheet_handler
 	name = "confusion"
 	task_id = "HUH"
-	mode = MODE_SHEETED
-
-/datum/computer/file/guardbot_task/threat_scan
-	name = "threatscan"
-	task_id = "SCAN"
-	mode = MODE_THREATS
-
+	primary_behavior = MODE_SHEETED
 
 /datum/action/bar/icon/buddy_cuff //This is used when you try to handcuff someone.
 	duration = 70
