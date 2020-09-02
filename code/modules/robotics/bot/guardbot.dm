@@ -174,14 +174,27 @@
 //The Robot.
 
 //Memory Defs
-#define ARRESTED_THEM_BEFORE "arr_b4_succ"
-#define GOT_AWAY "got_away"
-#define HURT_ME "hurt_me"
-#define EMAGGED_ME "emagd_me"
-#define EMAGGED_ME_GOLD "gold_emagd_me"
-#define WAS_GUARDED "i_guarded_them"
-#define FOUND_HURT "found_them_hurt"
-#define FOUND_DEAD "found_them_dead"
+//Kinds of memories buddies can make
+#define MET_BEFORE 1 // list of people who are in any list, so checking for strangers only checks one list
+#define ARRESTED_THEM_BEFORE 2 // Pissed me off and I got em
+#define GOT_AWAY 3 // Pissed me off, but they got away
+#define HURT_ME 4 // They hurt me!
+#define EMAGGED_ME 5 // They showed me a really neat rectangle
+#define EMAGGED_ME_GOLD 6 // They showed me a REALLY neat rectangle
+#define WAS_GUARDED 7 // I protected them with my life
+#define FOUND_HURT 8 // I saw them really banged up
+#define FOUND_DEAD 9 // I saw them dead
+#define NUM_OF_MEMORIES 9 // Number of lists to make
+//Things we can do with the memories
+#define JUST_CHECK 1 // Just checking to see if we know them at all
+#define CHECK_AND_REMEMBER 2 // Check if we know them for a specific thing, then remember them if we don't
+#define CHECK_AND_FORGET 3 // Check if we know them for a specific thing, then forget them if we do
+#define WIPE_MEMORY 4 // Forget everything
+//Memory management outputs
+#define NOT_IN_MEMORY 0 // We dont know them
+#define IS_IN_THIS_MEMORY 1 // We know them, and for the thing we're remembering
+#define IS_IN_OTHER_MEMORY 2 // We know them, but for something else
+#define IS_IN_MEMORY 2 // We know them in general
 
 /obj/machinery/bot/guardbot
 	name = "Guardbuddy"
@@ -485,6 +498,7 @@
 		if(!setup_unique_name)
 			src.name += "-[rand(100,999)]"
 
+		src.master_task.manage_memory()
 
 		SPAWN_DBG(0.5 SECONDS)
 			if (src.on)
@@ -2039,7 +2053,14 @@
 
 		src.master_task.buddy_routine()
 
+		src.master_task.task_act() // some bots still use this
+
 		return
+
+	speak(var/message)
+		if (src.master_task.primary_behavior & MODE_DRAGON)
+			message = scoobify(message) // rawr
+		..()
 
 //Robot tools.  Flash boards, batons, etc
 /obj/item/device/guardbot_tool
@@ -2323,7 +2344,10 @@
 		tool_id = "AMMOFAB - if you see this, please tell Superlagg their thing broke =0"
 
 //Task Datums
-
+// Skit types - Special scripts the bot can follow for whatever reason
+#define SKIT_NONE 0 // No active do-special-things
+#define SKIT_FOUND_A_DEADGUY 1 // Pretend to care about dead people
+#define SKIT_BREAKTIME 1 // Pretend to care about dead people
 
 /datum/computer/file/guardbot_task //Computer datum so it can be transmitted over radio
 	name = "idle"
@@ -2355,17 +2379,17 @@
 	var/priority = PRIORITY_NORMAL
 
 	var/list/things_to_care_about = null	// Look for these things
-	var/has_thing = 0	// Has a thing we care about
 	var/place_to_put_things = null	// and put them here-ish
-
-	var/rumpus_emotion = "joy" //Emotion to express during buddytime.
-	var/rumpus_location_tag = "buddytime" //Tag of the bar beacon
-	var/rumpus_state = 0
 
 	var/announced = 0
 
-	var/script_stage_dead = 0
-	var/script_stage_hurt = 0
+	var/skit_max_tries = 5 // how many times are we allowed to do a thing in a skit?
+	var/skit_tries = 0 // how many times have we tried doing the thing?
+	var/skit_type = SKIT_NONE // What script are we following?
+	var/skit_stage = 0 // Where are we in the script?
+	var/mob/living/carbon/skit_participant = null // Who are we pestering with the script?
+	var/skit_location = null // Where should we be doing this?
+	var/skit_emotion = "happy" // What's our motivation?
 
 	// pathing vars
 	var/new_destination		// pending new destination (waiting for beacon response)
@@ -2392,15 +2416,13 @@
 	var/list/arrested_messages = list()
 	var/single_use = 0
 
-	var/mob/living/carbon/protected = null
+	var/protected_name = null //Who are we seeking?
+	var/mob/living/carbon/protected = null // Person we're protecting right now
 	var/follow_attempts = 0
 
 	var/desired_emotion = "look"
 
-	var/protected_name = null //Who are we seeking?
-
-	var/initial_seek_complete = 0
-
+	//Tourguide shit
 	var/wait_for_guests = 0		//Wait for people to be around before giving tour dialog?
 
 	var/state = STATE_FINDING_BEACON
@@ -2423,6 +2445,69 @@
 		..()
 
 	proc
+		send_alert(var/mailgroupNum=0)
+			if(!src.master || !isnum(mailgroupNum))
+				return
+
+			var/mailgroup
+			switch (round(mailgroupNum))
+				if (-INFINITY to 1)
+					mailgroup = MGD_MEDBAY
+				if (2)
+					mailgroup = "engineer"
+				if (3 to INFINITY)
+					mailgroup = MGD_SECURITY
+
+			var/datum/signal/signal = get_free_signal()
+			signal.source = src.master
+			signal.transmission_method = TRANSMISSION_RADIO
+			signal.data["address_1"] = "00000000"
+			signal.data["command"] = "text_message"
+			signal.data["sender_name"] = src.master
+			signal.data["group"] = mailgroup
+			var/area/an_area = get_area(src.master)
+
+			signal.data["message"] = "<b><span class='alert'>***CRISIS ALERT*** Location: [an_area ? an_area.name : "nowhere"]!</span></b> sent by [master.name] <3"
+
+			src.post_signal(signal)
+
+		manage_memory(var/mob/living/carbon/M, var/which_memory, var/action = JUST_CHECK)
+			if (!src.master.memory) // Our memory is blank, setup the mind table
+				src.master.memory = list(NUM_OF_MEMORIES)
+
+			//Actions: JUST_CHECK, CHECK_AND_REMEMBER, CHECK_AND_FORGET, WIPE_MEMORY
+			//Outputs: NOT_IN_MEMORY, IS_IN_THIS_MEMORY, IS_IN_OTHER_MEMORY, IS_IN_MEMORY
+			if(M) // We want to know if we know about a specific person
+				(M.name in src.master.memory[MET_BEFORE]) ? . = IS_IN_MEMORY : . = NOT_IN_MEMORY // Do we know them?
+				if (. != IS_IN_MEMORY) // No?
+					src.master.memory[MET_BEFORE].Add(M.name) // Well now we have!
+
+				if (!which_memory || which_memory > NUM_OF_MEMORIES)
+					return // manage_memory(M) makes it just check if they're there.
+				else // We want to know if we know them for a thing
+					if (M.name in src.master.memory[which_memory])
+						. = IS_IN_THIS_MEMORY // Yay we know them for this!
+					else
+						. = IS_IN_OTHER_MEMORY // We know them, but not for this. Yet.
+
+				switch(action)
+					if (CHECK_AND_REMEMBER)
+						if (. == IS_IN_OTHER_MEMORY)
+							src.master.memory[which_memory].Add(M.name)
+
+					if (CHECK_AND_FORGET)
+						if (. == IS_IN_THIS_MEMORY)
+							src.master.memory[which_memory].Remove(M.name)
+
+					if (JUST_CHECK)
+						return
+
+				return
+
+			else
+				return NOT_IN_MEMORY // vOv
+
+
 		do_hugs()
 			if ((istype(hug_target) && isdead(hug_target)) || (istype(hug_target, /obj/critter) && hug_target.health <= 0) || !src.hug_target)
 				hug_target = null
@@ -2482,22 +2567,101 @@
 							do_hugs()
 			return CONTINUE_ROUTINE
 
-		someone_died(var/mob/living/carbon/human/H, var/stage = 0)
+		skit_manager(var/reset)
+			if(reset)
+				src.skit_location = null
+				src.skit_participant = null
+				src.skit_type = SKIT_NONE
+				src.skit_stage = 0
+
 			if(!master || !master.on || master.task != src || master.stunned)
 				return BREAK_ROUTINE_NORMAL
 
-			if(isdead(H))
-				if (!src.script_stage_dead)
+			if(skit_type == SKIT_NONE)
+				return CONTINUE_ROUTINE
+
+			switch(src.skit_type)
+				if(SKIT_BREAKTIME)
+					return break_time()
+				if(SKIT_FOUND_A_DEADGUY)
+					return someone_died()
+
+		someone_died(var/mob/living/carbon/human/H)
+			if(!master || !master.on || master.task != src || master.stunned) // whoops, wrong script!
+				return BREAK_ROUTINE_NORMAL
+
+			if (src.skit_tries > src.skit_max_tries)
+				if (manage_memory(M, FOUND_DEAD) == IS_IN_THIS_MEMORY)
+					master.speak("Well... I sure hope [src.skit_participant]'ll be okay.")
+					skit_manager(1)
+
+			if(H && isdead(H) && !src.skit_stage) // precheck initiate!
+				if (manage_memory(M, FOUND_DEAD, CHECK_AND_REMEMBER) != IS_IN_THIS_MEMORY)  // did we already do this with them?
 					master.speak("Uh oh...")
 					if (master.mover)
 						master.mover.master = null
 						master.mover = null
 					master.navigate_to(H,ARREST_DELAY, 0, 0) // goto: them
-					src.script_stage_dead = 1
+					src.skit_stage = 1
+					src.skit_type = SKIT_FOUND_A_DEADGUY
+					return BREAK_ROUTINE_NORMAL
+				else return CONTINUE_ROUTINE
 
-		someone_hurt(var/mob/living/carbon/human/H)
+			else
+				switch(skit_stage)
+					if (1)
+						src.skit_max_tries = 3
+						if (master.loc != skit_participant.loc)
+							if (src.skit_participant in view(7,master))
+								if (master.mover)
+									master.mover.master = null
+									master.mover = null
+								master.navigate_to(src.skit_participant,ARREST_DELAY, 0, 0) // goto: them, but again	\
+								return BREAK_ROUTINE_NORMAL
+							else
+								skit_manager(1) // where'd they go?
+								return BREAK_ROUTINE_NORMAL
+						else
+							if(src.skit_tries++ < src.skit_max_tries)
+								for (var/mob/living/carbon/C in view(7,master)) // is anyone around??
+									if (ishuman(C)) // maybe?
+										var/greet = pick("Uh, excuse me!", "Hi, uhm...", "Hey!")
+										var/salutation = pick("Sir or madam!", "Mister or missus!", "Ma'am or master!", "")
+										var/whatwrong = pick("This person isn't moving!", "Is this person supposed to be in this many pieces?")
+										var/theyhurt = pick("I think they might be hurt!", "Is this what people call \"dead\"?", "Aaaaa!")
+										var/call2acton = pick("Go get a medbay!", "Drag this person to doctor!", "Help them please!")
+										master.speak("[greet] [salutation] [whatwrong] [theyhurt] [call2action]")
+										master.visible_message("<b>[master]</b> points at [C.name]!")
+										src.skit_stage = 2
+										src.skit_tries = 0
+										return BREAK_ROUTINE_NORMAL
+							else
+								master.speak("..where <i>is</i> everybody?")
+								src.skit_stage = 2
+								src.skit_tries = 0
+							return BREAK_ROUTINE_NORMAL
+					if (2)
+						src.skit_max_tries = 3
+						if (master.loc != skit_participant.loc)
+							if (src.skit_participant in view(7,master))
+								if (master.mover)
+									master.mover.master = null
+									master.mover = null
+								master.navigate_to(src.skit_participant,ARREST_DELAY, 0, 0) // goto: them, but again	\
+								return BREAK_ROUTINE_NORMAL
+							else
+								skit_manager(1) // where'd they go?
+								return BREAK_ROUTINE_NORMAL
+						else
+							send_alert(MGD_MEDBAY)
+							master.speak("Ah there we go. Help is on the way, [src.skit_participant]!")
+							skit_manager(1) // all done!
+							return BREAK_ROUTINE_NORMAL
+
+
+		/* someone_hurt(var/mob/living/carbon/human/H)
 			if(!master || !master.on || master.task != src || master.stunned)
-				return BREAK_ROUTINE_NORMAL
+				return BREAK_ROUTINE_NORMAL */
 
 
 		buddy_routine() // generic buddy loop; kill, fuck off, gawk, or wander
@@ -2518,17 +2682,17 @@
 					master.process()
 				return	// maybe
 
-			break_routine = primary_behavior()	// Thing 2 do?
+			break_routine = skit_manager() // Are we doing anything?
 			if (break_routine)
 				if (break_routine == BREAK_ROUTINE_URGENT)
 					master.process()
 				return	// maybe
 
-			break_routine = break_time() // is it breaktime yet?
+			break_routine = primary_behavior()	// Thing 2 do?
 			if (break_routine)
 				if (break_routine == BREAK_ROUTINE_URGENT)
 					master.process()
-				return	// yay it is probably
+				return	// maybe
 
 			break_routine = check_surroundings()	// look 4 things
 			if (break_routine)
@@ -2622,12 +2786,18 @@
 			if(!master || !master.on || master.task != src || master.stunned)
 				return 0
 
-			switch(rumpus_state)
+			src.skit_emotion = "joy"
+			src.skit_location = "buddytime"
+
+			if(skit_type != SKIT_BREAKTIME) // whoops, wrong script!
+				return BREAK_ROUTINE_NORMAL
+
+			switch(skit_stage)
 				if (0)
 					return CONTINUE_ROUTINE // back2work
 				if (MODE_BREAKTIME_START)
 					master.speak("Break time. Rumpus protocol initiated.")
-					src.rumpus_state = MODE_BREAKTIME_GOTO_BAR
+					src.skit_stage = MODE_BREAKTIME_GOTO_BAR
 					return BREAK_ROUTINE_URGENT // Breaks are serious business!
 
 				if (MODE_BREAKTIME_GOTO_BAR)	//Seeking the bar.
@@ -2637,12 +2807,13 @@
 							src.master.speak("Error: Bar not found. Break canceled.")
 							src.master.set_emotion("sad")
 							src.master.remove_current_task()
-							src.rumpus_state = 0
+							src.skit_stage = 0
+							src.skit_type = SKIT_NONE
 					return BREAK_ROUTINE_NORMAL
 
 					if(istype(src.bar_beacon_turf, /turf/simulated))
 						if (get_area(src.master) == get_area(bar_beacon_turf)) // yay we're here!
-							src.rumpus_state = MODE_BREAKTIME_FIND_SEAT
+							src.skit_stage = MODE_BREAKTIME_FIND_SEAT
 							master.moving = 0
 
 						if (!master.moving)
@@ -2672,12 +2843,13 @@
 							master.speak("Error: No seating available. Break canceled.")
 							src.master.set_emotion("sad")
 							src.master.remove_current_task()
-							src.rumpus_state = 0
+							src.skit_stage = 0
+							src.skit_type = SKIT_NONE
 
 					else
 						if(src.target.loc == src.master.loc)
-							src.master.set_emotion(rumpus_emotion)
-							src.rumpus_state = MODE_BREAKTIME_FUCKOFF // woo partytime
+							src.master.set_emotion(skit_emotion)
+							src.skit_stage = MODE_BREAKTIME_FUCKOFF // woo partytime
 							src.our_seat = src.target
 							src.party_idle_counter = rand(4,14)
 							if (!its_beepsky)
@@ -2690,27 +2862,30 @@
 				if (MODE_BREAKTIME_FUCKOFF) //IT IS RUMPUS TIME
 					if (its_beepsky && (get_area(master) == get_area(its_beepsky)))
 						beepsky_check_delay = 8
-						src.rumpus_state = MODE_BREAKTIME_BEEPSKY_LEFT
+						src.skit_stage = MODE_BREAKTIME_BEEPSKY_LEFT
 						src.master.set_emotion("ugh")
 						if (its_beepsky.emagged == 2)
 							src.master.speak(pick("Oh, look at the time.", "I need to go.  I have a...dentist appointment.  Yes", "Oh, is the break over already? I better be off.", "I'd best be leaving."))
 							src.master.remove_current_task()
-							src.rumpus_state = 0
+							src.skit_stage = 0
+							src.skit_type = SKIT_NONE
 							return BREAK_ROUTINE_URGENT
+						return BREAK_ROUTINE_NORMAL
 
 					if (party_counter-- <= 0)
 						src.master.set_emotion()
 						src.master.speak("Break complete.")
 						src.master.remove_current_task()
-						src.rumpus_state = 0
+						src.skit_stage = 0
+						src.skit_type = SKIT_NONE
 						return BREAK_ROUTINE_NORMAL
 
 					if (our_seat && our_seat.loc != src.master.loc)
 						our_seat = null
-						src.rumpus_state = MODE_BREAKTIME_FIND_SEAT
+						src.skit_stage = MODE_BREAKTIME_FIND_SEAT
 
-					if (src.master.emotion != rumpus_emotion)
-						src.master.set_emotion(rumpus_emotion)
+					if (src.master.emotion != skit_emotion)
+						src.master.set_emotion(skit_emotion)
 
 					if (party_idle_counter-- <= 0)
 						party_idle_counter = rand(4,14)
@@ -2732,7 +2907,7 @@
 					if (!its_beepsky || get_area(master) != get_area(its_beepsky))
 						src.master.speak(pick("Took long enough.", "Thought he'd never leave.", "Thought he'd never leave.  Too bad it smells like him in here now."))
 
-						src.master.set_emotion(rumpus_emotion)
+						src.master.set_emotion(skit_emotion)
 						return
 
 					beepsky_check_delay = 8
@@ -2742,20 +2917,28 @@
 		check_surroundings() // generic look-around-you check
 			if(!master || !master.on || master.task != src || master.stunned)
 				return 1
+			var/break_routine
+
 			if (src.behavior_flags & CARES_ABOUT_CONTRABAND)
-				. = look_for_perp()	// Anyone look interesting?
-				if (.)
-					return
+				break_routine = look_for_perp()	// Anyone look valid?
+				if (break_routine)
+					if (break_routine == BREAK_ROUTINE_URGENT)
+						master.process()
+					return	// frick em up
 
 			if (src.behavior_flags & CARES_ABOUT_PEOPLE)
-				. = look_for_people()
-				if (.)
-					return
+				break_routine = look_for_people()	// Anyone look interesting?
+				if (break_routine)
+					if (break_routine == BREAK_ROUTINE_URGENT)
+						master.process()
+					return	// frick em up
 
 			if (src.behavior_flags & CARES_ABOUT_STUFF)
-				. = look_for_things()
-				if (.)
-					return
+				break_routine = look_for_things()	// Anything look stealable?
+				if (break_routine)
+					if (break_routine == BREAK_ROUTINE_URGENT)
+						master.process()
+					return	// frick em up
 
 		look_for_perp()
 			if(src.arrest_target) return BREAK_ROUTINE_NORMAL //Already chasing somebody
@@ -2785,51 +2968,40 @@
 		look_for_people()
 			var/break_routine
 
-			if(src.script_stage_dead && src.dead_target)
-				break_routine = someone_died() // did they died??
-				if (break_routine)	// oh no they did!
-					if (break_routine == BREAK_ROUTINE_URGENT)
-						master.process()
-					return
-
-			if(src.script_stage_hurt && src.hurt_target)
-				break_routine = someone_hurt() // did they hurt??
-				if (break_routine)	// oh no they did!
-					if (break_routine == BREAK_ROUTINE_URGENT)
-						master.process()
-					return
-
 			for (var/mob/living/carbon/C in view(7,master)) // let's see who's around
 				if (ishuman(C))
 					var/mob/living/carbon/human/H = C
 
-						if(!(H.name in master.memory))
-						break_routine = someone_died(H) // did they died??
-						if (break_routine)	// oh no they did!
-							if (break_routine == BREAK_ROUTINE_URGENT)
-								master.process()
-							return
+					break_routine = someone_died(H) // did they died??
+					if (break_routine)	// oh no they did!
+						if (break_routine == BREAK_ROUTINE_URGENT)
+							master.process()
+						return
 
-						break_routine = someone_hurt(H) // did they hurt??
-						if (break_routine)	// oh no they did!
-							if (break_routine == BREAK_ROUTINE_URGENT)
-								master.process()
-							return
-
-						break_routine = hang_out_with_them(H) // Want to chill?
-						if (break_routine)	// let's hang out!
-							if (break_routine == BREAK_ROUTINE_URGENT)
-								master.process()
-							return
-
-						break_routine = do_cute_shit(H) // maybe do some cute?
-						if (break_routine)	// oh no we did!
-							if (break_routine == BREAK_ROUTINE_URGENT)
-								master.process()
-							return
+					break_routine = do_cute_shit(H) // maybe do some cute?
+					if (break_routine)	// oh no we did!
+						if (break_routine == BREAK_ROUTINE_URGENT)
+							master.process()
+						return
 
 		look_for_things()
-			// put tstuff here
+			var/break_routine
+
+			for (var/obj/item in view(7,master)) // let's see what's around
+				if (ishuman(C))
+					var/mob/living/carbon/human/H = C
+
+					break_routine = someone_died(H) // did they died??
+					if (break_routine)	// oh no they did!
+						if (break_routine == BREAK_ROUTINE_URGENT)
+							master.process()
+						return
+
+					break_routine = do_cute_shit(H) // maybe do some cute?
+					if (break_routine)	// oh no we did!
+						if (break_routine == BREAK_ROUTINE_URGENT)
+							master.process()
+						return
 		guard_buddy()
 
 			if(master.emotion != desired_emotion)
@@ -2843,7 +3015,7 @@
 					master.process()
 				return	// maybe
 
-			if(!protected) //Priority one: Assess status of buddy.
+			if(!protected) //Priority one: Where's my buddy?
 				src.desired_emotion = SEARCH_EMOTION
 				src.look_for_protected() // They're not here. Go find em!
 				return
@@ -2917,6 +3089,9 @@
 					src.master.remove_current_task()
 					return
 
+		task_act() // eh
+			return
+
 		task_input(var/input)
 			if(!master || !input || !master.on) return 1
 
@@ -2929,10 +3104,10 @@
 						if(src.arrest_attempts >= 2)
 							drop_arrest_target()
 						return
-					if(src.rumpus_state)
+					if(src.skit_stage)
 						src.master.speak("Error: Destination unreachable. Break canceled.")
 						src.master.set_emotion("sad")
-						src.rumpus_state = 0 // :(
+						src.skit_stage = 0 // :(
 						return
 					if (src.protected)
 						if(!(src.protected in view(7,master)))
@@ -3116,7 +3291,7 @@
 			if(!awaiting_beacon || !recv || !valid || nav_delay)
 				return
 
-			if(recv == rumpus_location_tag)	// if the recvd beacon location matches the set destination
+			if(recv == skit_location)	// if the recvd beacon location matches the set destination
 										// then we will navigate there
 				bar_beacon_turf = get_turf(signal.source)
 				awaiting_beacon = 0
@@ -3319,23 +3494,20 @@
 					if (C.client && C.client.IsByondMember())
 						behavior_flags |= BUDDY_SUX
 					SPAWN_DBG(0)
-						if (C.name in master.memory)
-							if (master.memory[C.name] == WAS_GUARDED)
-								if(behavior_flags & BUDDY_SUX)
-									master.speak("Hey [pick("dork","nerd","weenie","doofus","loser","dingus","dorkus")]! You ain't ditching me that easily!")
-									master.visible_message("<b>[master]</b> points at [C.name]!")
-								else
-									master.speak(pick("Hey, wait up!","Please don't run, my little wheel nubs aren't as fast as yours!","Thank goodness you're okay! I turned around and you weren't there, and I feared the worst!","It's okay! You're safe now! I'm here!"))
-									master.visible_message("<b>[master]</b> points at [C.name]!")
+						if (manage_memory(C, WAS_GUARDED, CHECK_AND_REMEMBER) == IS_IN_THIS_MEMORY) // Didn't we already do this?
+							if(behavior_flags & BUDDY_SUX)
+								master.speak("Hey [pick("dork","nerd","weenie","doofus","loser","dingus","dorkus")]! You ain't ditching me that easily!")
+								master.visible_message("<b>[master]</b> points at [C.name]!")
 							else
-								if(behavior_flags & BUDDY_SUX)
-									master.speak("Level 9F [pick("dork","nerd","weenie","doofus","loser","dingus","dorkus")] detected!")
-									master.visible_message("<b>[master]</b> points at [C.name]!")
-								else
-									master.speak(pick("I am here to protect you.","I have been instructed to guard you.","You are now under guard.","Come with me if you want to live!"))
-									master.visible_message("<b>[master]</b> points at [C.name]!")
-						else
-							master.memory.Add(C.name, WAS_GUARDED)
+								master.speak(pick("Hey, wait up!","Please don't run, my little wheel nubs aren't as fast as yours!","Thank goodness you're okay! I turned around and you weren't there, and I feared the worst!","It's okay! You're safe now! I'm here!"))
+								master.visible_message("<b>[master]</b> points at [C.name]!")
+						else // No? Introduce ourself!
+							if(behavior_flags & BUDDY_SUX)
+								master.speak("Level 9F [pick("dork","nerd","weenie","doofus","loser","dingus","dorkus")] detected!")
+								master.visible_message("<b>[master]</b> points at [C.name]!")
+							else
+								master.speak(pick("I am here to protect you.","I have been instructed to guard you.","You are now under guard.","Come with me if you want to live!"))
+								master.visible_message("<b>[master]</b> points at [C.name]!")
 					break
 			return
 
@@ -3362,6 +3534,13 @@
 	name = "recharge"
 	task_id = "RECHARGE"
 
+/datum/computer/file/guardbot_task/dragon
+	name = "dragon"
+	task_id = "DRAGON"
+	primary_behavior = MODE_DRAGON
+	behavior_flags = (PATROLS | CARES_ABOUT_STUFF)
+	combat_flags = (LETHAL)
+
 	//Recharge task
 /datum/computer/file/guardbot_task/recharge
 	name = "recharge"
@@ -3380,8 +3559,11 @@
 	name = "rumpus"
 	handle_beacons = 1
 	task_id = "RUMPUS"
-	rumpus_state = MODE_BREAKTIME_START
 	behavior_flags = (CARES_ABOUT_PEOPLE)
+
+	New()
+		. = ..()
+		src.skit_type = SKIT_BREAKTIME
 
 	//Security/Patrol task -- Essentially secbot emulation.
 /datum/computer/file/guardbot_task/security
@@ -3410,7 +3592,7 @@
 	name = "candy"
 	task_id = "CANDY"
 
-		New()
+	New()
 		. = ..()
 		src.behavior_flags |= (PATROLS | IS_HALLOWEEN)
 
