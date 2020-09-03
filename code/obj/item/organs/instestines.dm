@@ -69,7 +69,7 @@
 	name = "lizard intestines"
 	desc = " wadded up length of fleshy tubing. As disgusting as it is colorful."
 	icon_state = "intestines"
-	robotic = 1
+	robotic = 0
 	edible = 0
 	mats = 6
 	var/gut_color = "#FFFFFF"
@@ -124,12 +124,13 @@
 	on_transplant(mob/M)
 		. = ..()
 		if(!broken)
-			APPLY_MOB_PROPERTY(M, PROP_TEMP_DIGESTION, src)
+			H.AddComponent(/datum/component/consume/organpoints, /datum/abilityHolder/lizard)
 		src.squozen = 0
 
 	on_removal()
 		. = ..()
-		REMOVE_MOB_PROPERTY(src.donor, PROP_TEMP_DIGESTION, src)
+		var/datum/component/C = src.donor.GetComponent(/datum/component/consume/organpoints)
+		C?.RemoveComponent(/datum/component/consume/organpoints)
 		src.squozen = 0
 
 /obj/item/organ/intestines/werewolf

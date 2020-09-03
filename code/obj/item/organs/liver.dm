@@ -118,8 +118,8 @@
 	on_transplant(mob/M)
 		. = ..()
 		if(!broken)
-			APPLY_MOB_PROPERTY(M, PROP_TEMP_CHEM_EFFECTS, src)
+			APPLY_MOB_PROPERTY(M, PROP_TEMP_METABOLIC_EFFECTS, src)
 
 	on_removal()
 		. = ..()
-		REMOVE_MOB_PROPERTY(src.donor, PROP_TEMP_CHEM_EFFECTS, src)
+		REMOVE_MOB_PROPERTY(src.donor, PROP_TEMP_METABOLIC_EFFECTS, src)

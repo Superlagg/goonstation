@@ -155,27 +155,3 @@
 		return special_desc
 	else
 		return null // give the standard description
-
-/obj/item/organ/heart/lizard
-	name = "cold blooded heart"
-	desc = "A cold blooded heart, relying on ambient temperature to beat properly."
-	item_state = "plant"
-	made_from = "flesh"
-	transplant_XP = 6
-	var/liver_color = "#FFFFFF"
-
-	New()
-		. = ..()
-		if(donor?.bioHolder.mobAppearance.customization_first_color)
-			src.liver_color = donor.bioHolder.mobAppearance.customization_first_color
-		else
-			src.liver_color = rgb(rand(50,190), rand(50,190), rand(50,190))
-
-	on_transplant(mob/M)
-		. = ..()
-		if(!broken)
-			APPLY_MOB_PROPERTY(M, PROP_TEMP_CRIT, src)
-
-	on_removal()
-		. = ..()
-		REMOVE_MOB_PROPERTY(src.donor, PROP_TEMP_CRIT, src)

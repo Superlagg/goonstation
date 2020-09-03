@@ -182,7 +182,7 @@ datum
 			return 1 // returns 1 to spawn fluid. Checked in 'reaction()' proc of Chemistry-Holder.dm
 
 
-		proc/how_many_depletions(var/mob/M)
+		proc/how_many_depletions(var/mob/M, var/temp_multiplier = 1)
 			var/deplRate = depletion_rate
 			if(!deplRate)
 				return
@@ -196,13 +196,15 @@ datum
 					if (H.organHolder.get_working_kidney_amt() == 0)	//same with kidneys
 						deplRate /= 2
 
+			deplRate *= temp_multiplier
+
 			.= src.volume / deplRate
 
 			if (abs(volume - deplRate) < 0.001) //magic number oooo (prevent bug where floating point values linger in body)
 				. += 0.001
 
 		//mult is used to handle realtime metabolizations over byond time
-		proc/on_mob_life(var/mob/M, var/mult = 1)
+		proc/on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 			if (!M || !M.reagents)
 				return
 			if (!holder)
@@ -227,7 +229,7 @@ datum
 						H.sims.affectMotive("Bladder", bladder_value)
 					if (src.energy_value)
 						H.sims.affectMotive("Energy", energy_value)
-			deplRate = deplRate * mult
+			deplRate = deplRate * mult * temp_multiplier
 			if (addiction_prob)
 				src.handle_addiction(M, deplRate)
 

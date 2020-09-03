@@ -2,8 +2,6 @@
 /datum/lifeprocess/critical //for mobs that use crit (humans only right now)
 	process(var/datum/gas_mixture/environment)
 		var/mult = get_multiplier()
-		if(owner && HAS_MOB_PROPERTY(owner, PROP_TEMP_CRIT))
-			mult *= get_temperature_mult()
 		//health_update_queue |= src //#843 uncomment this if things go funky maybe
 		var/death_health = owner.health + (owner.get_oxygen_deprivation() * 0.5) - (owner.get_burn_damage() * 0.67) - (owner.get_brute_damage() * 0.67) //lower weight of oxy, increase weight of brute/burn here
 		// I don't think the revenant needs any of this crap - Marq
