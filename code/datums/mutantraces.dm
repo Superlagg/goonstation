@@ -38,6 +38,8 @@
 	var/hand_offset = 0
 	var/body_offset = 0
 
+	var/list/mutant_organs = list() // Format: "entry_in_organlist", /obj/item/organ/path
+
 	var/r_limb_arm_type_mutantrace = null // Should we get custom arms? Dispose() replaces them with normal human arms.
 	var/l_limb_arm_type_mutantrace = null
 	var/r_limb_leg_type_mutantrace = null
@@ -103,6 +105,7 @@
 			src.mob = M
 			var/list/obj/item/clothing/restricted = list(mob.w_uniform, mob.shoes, mob.wear_suit)
 			AppearanceSetter(M, "set")
+			organ_mutator(M, "set")
 			for(var/obj/item/clothing/W in restricted)
 				if (istype(W,/obj/item/clothing))
 					if(W.compatible_species.Find(src.name) || (src.human_compatible && W.compatible_species.Find("human")))
@@ -241,6 +244,7 @@
 			if (ishuman(mob))
 				var/mob/living/carbon/human/H = mob
 				AppearanceSetter(H, "reset")
+				organ_mutator(H, "reset")
 				H.image_eyes.pixel_y = initial(H.image_eyes.pixel_y)
 				H.image_cust_one.pixel_y = initial(H.image_cust_one.pixel_y)
 				H.image_cust_two.pixel_y = initial(H.image_cust_two.pixel_y)
@@ -337,6 +341,39 @@
 				detail_2 = null
 				detail_3 = null
 				detail_over_suit = null
+
+	proc/organ_mutator(var/mob/living/carbon/human/O, var/mode as text)
+		if(!ishuman(O) || !(O?.organHolder))
+			return // hard to mess with someone's organs if they can't have any
+
+		var/datum/organHolder/OHM = O.organHolder
+
+		switch(mode)
+			if("set")
+				if(!src.mutant_organs.len)
+					return // All done!
+				else
+					for(var/mutorgan in src.mutant_organs)
+						var/obj/item/organ/org = OHM.get_organ(src.mutant_organs[mutorgan])
+						if (!org || org?.robotic)// No free organs, trade-ins only, keep ur robotic stuff
+							continue
+						else
+							OHM.receive_organ(mutorgan, src.mutant_organs[mutorgan], 0, 1)
+				return
+			if("reset")
+				if(!src.mutant_organs.len)
+					return // All done!
+				else
+					for(var/mutorgan in src.mutant_organs)
+						var/obj/item/organ/org = OHM.get_organ(src.mutant_organs[mutorgan])
+						if (!org || org?.robotic)// No free organs, trade-ins only, keep ur robotic stuff
+							continue
+						else
+							OHM.receive_organ(mutorgan, OHM.organ_type_list[mutorgan], 0, 1)
+				return
+
+
+
 
 /datum/mutantrace/blob // podrick's july assjam submission, it's pretty cute
 	name = "blob"
@@ -482,13 +519,17 @@
 
 /datum/mutantrace/lizard
 	name = "lizard"
-	// icon_state = "lizard"
 	icon_state = "lizard"
 	icon_override_static = 1
 	allow_fat = 1
 	override_attack = 0
 	voice_override = "lizard"
 	mutant_color_flags = (BODY_DETAIL_1 | BODY_DETAIL_2 | BODY_DETAIL_3 | HAS_HAIR_COLORED_DETAILS | BODY_DETAIL_OVERSUIT_1 | BODY_DETAIL_OVERSUIT_IS_COLORFUL | FIX_COLORS)
+	mutant_organs = list("left_kidney" = /obj/item/organ/kidney/lizard/left,\
+											"right_kidney" = /obj/item/organ/kidney/lizard/right,\
+											"liver" = /obj/item/organ/liver/lizard,\
+											"heart" = /obj/item/organ/heart/lizard,\
+											"intestines" = /obj/item/organ/intestines/lizard)
 
 	New(var/mob/living/carbon/human/H)
 		..()
@@ -842,12 +883,12 @@
 	l_limb_arm_type_mutantrace = /obj/item/parts/human_parts/arm/left/werewolf
 	ignore_missing_limbs = 0
 	var/old_client_color = null
+	mutant_organs = list("intestines", /obj/item/organ/intestines/werewolf)
 
 
 	New()
 		..()
 		if (mob)
-			mob.AddComponent(/datum/component/consume/organheal)
 			mob.AddComponent(/datum/component/consume/can_eat_inedible_organs, 1) // can also eat heads
 			mob.add_stam_mod_max("werewolf", 40) // Gave them a significant stamina boost, as they're melee-orientated (Convair880).
 			mob.add_stam_mod_regen("werewolf", 9) //mbc : these increase as they feast now. reduced!
@@ -872,8 +913,6 @@
 
 	disposing()
 		if (mob)
-			var/datum/component/C = mob.GetComponent(/datum/component/consume/organheal)
-			C?.RemoveComponent(/datum/component/consume/organheal)
 			var/datum/component/D = mob.GetComponent(/datum/component/consume/can_eat_inedible_organs)
 			D?.RemoveComponent(/datum/component/consume/can_eat_inedible_organs)
 			mob.remove_stam_mod_max("werewolf")

@@ -26,25 +26,25 @@
 
 	var/list/organ_list = list("all", "head", "skull", "brain", "left_eye", "right_eye", "chest", "heart", "left_lung", "right_lung", "butt", "left_kidney", "right_kidney", "liver", "stomach", "intestines", "spleen", "pancreas", "appendix")
 
-	var/list/organ_type_list = list(
-		"head"="/obj/item/organ/head",
-		"skull"="/obj/item/skull",
-		"brain"="/obj/item/organ/brain",
-		"left_eye"="/obj/item/organ/eye",
-		"right_eye"="/obj/item/organ/eye",
-		"chest"="/obj/item/organ/chest",
-		"heart"="/obj/item/organ/heart",
-		"left_lung"="/obj/item/organ/lung/left",
-		"right_lung"="/obj/item/organ/lung/right",
-		"left_kidney"="/obj/item/organ/kidney/left",
-		"right_kidney"="/obj/item/organ/kidney/right",
-		"liver"="/obj/item/organ/liver",
-		"spleen"="/obj/item/organ/spleen",
-		"pancreas"="/obj/item/organ/pancreas",
-		"stomach"="/obj/item/organ/stomach",
-		"intestines"="/obj/item/organ/intestines",
-		"appendix"="/obj/item/organ/appendix",
-		"butt"="/obj/item/clothing/head/butt")
+	var/list/organ_type_list = list(\
+		"head" = /obj/item/organ/head,\
+		"skull" = /obj/item/skull,\
+		"brain" = /obj/item/organ/brain,\
+		"left_eye" = /obj/item/organ/eye,\
+		"right_eye" = /obj/item/organ/eye,\
+		"chest" = /obj/item/organ/chest,\
+		"heart" = /obj/item/organ/heart,\
+		"left_lung" = /obj/item/organ/lung/left,\
+		"right_lung" = /obj/item/organ/lung/right,\
+		"left_kidney" = /obj/item/organ/kidney/left,\
+		"right_kidney" = /obj/item/organ/kidney/right,\
+		"liver" = /obj/item/organ/liver,\
+		"spleen" = /obj/item/organ/spleen,\
+		"pancreas" = /obj/item/organ/pancreas,\
+		"stomach" = /obj/item/organ/stomach,\
+		"intestines" = /obj/item/organ/intestines,\
+		"appendix" = /obj/item/organ/appendix,\
+		"butt" = /obj/item/clothing/head/butt)
 
 	New(var/mob/living/L)
 		..()
@@ -342,7 +342,7 @@
 			return return_organ
 		return 0
 
-	proc/drop_organ(var/organ, var/location)
+	proc/drop_organ(var/organ, var/location, var/delete)
 		if (!src.donor || !organ)
 			return
 
@@ -397,7 +397,7 @@
 					for (var/thing in src.organ_list)
 						if (!src.organ_list[thing])
 							continue
-						src.drop_organ(thing, location)
+						src.drop_organ(thing, location, delete)
 					return 1
 				/*src.drop_organ("brain", location)
 				src.drop_organ("head", location)
@@ -454,7 +454,7 @@
 				src.donor.update_body()
 				src.donor.UpdateDamageIcon()
 				src.donor.update_clothing()
-				return myHead
+				. = myHead
 
 			if ("skull")
 				if (!src.skull)
@@ -465,7 +465,7 @@
 				src.skull = null
 				src.organ_list["skull"] = null
 				src.head.skull = null
-				return mySkull
+				. = mySkull
 
 			if ("brain")
 				if (!src.brain)
@@ -496,7 +496,7 @@
 				src.brain = null
 				src.organ_list["brain"] = null
 				src.head?.brain = null
-				return myBrain
+				. = myBrain
 
 			if ("left_eye")
 				if (!src.left_eye)
@@ -508,7 +508,7 @@
 				src.left_eye = null
 				src.organ_list["left_eye"] = null
 				src.head.left_eye = null
-				return myLeftEye
+				. = myLeftEye
 
 			if ("right_eye")
 				if (!src.right_eye)
@@ -520,7 +520,7 @@
 				src.right_eye = null
 				src.organ_list["right_eye"] = null
 				src.head.right_eye = null
-				return myRightEye
+				. = myRightEye
 
 			if ("chest")
 				if (!src.chest)
@@ -531,7 +531,7 @@
 				myChest.holder = null
 				src.chest = null
 				src.organ_list["chest"] = null
-				return myChest
+				. = myChest
 
 			if ("heart")
 				if (!src.heart)
@@ -549,7 +549,7 @@
 				src.heart = null
 				src.donor.update_body()
 				src.organ_list["heart"] = null
-				return myHeart
+				. = myHeart
 
 			if ("left_lung")
 				if (!src.left_lung)
@@ -562,7 +562,7 @@
 				src.organ_list["left_lung"] = null
 				src.donor.update_body()
 				handle_lungs_stamina()
-				return myLeftLung
+				. = myLeftLung
 
 			if ("right_lung")
 				if (!src.right_lung)
@@ -575,7 +575,7 @@
 				src.organ_list["right_lung"] = null
 				src.donor.update_body()
 				handle_lungs_stamina()
-				return myRightLung
+				. = myRightLung
 
 			if ("butt")
 				if (!src.butt)
@@ -587,7 +587,7 @@
 				src.donor.butt_op_stage = 4.0
 				src.donor.update_body()
 				src.organ_list["butt"] = null
-				return myButt
+				. = myButt
 
 			if ("left_kidney")
 				if (!src.left_kidney)
@@ -599,7 +599,7 @@
 				src.left_kidney = null
 				src.donor.update_body()
 				src.organ_list["left_kidney"] = null
-				return myleft_kidney
+				. = myleft_kidney
 
 			if ("right_kidney")
 				if (!src.right_kidney)
@@ -611,7 +611,7 @@
 				src.right_kidney = null
 				src.donor.update_body()
 				src.organ_list["right_kidney"] = null
-				return myright_kidney
+				. = myright_kidney
 
 			if ("liver")
 				if (!src.liver)
@@ -623,7 +623,7 @@
 				src.liver = null
 				src.donor.update_body()
 				src.organ_list["liver"] = null
-				return myliver
+				. = myliver
 
 			if ("stomach")
 				if (!src.stomach)
@@ -635,7 +635,7 @@
 				src.stomach = null
 				src.donor.update_body()
 				src.organ_list["stomach"] = null
-				return mystomach
+				. = mystomach
 
 			if ("intestines")
 				if (!src.intestines)
@@ -647,7 +647,7 @@
 				src.intestines = null
 				src.donor.update_body()
 				src.organ_list["intestines"] = null
-				return myintestines
+				. = myintestines
 
 			if ("spleen")
 				if (!src.spleen)
@@ -659,7 +659,7 @@
 				src.spleen = null
 				src.donor.update_body()
 				src.organ_list["spleen"] = null
-				return myspleen
+				. = myspleen
 
 			if ("pancreas")
 				if (!src.pancreas)
@@ -671,7 +671,7 @@
 				src.pancreas = null
 				src.donor.update_body()
 				src.organ_list["pancreas"] = null
-				return mypancreas
+				. = mypancreas
 
 			if ("appendix")
 				if (!src.appendix)
@@ -683,7 +683,11 @@
 				src.appendix = null
 				src.donor.update_body()
 				src.organ_list["appendix"] = null
-				return myappendix
+				. = myappendix
+
+		if(delete)
+			qdel(.)
+			return 1
 
 	proc/receive_organ(var/obj/item/I, var/organ, var/op_stage = 0.0, var/force = 0)
 		if (!src.donor || !I || !organ)

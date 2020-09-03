@@ -22,7 +22,8 @@
 		// 		src.blood_volume -= 1 * mult
 
 		var/mult = get_multiplier()
-
+		if(owner && HAS_MOB_PROPERTY(owner, PROP_TEMP_CHEM_EFFECTS))
+			mult *= get_temperature_mult()
 
 		var/anticoag_amt = 0
 		var/coag_amt = 0

@@ -38,6 +38,9 @@
 	proc/get_multiplier()
 		.= clamp(TIME - last_process, tick_spacing, cap_tick_spacing) / tick_spacing
 
+	proc/get_temperature_mult() // mults the mult based on temp
+		. = owner ? clamp((owner.bodytemperature / owner.base_body_temp), owner.min_temp_mult, owner.max_temp_mult) : 1
+
 /mob/living
 	var/list/lifeprocesses = list()
 

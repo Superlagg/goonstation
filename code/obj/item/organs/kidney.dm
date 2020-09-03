@@ -134,7 +134,7 @@
 		if (!ispath(abil, /datum/targetable/organAbility/kidneypurge) || !aholder)
 			return ..()
 		var/datum/targetable/organAbility/kidneypurge/OA = aholder.getAbility(abil)//addAbility(abil)
-		if (istype(OA)) // already has an emagged kidney. having 2 makes it safer (damage is split between kidneys) and a little stronger 
+		if (istype(OA)) // already has an emagged kidney. having 2 makes it safer (damage is split between kidneys) and a little stronger
 			OA.linked_organ = list(OA.linked_organ, src)
 			OA.power = 9
 		else
@@ -164,7 +164,7 @@
 			chem_metabolism_modifier = clamp(chem_metabolism_modifier, 75, 150) / 100
 		else
 			. = ..()
-		
+
 /obj/item/organ/kidney/cyber/left
 	name = "left kidney"
 	desc = "A fancy robotic kidney to replace one that someone's lost! It's the left kidney!"
@@ -180,5 +180,77 @@
 	organ_name = "cyber_kidney_R"
 	organ_holder_name = "right_kidney"
 	icon_state = "cyber-kidney-R"
+	body_side = R_ORGAN
+	failure_disease = /datum/ailment/disease/kidney_failure/right
+
+/obj/item/organ/kidney/lizard
+	name = "lizard kidney"
+	desc = "A small, colorful, bean-like mass that resembles a human kidney. "
+	icon_state = "kidney-L"
+	robotic = 0
+	edible = 1
+	mats = 6
+	var/kidney_color = "#FFFFFF"
+
+	New()
+		. = ..()
+		if(donor?.bioHolder.mobAppearance.customization_first_color)
+			src.kidney_color = donor.bioHolder.mobAppearance.customization_first_color
+		else
+			src.kidney_color = rgb(rand(50,190), rand(50,190), rand(50,190))
+
+	attack_self(mob/user as mob)
+		boutput(user, "You squeeze \the [src].")
+		if (user.bodytemperature)
+			var/organ_flavor
+			var/organ_adverb
+			if (prob(1))
+				var/pop_type = pick("explodes", "pops", "bursts")
+				var/like_what = pick("a zit", "a water balloon", "a kidney", "a burrito")
+				var/filled_with_what = pick("Discount Dan's", "blood", "gore", "pizza sauce", "...hair?", "kidney meat")
+				user.visible_message("<span class='alert'><b>[user]</b> squeezes \the [src] too hard! It [pop_type] like [like_what] filled with [filled_with_what]!</span>")
+				playsound(src.loc, "sound/impact_sounds/Slimy_Splat_1.ogg", 50, 1)
+				var/obj/decal/cleanable/vomit/splught = make_cleanable(/obj/decal/cleanable/vomit, donor.loc)
+				splught.color = src.kidney_color
+				user.u_equip(src)
+				qdel(src)
+				return
+			else if (user.bodytemperature > user.base_body_temp + 20)
+				organ_adverb = pick("energetically", "unpleasantly", "audibly", "rapidly")
+				organ_flavor = pick("jiggles", "twitches", "vibrates", "beats")
+				boutput(user, "\The [src] [organ_flavor] [organ_adverb]!")
+			else if (user.bodytemperature < user.base_body_temp - 20)
+				organ_adverb = pick("slowly", "lethargically", "lazily", "sadly")
+				organ_flavor = pick("shifts", "sighs", "spluts", "slumps")
+				boutput(user, "\The [src] [organ_flavor] [organ_adverb]...")
+			else
+				organ_adverb = pick("happily", "contentedly")
+				organ_flavor = pick("squaps", "flollops", "pulses", "flups")
+				boutput(user, "\The [src] [organ_flavor] [organ_adverb]...?")
+		. = ..()
+
+	on_transplant(mob/M)
+		. = ..()
+		if(!broken)
+			APPLY_MOB_PROPERTY(M, PROP_TEMP_CHEM_DEPLETION, src)
+
+	on_removal() // Even one kidney'll give the effects
+		. = ..()
+		if(donor && !istype(src.donor.organHolder.left_kidney, /obj/item/organ/kidney/lizard) && !istype(src.donor.organHolder.right_kidney, /obj/item/organ/kidney/lizard))
+			REMOVE_MOB_PROPERTY(src.donor, PROP_TEMP_CHEM_DEPLETION, src)
+
+/obj/item/organ/kidney/lizard/left
+	name = "left lizard kidney"
+	organ_name = "kidney_L"
+	organ_holder_name = "left_kidney"
+	icon_state = "kidney_L"
+	body_side = L_ORGAN
+	failure_disease = /datum/ailment/disease/kidney_failure/left
+
+/obj/item/organ/kidney/lizard/right
+	name = "right lizard kidney"
+	organ_name = "kidney_R"
+	organ_holder_name = "right_kidney"
+	icon_state = "kidney_R"
 	body_side = R_ORGAN
 	failure_disease = /datum/ailment/disease/kidney_failure/right

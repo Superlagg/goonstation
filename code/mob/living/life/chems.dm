@@ -10,7 +10,11 @@
 		if (owner.reagents)
 			var/reagent_time_multiplier = get_multiplier()
 
+
 			owner.reagents.temperature_reagents(owner.bodytemperature, 100, 35/reagent_time_multiplier, 15*reagent_time_multiplier)
+
+			if(owner && HAS_MOB_PROPERTY(owner, PROP_TEMP_CHEM_DEPLETION))
+				reagent_time_multiplier *= get_temperature_mult()
 
 			if (blood_system && owner.reagents.get_reagent("blood"))
 				var/blood2absorb = min(owner.blood_absorption_rate, owner.reagents.get_reagent_amount("blood")) * reagent_time_multiplier
