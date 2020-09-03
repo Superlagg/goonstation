@@ -362,22 +362,22 @@
 					return // All done!
 				else
 					for(var/mutorgan in src.mutant_organs)
-						var/obj/item/organ/org = OHM.get_organ(src.mutant_organs[mutorgan])
+						var/obj/item/organ/org = OHM.get_organ(mutorgan)
 						if (!org || org?.robotic)// No free organs, trade-ins only, keep ur robotic stuff
 							continue
 						else
-							OHM.receive_organ(mutorgan, src.mutant_organs[mutorgan], 0, 1)
+							OHM.receive_organ(src.mutant_organs[mutorgan], mutorgan, 0, 1)
 				return
 			if("reset")
 				if(!src.mutant_organs.len)
 					return // All done!
 				else
 					for(var/mutorgan in src.mutant_organs)
-						var/obj/item/organ/org = OHM.get_organ(src.mutant_organs[mutorgan])
+						var/obj/item/organ/org = OHM.get_organ(mutorgan)
 						if (!org || org?.robotic)// No free organs, trade-ins only, keep ur robotic stuff
 							continue
 						else
-							OHM.receive_organ(mutorgan, OHM.organ_type_list[mutorgan], 0, 1)
+							OHM.receive_organ(OHM.organ_type_list[mutorgan], mutorgan, 0, 1)
 				return
 
 
