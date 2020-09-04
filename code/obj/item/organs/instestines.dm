@@ -124,7 +124,7 @@
 	on_transplant(mob/M)
 		. = ..()
 		if(!broken)
-			H.AddComponent(/datum/component/consume/organpoints, /datum/abilityHolder/lizard)
+			M.AddComponent(/datum/component/consume/organpoints, /datum/abilityHolder/lizard)
 		src.squozen = 0
 
 	on_removal()

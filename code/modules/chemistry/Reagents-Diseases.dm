@@ -21,7 +21,7 @@ datum
 					L.contract_disease(disease, null, null, 1) // path, name, strain, bypass resist
 			*/
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				..()
 				if(!M)
 					M = holder.my_atom
@@ -424,7 +424,7 @@ datum
 			transparency = 0
 			disease = /datum/ailment/disease/noheart
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M)
 					M = holder.my_atom
 				if (ishuman(M))

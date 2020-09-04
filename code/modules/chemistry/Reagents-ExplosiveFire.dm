@@ -51,14 +51,14 @@ datum
 					M.emote("scream")
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!holder) //Wire: Fix for Cannot read null.total_temperature
 					return
 				if(holder.total_temperature <= T0C - 50) return
 				if(!M) M = holder.my_atom
 				var/mob/living/L = M
 				if(istype(L))
-					L.update_burning(2 * mult)
+					L.update_burning(2 * mult * temp_multiplier)
 				..()
 				return
 
@@ -127,11 +127,11 @@ datum
 					return 0
 				return 1
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 
 				var/mob/living/L = M
 				if(istype(L) && L.getStatusDuration("burning"))
-					L.changeStatus("burning", 100 * mult)
+					L.changeStatus("burning", 100 * mult * temp_multiplier)
 				..()
 				return
 
@@ -340,10 +340,10 @@ datum
 
 				holder.del_reagent(id)
 
-			on_mob_life(var/mob/M, var/mult = 1) // fuck you jerk chemists (todo: a thing to self-harm borgs too, maybe ex_act(3) to the holder? I D K
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1) // fuck you jerk chemists (todo: a thing to self-harm borgs too, maybe ex_act(3) to the holder? I D K
 				if(!M) M = holder.my_atom
 				if(prob(70))
-					M.take_brain_damage(1 * mult)
+					M.take_brain_damage(1 * mult * temp_multiplier)
 				..()
 				return
 
@@ -468,11 +468,11 @@ datum
 					M.emote("scream")
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 
 				var/mob/living/L = M
 				if(istype(L) && L.getStatusDuration("burning"))
-					L.changeStatus("burning", 100 * mult)
+					L.changeStatus("burning", 100 * mult * temp_multiplier)
 				..()
 
 		combustible/foof // this doesn't work yet
@@ -517,11 +517,11 @@ datum
 					M.emote("scream")
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 
 				var/mob/living/L = M
 				if(istype(L))
-					L.update_burning(50 * mult)
+					L.update_burning(50 * mult * temp_multiplier)
 				..()
 
 		combustible/thalmerite // COGWERKS CHEM REVISION PROJECT. pretty much a magic chem, can leave alone
@@ -737,11 +737,11 @@ datum
 						L.changeStatus("burning", 300)
 				return 1
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 
 				var/mob/living/L = M
 				if(istype(L) && L.getStatusDuration("burning"))
-					L.changeStatus("burning", 20 * mult)
+					L.changeStatus("burning", 20 * mult * temp_multiplier)
 				..()
 
 			on_plant_life(var/obj/machinery/plantpot/P)

@@ -17,9 +17,9 @@ datum
 			depletion_rate = 0.2
 			value = 3
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
-				M.take_toxin_damage(1 * mult)
+				M.take_toxin_damage(1 * mult * temp_multiplier)
 				..()
 				return
 
@@ -35,7 +35,7 @@ datum
 			depletion_rate = 0.2
 			value = 3 // 2c + 1c
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				for(var/datum/ailment_data/disease/virus in M.ailments)
 					if (virus.cure == "Antibiotics")
@@ -79,7 +79,7 @@ datum
 					REMOVE_MOVEMENT_MODIFIER(M, /datum/movement_modifier/reagent/morphine, src.type)
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(!counter) counter = 1
 				M.jitteriness = max(M.jitteriness-25,0)
@@ -90,7 +90,7 @@ datum
 					if(16 to 35)
 						M.drowsyness  = max(M.drowsyness, 20)
 					if(36 to INFINITY)
-						M.setStatus("paralysis", max(M.getStatusDuration("paralysis"), 30 * mult))
+						M.setStatus("paralysis", max(M.getStatusDuration("paralysis"), 30 * mult * temp_multiplier))
 						M.drowsyness  = max(M.drowsyness, 20)
 
 				..()
@@ -130,7 +130,7 @@ datum
 						M.remove_stam_mod_regen("r_ether")
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(!counter) counter = 1
 				M.jitteriness = max(M.jitteriness-25,0)
@@ -141,7 +141,7 @@ datum
 					if(16 to 35)
 						M.drowsyness  = max(M.drowsyness, 20)
 					if(36 to INFINITY)
-						M.setStatus("paralysis", max(M.getStatusDuration("paralysis"), 30 * mult))
+						M.setStatus("paralysis", max(M.getStatusDuration("paralysis"), 30 * mult * temp_multiplier))
 						M.drowsyness  = max(M.drowsyness, 20)
 
 				..()
@@ -160,7 +160,7 @@ datum
 			overdose = 30
 			value = 7 // Okay there are two recipes, so two different values... I'll just go with the lower one.
 
-			on_mob_life(var/mob/living/M, var/mult = 1)
+			on_mob_life(var/mob/living/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(prob(8))
 					M.emote(pick("smile","giggle","yawn"))
@@ -174,29 +174,29 @@ datum
 				..()
 				return
 
-			do_overdose(var/severity, var/mob/M, var/mult = 1)
+			do_overdose(var/severity, var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				var/effect = ..(severity, M)
 				M.druggy = max(M.druggy, 15)
 				M.stuttering += rand(0,2)
 				if(severity == 1)
 					if(effect <= 4)
 						M.emote(pick("blink","shiver","drool"))
-						M.change_misstep_chance(8 * mult)
+						M.change_misstep_chance(8 * mult * temp_multiplier)
 					else if (effect <= 9)
 						M.emote("twitch")
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 30 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 30 * mult * temp_multiplier))
 					else if(effect <= 12)
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult * temp_multiplier))
 						M.druggy ++
 				else if (severity == 2)
 					if(effect <= 4)
 						M.emote(pick("shiver","moan","groan","laugh"))
-						M.change_misstep_chance(14 * mult)
+						M.change_misstep_chance(14 * mult * temp_multiplier)
 					else if (effect <= 10)
 						M.emote("twitch")
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 30 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 30 * mult * temp_multiplier))
 					else if (effect <= 13)
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult * temp_multiplier))
 						M.druggy ++
 
 
@@ -215,13 +215,13 @@ datum
 			overdose = 50
 			value = 7 // 5c + 1c + 1c
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				M.make_jittery(2)
 				if(M.bodytemperature > M.base_body_temp)
-					M.bodytemperature = max(M.base_body_temp, M.bodytemperature-(15 * mult))
+					M.bodytemperature = max(M.base_body_temp, M.bodytemperature-(15 * mult * temp_multiplier))
 				else if(M.bodytemperature < 311)
-					M.bodytemperature = min(M.base_body_temp, M.bodytemperature+(15 * mult))
+					M.bodytemperature = min(M.base_body_temp, M.bodytemperature+(15 * mult * temp_multiplier))
 				..()
 				return
 
@@ -238,17 +238,17 @@ datum
 			depletion_rate = 0.1
 			value = 11 // 5c + 3c + 1c + 1c + 1c
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(prob(55))
-					M.HealDamage("All", 2 * mult, 0)
+					M.HealDamage("All", 2 * mult * temp_multiplier, 0)
 				if(M.bodytemperature > M.base_body_temp)
-					M.bodytemperature = max(M.base_body_temp, M.bodytemperature-(10 * mult))
+					M.bodytemperature = max(M.base_body_temp, M.bodytemperature-(10 * mult * temp_multiplier))
 				// I only put this following bit because wiki claims it "attempts to return temperature to normal"
 				// Rather than the previous functionality of cooling down when hot
 				// No need to implement if the wiki is erronous here
 				if(M.bodytemperature < M.base_body_temp)
-					M.bodytemperature = min(M.base_body_temp, M.bodytemperature+(10 * mult))
+					M.bodytemperature = min(M.base_body_temp, M.bodytemperature+(10 * mult * temp_multiplier))
 				..()
 				return
 
@@ -275,12 +275,12 @@ datum
 			value = 2 // I think this is correct?
 			hygiene_value = 1
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(prob(55))
-					M.HealDamage("All", 0, 2 * mult)
+					M.HealDamage("All", 0, 2 * mult * temp_multiplier)
 				if(M.bodytemperature > 280)
-					M.bodytemperature = max(M.bodytemperature-(10 * mult),280)
+					M.bodytemperature = max(M.bodytemperature-(10 * mult * temp_multiplier),280)
 				..()
 				return
 
@@ -296,14 +296,14 @@ datum
 			transparency = 200
 			value = 3 // 1c + 1c + heat
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 
 				for(var/reagent_id in M.reagents.reagent_list)
 					if(reagent_id != id)
-						M.reagents.remove_reagent(reagent_id, 5 * mult)
+						M.reagents.remove_reagent(reagent_id, 5 * mult * temp_multiplier)
 				if(M.health > 20)
-					M.take_toxin_damage(5 * mult, 1)	//calomel doesn't damage organs.
+					M.take_toxin_damage(5 * mult * temp_multiplier, 1)	//calomel doesn't damage organs.
 				if(prob(6))
 					M.visible_message("<span class='alert'>[M] pukes all over \himself.</span>")
 					M.vomit()
@@ -322,7 +322,7 @@ datum
 			fluid_b = 75
 			depletion_rate = 0.8
 			transparency = 200
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				..()
 				for(var/reagent_id in M.reagents.reagent_list)
@@ -347,15 +347,15 @@ datum
 			addiction_min = 5
 			value = 13
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(M.bodytemperature < M.base_body_temp)
-					M.bodytemperature = min(M.base_body_temp, M.bodytemperature+(15 * mult))
+					M.bodytemperature = min(M.base_body_temp, M.bodytemperature+(15 * mult * temp_multiplier))
 				else if(M.bodytemperature > M.base_body_temp)
-					M.bodytemperature = max(M.base_body_temp, M.bodytemperature-(15 * mult))
+					M.bodytemperature = max(M.base_body_temp, M.bodytemperature-(15 * mult * temp_multiplier))
 				M.take_oxygen_deprivation(-INFINITY)
 				if(prob(20))
-					M.take_brain_damage(1 * mult)
+					M.take_brain_damage(1 * mult * temp_multiplier)
 				..()
 				return
 
@@ -440,17 +440,17 @@ datum
 						M.remove_stam_mod_regen("r_synaptizine")
 				..()
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				M.drowsyness = max(M.drowsyness-5, 0)
 				if(M.sleeping) M.sleeping = 0
 				if (M.get_brain_damage() <= 90)
-					if (prob(50)) M.take_brain_damage(-1 * mult)
-				else M.take_brain_damage(-10 * mult) // Zine those synapses into not dying *yet*
+					if (prob(50)) M.take_brain_damage(-1 * mult * temp_multiplier)
+				else M.take_brain_damage(-10 * mult * temp_multiplier) // Zine those synapses into not dying *yet*
 				..()
 				return
 
-			do_overdose(var/severity, var/mob/M, var/mult = 1)
+			do_overdose(var/severity, var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				var/effect = ..(severity, M)
 				if (severity == 1)
 					if( effect <= 1)
@@ -458,7 +458,7 @@ datum
 						M.vomit()
 					else if (effect <= 3) M.emote(pick("groan","moan"))
 					if (effect <= 8)
-						M.take_toxin_damage(1 * mult)
+						M.take_toxin_damage(1 * mult * temp_multiplier)
 				else if (severity == 2)
 					if( effect <= 2)
 						M.visible_message("<span class='alert'>[M.name] suddenly and violently vomits!</span>")
@@ -466,9 +466,9 @@ datum
 					else if (effect <= 5)
 						M.visible_message("<span class='alert'><b>[M.name]</b> staggers and drools, their eyes crazed and bloodshot!</span>")
 						M.dizziness += 8
-						M.reagents.add_reagent("madness_toxin", rand(1,2) * mult)
+						M.reagents.add_reagent("madness_toxin", rand(1,2) * mult * temp_multiplier)
 					if (effect <= 15)
-						M.take_toxin_damage(1 * mult)
+						M.take_toxin_damage(1 * mult * temp_multiplier)
 
 		medical/omnizine // COGWERKS CHEM REVISION PROJECT. magic drug, ought to use plasma or something
 			name = "omnizine"
@@ -487,20 +487,20 @@ datum
 			value = 22
 			target_organs = list("brain", "left_eye", "right_eye", "heart", "left_lung", "right_lung", "left_kidney", "right_kidney", "liver", "stomach", "intestines", "spleen", "pancreas", "appendix")	//RN this is all the organs. Probably I'll remove some from this list later.
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M)
 					M = holder.my_atom
 				if(M.get_oxygen_deprivation())
-					M.take_oxygen_deprivation(-1 * mult)
+					M.take_oxygen_deprivation(-1 * mult * temp_multiplier)
 				if(M.get_toxin_damage())
-					M.take_toxin_damage(-1 * mult)
+					M.take_toxin_damage(-1 * mult * temp_multiplier)
 				if(M.losebreath && prob(50))
 					M.lose_breath(-1)
-				M.HealDamage("All", 2 * mult, 2 * mult, 1 * mult)
+				M.HealDamage("All", 2 * mult * temp_multiplier, 2 * mult * temp_multiplier, 1 * mult * temp_multiplier)
 				if (isliving(M))
 					var/mob/living/L = M
 					if (L.bleeding)
-						repair_bleeding_damage(L, 10, 1 * mult)
+						repair_bleeding_damage(L, 10, 1 * mult * temp_multiplier)
 					if (L.blood_volume < 500)
 						L.blood_volume ++
 					if (ishuman(M))
@@ -512,21 +512,21 @@ datum
 				..()
 				return
 
-			do_overdose(var/severity, var/mob/M, var/mult = 1)
+			do_overdose(var/severity, var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				var/effect = ..(severity, M)
 				if (severity == 1) //lesser
 					M.stuttering += 1
 					if(effect <= 1)
 						M.visible_message("<span class='alert'><b>[M.name]</b> suddenly cluches their gut!</span>")
 						M.emote("scream")
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult * temp_multiplier))
 					else if(effect <= 3)
 						M.visible_message("<span class='alert'><b>[M.name]</b> completely spaces out for a moment.</span>")
-						M.change_misstep_chance(15 * mult)
+						M.change_misstep_chance(15 * mult * temp_multiplier)
 					else if(effect <= 5)
 						M.visible_message("<span class='alert'><b>[M.name]</b> stumbles and staggers.</span>")
 						M.dizziness += 5
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult * temp_multiplier))
 					else if(effect <= 7)
 						M.visible_message("<span class='alert'><b>[M.name]</b> shakes uncontrollably.</span>")
 						M.make_jittery(30)
@@ -534,14 +534,14 @@ datum
 					if(effect <= 2)
 						M.visible_message("<span class='alert'><b>[M.name]</b> suddenly cluches their gut!</span>")
 						M.emote("scream")
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 80 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 80 * mult * temp_multiplier))
 					else if(effect <= 5)
 						M.visible_message("<span class='alert'><b>[M.name]</b> jerks bolt upright, then collapses!</span>")
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 80 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 80 * mult * temp_multiplier))
 					else if(effect <= 8)
 						M.visible_message("<span class='alert'><b>[M.name]</b> stumbles and staggers.</span>")
 						M.dizziness += 5
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult * temp_multiplier))
 
 		medical/saline // COGWERKS CHEM REVISION PROJECT. magic drug, ought to use plasma or something
 			name = "saline-glucose solution"
@@ -556,11 +556,11 @@ datum
 			depletion_rate = 0.15
 			value = 5 // 3c + 1c + 1c
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M)
 					M = holder.my_atom
 				if (prob(33))
-					M.HealDamage("All", 2 * mult, 2 * mult)
+					M.HealDamage("All", 2 * mult * temp_multiplier, 2 * mult * temp_multiplier)
 				if (blood_system && isliving(M) && prob(33))
 					var/mob/living/H = M
 					H.blood_volume += 1  * mult
@@ -581,13 +581,13 @@ datum
 			value = 2 // 1c + 1c
 			target_organs = list("left_kidney", "right_kidney", "liver")
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(M.getStatusDuration("radiation") && prob(80))
-					M.changeStatus("radiation", -20 * mult, 1)
+					M.changeStatus("radiation", -20 * mult * temp_multiplier, 1)
 
-				M.take_toxin_damage(-0.5 * mult)
-				M.HealDamage("All", 0, 0, 0.5 * mult)
+				M.take_toxin_damage(-0.5 * mult * temp_multiplier)
+				M.HealDamage("All", 0, 0, 0.5 * mult * temp_multiplier)
 
 				if (prob(33) && ishuman(M))
 					var/mob/living/carbon/human/H = M
@@ -621,30 +621,30 @@ datum
 						M.remove_stam_mod_regen("r_smelling_salt")
 				return
 
-			on_mob_life(var/mob/M, var/method=INGEST, var/mult = 1)
+			on_mob_life(var/mob/M, var/method=INGEST, var/mult = 1, var/temp_multiplier = 1)
 				if(!M)
 					M = holder.my_atom
 				if(holder.has_reagent("neurotoxin"))
-					holder.remove_reagent("neurotoxin", 3 * mult)
+					holder.remove_reagent("neurotoxin", 3 * mult * temp_multiplier)
 				if(holder.has_reagent("capulettium"))
-					holder.remove_reagent("capulettium", 3 * mult)
+					holder.remove_reagent("capulettium", 3 * mult * temp_multiplier)
 				if(holder.has_reagent("sulfonal"))
-					holder.remove_reagent("sulfonal", 3 * mult)
+					holder.remove_reagent("sulfonal", 3 * mult * temp_multiplier)
 				if(holder.has_reagent("ketamine"))
-					holder.remove_reagent("ketamine", 3 * mult)
+					holder.remove_reagent("ketamine", 3 * mult * temp_multiplier)
 				if(holder.has_reagent("sodium_thiopental"))
-					holder.remove_reagent("sodium_thiopental", 3 * mult)
+					holder.remove_reagent("sodium_thiopental", 3 * mult * temp_multiplier)
 				if(holder.has_reagent("pancuronium"))
-					holder.remove_reagent("pancuronium", 3 * mult)
+					holder.remove_reagent("pancuronium", 3 * mult * temp_multiplier)
 
 
 				if(method == INGEST)
 					if (M.health < -5 && M.health > -30)
-						M.HealDamage("All", 1 * mult, 1 * mult, 1 * mult)
+						M.HealDamage("All", 1 * mult * temp_multiplier, 1 * mult * temp_multiplier, 1 * mult * temp_multiplier)
 				if(M.getStatusDuration("radiation") && prob(30))
-					M.changeStatus("radiation", -20 * mult, 1)
+					M.changeStatus("radiation", -20 * mult * temp_multiplier, 1)
 				if (prob(5))
-					M.take_toxin_damage(1 * mult)
+					M.take_toxin_damage(1 * mult * temp_multiplier)
 				..()
 				return
 
@@ -661,7 +661,7 @@ datum
 			value = 26 // 18 5 3
 
 			// I've added hearing damage here (Convair880).
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M)
 					M = holder.my_atom
 
@@ -677,16 +677,16 @@ datum
 					M.change_eye_blurry(-1)
 
 				if (M.get_eye_damage() && prob(80)) // Permanent eye damage.
-					M.take_eye_damage(-1 * mult)
+					M.take_eye_damage(-1 * mult * temp_multiplier)
 
 				if (M.get_eye_damage(1) && prob(50)) // Temporary blindness.
-					M.take_eye_damage(-0.5 * mult, 1)
+					M.take_eye_damage(-0.5 * mult * temp_multiplier, 1)
 
 				if (M.get_ear_damage() && prob(80)) // Permanent ear damage.
-					M.take_ear_damage(-1 * mult)
+					M.take_ear_damage(-1 * mult * temp_multiplier)
 
 				if (M.get_ear_damage(1) && prob(50)) // Temporary deafness.
-					M.take_ear_damage(-0.5 * mult, 1)
+					M.take_ear_damage(-0.5 * mult * temp_multiplier, 1)
 
 				..()
 				return
@@ -716,39 +716,39 @@ datum
 						M.remove_stam_mod_regen("r_haloperidol")
 				return
 
-			on_mob_life(var/mob/living/M, var/mult = 1)
+			on_mob_life(var/mob/living/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				M.jitteriness = max(M.jitteriness-50,0)
 				if (M.druggy > 0)
 					M.druggy -= 3
 					M.druggy = max(0, M.druggy)
 				if(holder.has_reagent("LSD"))
-					holder.remove_reagent("LSD", 5 * mult)
+					holder.remove_reagent("LSD", 5 * mult * temp_multiplier)
 				if(holder.has_reagent("psilocybin"))
-					holder.remove_reagent("psilocybin", 5 * mult)
+					holder.remove_reagent("psilocybin", 5 * mult * temp_multiplier)
 				if(holder.has_reagent("crank"))
-					holder.remove_reagent("crank", 5 * mult)
+					holder.remove_reagent("crank", 5 * mult * temp_multiplier)
 				if(holder.has_reagent("bathsalts"))
-					holder.remove_reagent("bathsalts", 5 * mult)
+					holder.remove_reagent("bathsalts", 5 * mult * temp_multiplier)
 				if(holder.has_reagent("THC"))
-					holder.remove_reagent("THC", 5 * mult)
+					holder.remove_reagent("THC", 5 * mult * temp_multiplier)
 				if(holder.has_reagent("space_drugs"))
-					holder.remove_reagent("space_drugs", 5 * mult)
+					holder.remove_reagent("space_drugs", 5 * mult * temp_multiplier)
 				if(holder.has_reagent("catdrugs"))
-					holder.remove_reagent("catdrugs", 5 * mult)
+					holder.remove_reagent("catdrugs", 5 * mult * temp_multiplier)
 				if(holder.has_reagent("methamphetamine"))
-					holder.remove_reagent("methamphetamine", 5 * mult)
+					holder.remove_reagent("methamphetamine", 5 * mult * temp_multiplier)
 				if(holder.has_reagent("epinephrine"))
-					holder.remove_reagent("epinephrine", 5 * mult)
+					holder.remove_reagent("epinephrine", 5 * mult * temp_multiplier)
 				if(holder.has_reagent("ephedrine"))
-					holder.remove_reagent("ephedrine", 5 * mult)
+					holder.remove_reagent("ephedrine", 5 * mult * temp_multiplier)
 				if(holder.has_reagent("stimulants"))
-					holder.remove_reagent("stimulants", 3 * mult)
+					holder.remove_reagent("stimulants", 3 * mult * temp_multiplier)
 				if(prob(5))
 					for(var/datum/ailment_data/disease/virus in M.ailments)
 						if(istype(virus.master,/datum/ailment/disease/space_madness) || istype(virus.master,/datum/ailment/disease/berserker))
 							M.cure_disease(virus)
-				if(prob(20)) M.take_brain_damage(1 * mult)
+				if(prob(20)) M.take_brain_damage(1 * mult * temp_multiplier)
 				if(prob(50)) M.drowsyness = max(M.drowsyness, 6)
 				if(prob(10)) M.emote("drool")
 				..()
@@ -781,29 +781,29 @@ datum
 						M.remove_stam_mod_regen("r_epinephrine")
 				..()
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(M.bodytemperature < M.base_body_temp) // So it doesn't act like supermint
-					M.bodytemperature = min(M.base_body_temp, M.bodytemperature+(7 * mult))
+					M.bodytemperature = min(M.base_body_temp, M.bodytemperature+(7 * mult * temp_multiplier))
 				if(prob(10))
 					M.make_jittery(4)
 				M.drowsyness = max(M.drowsyness-5, 0)
 				if(M.sleeping && prob(5)) M.sleeping = 0
 				if(M.get_brain_damage() && prob(5)) M.take_brain_damage(-1)
 				if(holder.has_reagent("histamine"))
-					holder.remove_reagent("histamine", 15 * mult)
+					holder.remove_reagent("histamine", 15 * mult * temp_multiplier)
 				if(M.losebreath > 3)
-					M.losebreath -= (1 * mult)
+					M.losebreath -= (1 * mult * temp_multiplier)
 				if(M.get_oxygen_deprivation() > 35)
-					M.take_oxygen_deprivation(-10 * mult)
+					M.take_oxygen_deprivation(-10 * mult * temp_multiplier)
 				if(M.health < -10 && M.health > -65)
 					if(M.get_toxin_damage())
-						M.take_toxin_damage(-1 * mult)
-					M.HealDamage("All", 1 * mult, 1 * mult, 1 * mult)
+						M.take_toxin_damage(-1 * mult * temp_multiplier)
+					M.HealDamage("All", 1 * mult * temp_multiplier, 1 * mult * temp_multiplier, 1 * mult * temp_multiplier)
 				..()
 				return
 
-			do_overdose(var/severity, var/mob/M, var/mult = 1)
+			do_overdose(var/severity, var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				var/effect = ..(severity, M)
 				if (severity == 1)
 					if( effect <= 1)
@@ -818,7 +818,7 @@ datum
 					else if (effect <= 5)
 						M.visible_message("<span class='alert'><b>[M.name]</b> staggers and drools, their eyes bloodshot!</span>")
 						M.dizziness += 2
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult * temp_multiplier))
 					if (effect <= 15) M.emote("collapse")
 
 		medical/heparin
@@ -833,31 +833,31 @@ datum
 			depletion_rate = 0.4
 			overdose = 20
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M)
 					M = holder.my_atom
 				if (holder.has_reagent("cholesterol"))
-					holder.remove_reagent("cholesterol", 2 * mult) // insulin used to do this but now doesn't, so w/e this can do it now.
+					holder.remove_reagent("cholesterol", 2 * mult * temp_multiplier) // insulin used to do this but now doesn't, so w/e this can do it now.
 				..()
 				return
 
 			// od effects: you blood fall out (bleeding from pores esp.)
-			do_overdose(var/severity, var/mob/M, var/mult = 1)
+			do_overdose(var/severity, var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				var/effect = ..(severity, M)
 				DEBUG_MESSAGE("[M] processing OD of heparin ([src.volume]u): severity [severity], effect [effect]")
 				if (severity == 1) //lesser
 					if (effect <= 2)
 						M.visible_message("<span class='alert'>[M] coughs up a lot of blood!</span>")
 						playsound(get_turf(M), "sound/impact_sounds/Slimy_Splat_1.ogg", 30, 1)
-						bleed(M, rand(5,10) * mult, 3 * mult)
+						bleed(M, rand(5,10) * mult * temp_multiplier, 3 * mult * temp_multiplier)
 					else if (effect <= 4)
 						M.visible_message("<span class='alert'>[M] coughs up a little blood!</span>")
 						playsound(get_turf(M), "sound/impact_sounds/Slimy_Splat_1.ogg", 30, 1)
-						bleed(M, rand(1,2) * mult, 1 * mult)
+						bleed(M, rand(1,2) * mult * temp_multiplier, 1 * mult * temp_multiplier)
 				else if (severity == 2) // greater
 					if (effect <= 2)
 						M.visible_message("<span class='alert'><b>[M] is bleeding from [his_or_her(M)] very pores!</span>")
-						bleed(M, rand(10,20) * mult, rand(1,3) * mult)
+						bleed(M, rand(10,20) * mult * temp_multiplier, rand(1,3) * mult * temp_multiplier)
 						if (ishuman(M))
 							var/mob/living/carbon/human/H = M
 							var/list/gear_to_bloody = list(H.r_hand, H.l_hand, H.head, H.wear_mask, H.w_uniform, H.wear_suit, H.belt, H.gloves, H.glasses, H.shoes, H.wear_id, H.back)
@@ -869,11 +869,11 @@ datum
 					else if (effect <= 4)
 						M.visible_message("<span class='alert'>[M] coughs up a lot of blood!</span>")
 						playsound(get_turf(M), "sound/impact_sounds/Slimy_Splat_1.ogg", 30, 1)
-						bleed(M, rand(5,10) * mult, 3 * mult)
+						bleed(M, rand(5,10) * mult * temp_multiplier, 3 * mult * temp_multiplier)
 					else if (effect <= 8)
 						M.visible_message("<span class='alert'>[M] coughs up a little blood!</span>")
 						playsound(get_turf(M), "sound/impact_sounds/Slimy_Splat_1.ogg", 30, 1)
-						bleed(M, rand(1,2) * mult, 1 * mult)
+						bleed(M, rand(1,2) * mult * temp_multiplier, 1 * mult * temp_multiplier)
 
 		medical/proconvertin // old name for factor VII, which is a protein that causes blood to clot. this stuff is seemingly just used for people with hemophilia but this is ss13 so let's give it to everybody who's bleeding a little, it's fine.
 			name = "proconvertin"
@@ -886,12 +886,12 @@ datum
 			transparency = 230
 			depletion_rate = 0.3
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M)
 					M = holder.my_atom
 				if (isliving(M))
 					var/mob/living/H = M
-					repair_bleeding_damage(H, 90, 1 * mult)
+					repair_bleeding_damage(H, 90, 1 * mult * temp_multiplier)
 					if (prob(2))
 						H.contract_disease(/datum/ailment/malady/bloodclot,null,null,1)
 				..()
@@ -910,7 +910,7 @@ datum
 			depletion_rate = 0.2
 			target_organs = list("left_lung", "right_lung")
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M)
 					M = holder.my_atom
 				if (isliving(M))
@@ -919,7 +919,7 @@ datum
 				..()
 				return
 
-			do_overdose(var/severity, var/mob/M, var/mult = 1)
+			do_overdose(var/severity, var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M)
 					M = holder.my_atom
 				if (isliving(M))
@@ -927,13 +927,13 @@ datum
 					if (prob(50))
 						L.losebreath += 1*mult
 					else
-						L.take_oxygen_deprivation(1 * mult)
+						L.take_oxygen_deprivation(1 * mult * temp_multiplier)
 					if(prob(20))
 						L.emote("cough")
 					else if (severity > 1 && prob(50))
 						L.visible_message("<span class='alert'>[L] coughs up a little blood!</span>")
 						playsound(get_turf(L), "sound/impact_sounds/Slimy_Splat_1.ogg", 30, 1)
-						bleed(L, rand(2,8) * mult, 3 * mult)
+						bleed(L, rand(2,8) * mult * temp_multiplier, 3 * mult * temp_multiplier)
 					if (ishuman(M))
 						var/mob/living/carbon/human/H = M
 						if (H.organHolder)
@@ -952,10 +952,10 @@ datum
 			transparency = 50
 			value = 6
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(holder.has_reagent("sugar"))
-					holder.remove_reagent("sugar", 5 * mult)
+					holder.remove_reagent("sugar", 5 * mult * temp_multiplier)
 				//if(holder.has_reagent("cholesterol")) //probably doesnt actually happen but whatever
 					//holder.remove_reagent("cholesterol", 2)
 				..()
@@ -973,11 +973,11 @@ datum
 			depletion_rate = 3
 			value = 6 // 2c + 1c + 1c + 1c + 1c
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				// Please don't set this to 8 again, medical patches add their contents to the bloodstream too.
 				// Consequently, a single patch would heal ~200 damage (Convair880).
-				M.HealDamage("All", 0, 2 * mult)
+				M.HealDamage("All", 0, 2 * mult * temp_multiplier)
 				M.UpdateDamageIcon()
 				..()
 				return
@@ -1016,7 +1016,7 @@ datum
 			transparency = 255
 			value = 9 // 5 3 1
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(M.bioHolder && M.bioHolder.effects && M.bioHolder.effects.len) //One per cycle. We're having superpowered hellbastards and this is their kryptonite.
 					var/datum/bioEffect/B = M.bioHolder.effects[pick(M.bioHolder.effects)]
@@ -1076,24 +1076,24 @@ datum
 						M.remove_stam_mod_regen("r_ephedrine")
 				..()
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(M.bodytemperature < M.base_body_temp) // So it doesn't act like supermint
-					M.bodytemperature = min(M.base_body_temp, M.bodytemperature+(5 * mult))
+					M.bodytemperature = min(M.base_body_temp, M.bodytemperature+(5 * mult * temp_multiplier))
 				M.make_jittery(4)
 				M.drowsyness = max(M.drowsyness-5, 0)
 				if(M.losebreath > 3)
-					M.losebreath = max(5, M.losebreath-(1 * mult))
+					M.losebreath = max(5, M.losebreath-(1 * mult * temp_multiplier))
 				if(M.get_oxygen_deprivation() > 75)
-					M.take_oxygen_deprivation(-1 * mult)
+					M.take_oxygen_deprivation(-1 * mult * temp_multiplier)
 				if ((M.health < 0) || (M.health > 0 && prob(33)))
 					if (M.get_toxin_damage() && prob(25))
-						M.take_toxin_damage(-1 * mult)
-					M.HealDamage("All", 1 * mult, 1 * mult)
+						M.take_toxin_damage(-1 * mult * temp_multiplier)
+					M.HealDamage("All", 1 * mult * temp_multiplier, 1 * mult * temp_multiplier)
 				..()
 				return
 
-			do_overdose(var/severity, var/mob/M, var/mult = 1)
+			do_overdose(var/severity, var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				var/effect = ..(severity, M)
 				if (severity == 1)
 					if( effect <= 1)
@@ -1101,7 +1101,7 @@ datum
 						M.vomit()
 					else if (effect <= 3) M.emote(pick("groan","moan"))
 					if (effect <= 8)
-						M.take_toxin_damage(1 * mult)
+						M.take_toxin_damage(1 * mult * temp_multiplier)
 				else if (severity == 2)
 					if( effect <= 2)
 						M.visible_message("<span class='alert'>[M.name] suddenly and violently vomits!</span>")
@@ -1109,9 +1109,9 @@ datum
 					else if (effect <= 5)
 						M.visible_message("<span class='alert'><b>[M.name]</b> staggers and drools, their eyes bloodshot!</span>")
 						M.dizziness += 8
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult * temp_multiplier))
 					if (effect <= 15)
-						M.take_toxin_damage(1 * mult)
+						M.take_toxin_damage(1 * mult * temp_multiplier)
 
 
 		medical/penteticacid // COGWERKS CHEM REVISION PROJECT. should be a potent chelation agent, maybe roll this into tribenzocytazine as Pentetic Acid
@@ -1126,17 +1126,17 @@ datum
 			value = 16 // 7 2 4 1 1 1
 			target_organs = list("left_kidney", "right_kidney", "liver", "stomach", "intestines")
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 				for (var/reagent_id in M.reagents.reagent_list)
 					if (reagent_id != id)
-						M.reagents.remove_reagent(reagent_id, 4 * mult)
+						M.reagents.remove_reagent(reagent_id, 4 * mult * temp_multiplier)
 				M.changeStatus("radiation", -70, 1)
 				if (M.get_toxin_damage() && prob(75))
-					M.take_toxin_damage(-4 * mult)
-					M.HealDamage("All", 0, 0, 2 * mult)
+					M.take_toxin_damage(-4 * mult * temp_multiplier)
+					M.HealDamage("All", 0, 0, 2 * mult * temp_multiplier)
 				if (prob(33))
-					M.TakeDamage("chest", 1 * mult, 1 * mult, 0, DAMAGE_BLUNT)
+					M.TakeDamage("chest", 1 * mult * temp_multiplier, 1 * mult * temp_multiplier, 0, DAMAGE_BLUNT)
 				if (ishuman(M))
 					var/mob/living/carbon/human/H = M
 					if (H.organHolder)
@@ -1175,16 +1175,16 @@ datum
 						M.remove_stam_mod_regen("r_diphenhydramine")
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				M.jitteriness = max(M.jitteriness-20,0)
 				if(holder.has_reagent("histamine"))
-					holder.remove_reagent("histamine", 3 * mult)
+					holder.remove_reagent("histamine", 3 * mult * temp_multiplier)
 				if(holder.has_reagent("itching"))
-					holder.remove_reagent("itching", 3 * mult)
+					holder.remove_reagent("itching", 3 * mult * temp_multiplier)
 				if(prob(7)) M.emote("yawn")
 				if(prob(3))
-					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult))
+					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult * temp_multiplier))
 					M.drowsyness++
 					M.visible_message("<span class='notice'><b>[M.name]<b> looks a bit dazed.</span>")
 				..()
@@ -1202,11 +1202,11 @@ datum
 			depletion_rate = 3
 			value = 6 // 3c + 1c + 1c + 1c
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				// Please don't set this to 8 again, medical patches add their contents to the bloodstream too.
 				// Consequently, a single patch would heal ~200 damage (Convair880).
-				M.HealDamage("All", 2 * mult, 0)
+				M.HealDamage("All", 2 * mult * temp_multiplier, 0)
 				M.UpdateDamageIcon()
 				..()
 				return
@@ -1273,18 +1273,18 @@ datum
 
 				return*/
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(M.bodytemperature < M.base_body_temp - 100)
 					var/health_before = M.health
 
 					if(M.get_oxygen_deprivation())
-						M.take_oxygen_deprivation(-10 * mult)
+						M.take_oxygen_deprivation(-10 * mult * temp_multiplier)
 					if(M.get_toxin_damage())
-						M.take_toxin_damage(-3 * mult)
+						M.take_toxin_damage(-3 * mult * temp_multiplier)
 					if (M.get_brain_damage())
-						M.take_brain_damage(-2 * mult)
-					M.HealDamage("All", 12 * mult, 12 * mult)
+						M.take_brain_damage(-2 * mult * temp_multiplier)
+					M.HealDamage("All", 12 * mult * temp_multiplier, 12 * mult * temp_multiplier)
 					M.updatehealth() //I hate this, but we actually need the health on time here.
 					if(M.health > health_before)
 						var/increase = min((M.health - health_before)/37*25,25) //12+12+3+10 = 37 health healed possible, 25 max temp increase possible
@@ -1334,28 +1334,28 @@ datum
 						M.change_misstep_chance(-src.total_misstep)
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1) //god fuck this proc
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1) //god fuck this proc
 				if(!M) M = holder.my_atom
-				M.make_dizzy(1 * mult)
-				M.change_misstep_chance(5 * mult)
+				M.make_dizzy(1 * mult * temp_multiplier)
+				M.change_misstep_chance(5 * mult * temp_multiplier)
 				src.total_misstep += 5 * mult
 				if(M.bodytemperature < M.base_body_temp)
-					M.bodytemperature = min(M.base_body_temp + 10, M.bodytemperature+(10 * mult))
+					M.bodytemperature = min(M.base_body_temp + 10, M.bodytemperature+(10 * mult * temp_multiplier))
 				if(prob(4)) M.emote("collapse")
 				if(M.losebreath > 5)
-					M.losebreath = max(5, M.losebreath-(5 * mult))
+					M.losebreath = max(5, M.losebreath-(5 * mult * temp_multiplier))
 				if(M.get_oxygen_deprivation() > 65)
-					M.take_oxygen_deprivation(-10 * mult)
+					M.take_oxygen_deprivation(-10 * mult * temp_multiplier)
 				if(M.health < -25)
 					if(M.get_toxin_damage())
-						M.take_toxin_damage(-1 * mult)
-					M.HealDamage("All", 3 * mult, 3 * mult)
+						M.take_toxin_damage(-1 * mult * temp_multiplier)
+					M.HealDamage("All", 3 * mult * temp_multiplier, 3 * mult * temp_multiplier)
 					if (M.get_brain_damage())
-						M.take_brain_damage(-2 * mult)
+						M.take_brain_damage(-2 * mult * temp_multiplier)
 				else if (M.health > 15 && M.get_toxin_damage() < 70)
-					M.take_toxin_damage(1 * mult)
+					M.take_toxin_damage(1 * mult * temp_multiplier)
 				if(M.reagents.has_reagent("sarin"))
-					M.reagents.remove_reagent("sarin",20 * mult)
+					M.reagents.remove_reagent("sarin",20 * mult * temp_multiplier)
 				..()
 				return
 
@@ -1373,11 +1373,11 @@ datum
 			overdose = 50
 			target_organs = list("left_lung", "right_lung", "spleen")
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
-				M.take_oxygen_deprivation(-6 * mult)
+				M.take_oxygen_deprivation(-6 * mult * temp_multiplier)
 				if(M.losebreath)
-					M.losebreath = max(0, M.losebreath-(4 * mult))
+					M.losebreath = max(0, M.losebreath-(4 * mult * temp_multiplier))
 
 				if (ishuman(M))
 					var/mob/living/carbon/human/H = M
@@ -1388,7 +1388,7 @@ datum
 				return
 
 			//severe overdose can damage kidneys
-			do_overdose(var/severity, var/mob/M, var/mult = 1)
+			do_overdose(var/severity, var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				// var/effect = ..(severity, M)
 				if (severity >= 2)
 					if (ishuman(M))
@@ -1415,13 +1415,13 @@ datum
 			value = 6 // 3 1 1 heat
 			target_organs = list("left_lung", "right_lung", "spleen")
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
-				M.take_oxygen_deprivation(-25 * mult)
+				M.take_oxygen_deprivation(-25 * mult * temp_multiplier)
 				if(src.volume >= 4) // stop killing dudes goddamn
 					M.losebreath = max(6, M.losebreath)
 				if(prob(33)) // has some slight healing properties due to tissue oxygenation
-					M.HealDamage("All", 1 * mult, 1 * mult)
+					M.HealDamage("All", 1 * mult * temp_multiplier, 1 * mult * temp_multiplier)
 
 				if (ishuman(M))
 					var/mob/living/carbon/human/H = M
@@ -1442,9 +1442,9 @@ datum
 			value = 3 // 1 1 1
 			target_organs = list("brain")		//unused for now
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
-				M.take_brain_damage(-3 * mult)
+				M.take_brain_damage(-3 * mult * temp_multiplier)
 				..()
 				return
 
@@ -1459,13 +1459,13 @@ datum
 			value = 5 // 3c + 1c + heat
 			target_organs = list("left_kidney", "right_kidney", "liver", "stomach", "intestines")
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				for(var/reagent_id in M.reagents.reagent_list)
 					if(reagent_id != id && prob(50)) // slow this down a bit
-						M.reagents.remove_reagent(reagent_id, 1 * mult)
-				M.take_toxin_damage(-1.5 * mult)
-				M.HealDamage("All", 0, 0, 1 * mult)
+						M.reagents.remove_reagent(reagent_id, 1 * mult * temp_multiplier)
+				M.take_toxin_damage(-1.5 * mult * temp_multiplier)
+				M.HealDamage("All", 0, 0, 1 * mult * temp_multiplier)
 
 				if (ishuman(M))
 					var/mob/living/carbon/human/H = M
@@ -1504,11 +1504,11 @@ datum
 			transparency = 220
 			value = 6 // 5c + 1c
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
-				if(holder.has_reagent("ethanol")) holder.remove_reagent("ethanol", 8 * mult)
+				if(holder.has_reagent("ethanol")) holder.remove_reagent("ethanol", 8 * mult * temp_multiplier)
 				if (M.get_toxin_damage() <= 25)
-					M.take_toxin_damage(-2 * mult)
+					M.take_toxin_damage(-2 * mult * temp_multiplier)
 				..()
 				return
 
@@ -1524,10 +1524,10 @@ datum
 			value = 3 // 1c + 1c + heat
 			viscosity = 0.8
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(M.health > 25)
-					M.take_toxin_damage(1 * mult)
+					M.take_toxin_damage(1 * mult * temp_multiplier)
 				if(prob(25))
 					M.visible_message("<span class='alert'>[M] pukes all over \himself!</span>")
 					M.vomit()

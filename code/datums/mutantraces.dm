@@ -366,7 +366,8 @@
 						if (!org || org?.robotic)// No free organs, trade-ins only, keep ur robotic stuff
 							continue
 						else
-							OHM.receive_organ(src.mutant_organs[mutorgan], mutorgan, 0, 1)
+							var/obj/item/organ_get = new src.mutant_organs[mutorgan]
+							OHM.receive_organ(organ_get, mutorgan, 0, 1)
 				return
 			if("reset")
 				if(!src.mutant_organs.len)
@@ -377,11 +378,9 @@
 						if (!org || org?.robotic)// No free organs, trade-ins only, keep ur robotic stuff
 							continue
 						else
-							OHM.receive_organ(OHM.organ_type_list[mutorgan], mutorgan, 0, 1)
+							var/obj/item/organ_get = new OHM.organ_type_list[mutorgan]
+							OHM.receive_organ(organ_get, mutorgan, 0, 1)
 				return
-
-
-
 
 /datum/mutantrace/blob // podrick's july assjam submission, it's pretty cute
 	name = "blob"
@@ -536,7 +535,6 @@
 	mutant_organs = list("left_kidney" = /obj/item/organ/kidney/lizard/left,\
 											"right_kidney" = /obj/item/organ/kidney/lizard/right,\
 											"liver" = /obj/item/organ/liver/lizard,\
-											"heart" = /obj/item/organ/heart/lizard,\
 											"intestines" = /obj/item/organ/intestines/lizard)
 
 	New(var/mob/living/carbon/human/H)

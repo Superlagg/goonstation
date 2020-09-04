@@ -78,8 +78,8 @@
 	var/temp_tolerance = 15 // iterations between each temperature state
 	var/thermoregulation_mult = 0.025 // how quickly the body's temperature tries to correct itself, higher = faster
 	var/innate_temp_resistance = 0.16  // how good the body is at resisting environmental temperature, lower = more resistant
-	var/min_temp_mult = 0.1 // How much should temperature decrease the life mult, if applicable
-	var/max_temp_mult = 5 // How much should temperature increase the life mult, if applicable
+	var/min_temp_mult = 0.5 // How much should temperature decrease the life mult, if applicable
+	var/max_temp_mult = 3 // How much should temperature increase the life mult, if applicable
 	var/drowsyness = 0.0
 	var/dizziness = 0
 	var/is_dizzy = 0

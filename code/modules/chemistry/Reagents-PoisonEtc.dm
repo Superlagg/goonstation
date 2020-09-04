@@ -9,9 +9,9 @@ datum
 			name = "toxin precursor"
 			id = "simple_damage_toxin"
 			var/damage_factor = 1
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
-				M.take_toxin_damage(damage_factor * mult)
+				M.take_toxin_damage(damage_factor * mult * temp_multiplier)
 				..()
 				return
 
@@ -33,9 +33,9 @@ datum
 			name = "irritant precursor"
 			id = "simple_damage_burn"
 			var/damage_factor = 1
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
-				M.TakeDamage("chest", 0, damage_factor * mult, 0, DAMAGE_BURN)
+				M.TakeDamage("chest", 0, damage_factor * mult * temp_multiplier, 0, DAMAGE_BURN)
 				..()
 				return
 
@@ -65,10 +65,10 @@ datum
 			blob_damage = 1
 			value = 3 // 1c + 1c + 1c
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 				//M.take_toxin_damage(1)
-				M.TakeDamage("chest", 0, 1 * mult, 0, DAMAGE_BURN)
+				M.TakeDamage("chest", 0, 1 * mult * temp_multiplier, 0, DAMAGE_BURN)
 				..()
 				return
 
@@ -189,10 +189,10 @@ datum
 				..()
 				damage_counter = 0
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 
 				if (!M) M = holder.my_atom
-				damage_counter += rand(2,4) * mult // RNG rolls moved to accumulation proc for consistency
+				damage_counter += rand(2,4) * mult * temp_multiplier // RNG rolls moved to accumulation proc for consistency
 
 				..()
 
@@ -211,9 +211,9 @@ datum
 			fluid_b = 0
 			transparency = 50
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
-				M.take_toxin_damage(rand(10,30) * mult)
+				M.take_toxin_damage(rand(10,30) * mult * temp_multiplier)
 				if(prob(percentmult(30, mult)))
 					var/atom/my_atom = holder.my_atom
 					var/turf/location = 0
@@ -233,9 +233,9 @@ datum
 			transparency = 80
 			depletion_rate = 0.05
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
-				M.take_toxin_damage(2 * mult)
+				M.take_toxin_damage(2 * mult * temp_multiplier)
 				M.losebreath += 5 * mult
 				..()
 				return
@@ -255,19 +255,19 @@ datum
 			blob_damage = 5
 			value = 7 // 3 2 1 heat
 
-			on_mob_life(var/mob/M, var/mult = 1) // -cogwerks. previous version
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1) // -cogwerks. previous version
 				if (!M) M = holder.my_atom
-				M.take_toxin_damage(1.5 * mult)
+				M.take_toxin_damage(1.5 * mult * temp_multiplier)
 				if (prob(8))
 					M.emote("drool")
 				if (prob(10))
 					boutput(M, "<span class='alert'>You cannot breathe!</span>")
-					M.losebreath += (1 * mult)
+					M.losebreath += (1 * mult * temp_multiplier)
 					M.emote("gasp")
 				if (prob(8))
 					boutput(M, "<span class='alert'>You feel horribly weak.</span>")
-					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult))
-					M.take_toxin_damage(2 * mult)
+					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult * temp_multiplier))
+					M.take_toxin_damage(2 * mult * temp_multiplier)
 				..()
 				return
 
@@ -289,12 +289,12 @@ datum
 				..()
 				counter = 1
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 				if (!counter) counter = 1
-				M.take_toxin_damage(1 * mult)
-				M.take_oxygen_deprivation(1 * mult)
-				switch(counter += (1 * mult))
+				M.take_toxin_damage(1 * mult * temp_multiplier)
+				M.take_oxygen_deprivation(1 * mult * temp_multiplier)
+				switch(counter += (1 * mult * temp_multiplier))
 					if (1 to 5)
 						if (prob(20) && !M.stat)
 							M.emote(pick("drool", "pale", "gasp"))
@@ -302,17 +302,17 @@ datum
 						M.change_eye_blurry(5, 5)
 						if (prob(8))
 							boutput(M, "<span class='alert'><b>You feel [pick("weak", "horribly weak", "numb", "like you can barely move", "tingly")].</b></span>")
-							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult))
+							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult * temp_multiplier))
 						else if (prob(8))
 							M.emote(pick("drool","pale", "gasp"))
 					if (11 to INFINITY)
-						M.setStatus("stunned", max(M.getStatusDuration("stunned"), 40 * mult))
+						M.setStatus("stunned", max(M.getStatusDuration("stunned"), 40 * mult * temp_multiplier))
 						M.drowsyness  = max(M.drowsyness, 20)
 						if (prob(20) && !M.stat)
 							M.emote(pick("drool", "faint", "pale", "gasp", "collapse"))
 						else if (prob(8))
 							boutput(M, "<span class='alert'><b>You can't [pick("breathe", "move", "feel your legs", "feel your face", "feel anything")]!</b></span>")
-							M.losebreath += (1 * mult)
+							M.losebreath += (1 * mult * temp_multiplier)
 
 				..()
 				return
@@ -329,11 +329,11 @@ datum
 			penetrates_skin = 1
 			value = 4 // 1 1 1 heat
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
-				M.take_toxin_damage(1 * mult)
+				M.take_toxin_damage(1 * mult * temp_multiplier)
 				if (prob(10))
-					M.reagents.add_reagent("histamine", rand(5,15) * mult)
+					M.reagents.add_reagent("histamine", rand(5,15) * mult * temp_multiplier)
 				..()
 				return
 
@@ -352,9 +352,9 @@ datum
 			penetrates_skin = 1
 			value = 4
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
-				M.TakeDamage("All", 0, 1 * mult, 0, DAMAGE_BURN)
+				M.TakeDamage("All", 0, 1 * mult * temp_multiplier, 0, DAMAGE_BURN)
 				..()
 				return
 
@@ -371,7 +371,7 @@ datum
 			transparency = 215
 			depletion_rate = 0.2
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 
 				// Used to do exactly this back in 2012 or so (Convair880).
@@ -383,12 +383,12 @@ datum
 						if (1)
 							boutput(M, "<span class='alert'>You feel hungry...</span>")
 						if (2)
-							M.take_toxin_damage(1 * mult)
+							M.take_toxin_damage(1 * mult * temp_multiplier)
 							boutput(M, "<span class='alert'>Your stomach grumbles painfully!</span>")
 
 				else
 					if (prob(60))
-						var/fat_to_burn = max(round(M.nutrition/100,1) * mult, 5)
+						var/fat_to_burn = max(round(M.nutrition/100,1) * mult * temp_multiplier, 5)
 						M.nutrition = max(M.nutrition-fat_to_burn,0)
 				..()
 				return
@@ -425,23 +425,23 @@ datum
 						M.remove_stam_mod_regen("r_initropidril")
 				return
 
-			on_mob_life(var/mob/living/M, var/mult = 1)
+			on_mob_life(var/mob/living/M, var/mult = 1, var/temp_multiplier = 1)
 
 				if (!M) M = holder.my_atom
 				if (prob(33))
-					M.take_toxin_damage(rand(5,25) * mult)
+					M.take_toxin_damage(rand(5,25) * mult * temp_multiplier)
 				if (prob(33))
 					boutput(M, "<span class='alert'>You feel horribly weak.</span>")
-					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult))
+					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult * temp_multiplier))
 				if (prob(10))
 					boutput(M, "<span class='alert'>You cannot breathe!</span>")
-					M.take_oxygen_deprivation(10 * mult)
-					M.losebreath += (1 * mult)
+					M.take_oxygen_deprivation(10 * mult * temp_multiplier)
+					M.losebreath += (1 * mult * temp_multiplier)
 				if (prob(10))
 					boutput(M, "<span class='alert'>Your chest is burning with pain!</span>")
-					M.take_oxygen_deprivation(10 * mult)
-					M.losebreath += (1 * mult)
-					M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult))
+					M.take_oxygen_deprivation(10 * mult * temp_multiplier)
+					M.losebreath += (1 * mult * temp_multiplier)
+					M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult * temp_multiplier))
 					M.contract_disease(/datum/ailment/malady/flatline, null, null, 1) // path, name, strain, bypass resist
 				..()
 
@@ -456,7 +456,7 @@ datum
 			transparency = 255
 			depletion_rate = 0.1 //per 3 sec
 
-			on_mob_life(var/mob/living/M, var/mult = 1)
+			on_mob_life(var/mob/living/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 
 				if (!data) data = 1
@@ -464,34 +464,34 @@ datum
 
 				var/col = min(data * 5, 255)
 				M.color = rgb(255, 255, 255 - col)
-				M.take_toxin_damage(1 * mult)
+				M.take_toxin_damage(1 * mult * temp_multiplier)
 
 				switch(data)
 					if (1 to 8)
 						if (prob(33))
 							boutput(M, "<span class='alert'>You feel weak.</span>")
-							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult))
+							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult * temp_multiplier))
 					if (9 to 30)
 						if (prob(33))
 							boutput(M, "<span class='alert'><I>You feel very weak.</I></span>")
-							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult))
+							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult * temp_multiplier))
 						if (prob(10))
 							boutput(M, "<span class='alert'><I>You have trouble breathing!</I></span>")
-							M.take_oxygen_deprivation(2 * mult)
-							M.losebreath += (1 * mult)
+							M.take_oxygen_deprivation(2 * mult * temp_multiplier)
+							M.losebreath += (1 * mult * temp_multiplier)
 					if (31 to 50)
 						if (prob(33))
 							boutput(M, "<span class='alert'><B>You feel horribly weak.</B></span>")
-							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 40 * mult))
+							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 40 * mult * temp_multiplier))
 						if (prob(10))
 							boutput(M, "<span class='alert'><B>You cannot breathe!</B></span>")
-							M.take_oxygen_deprivation(2 * mult)
-							M.losebreath += (1 * mult)
+							M.take_oxygen_deprivation(2 * mult * temp_multiplier)
+							M.losebreath += (1 * mult * temp_multiplier)
 						if (prob(10))
 							boutput(M, "<span class='alert'><B>Your heart flutters in your chest!</B></span>")
-							M.take_oxygen_deprivation(5 * mult)
-							M.losebreath += (1 * mult)
-							M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult))
+							M.take_oxygen_deprivation(5 * mult * temp_multiplier)
+							M.losebreath += (1 * mult * temp_multiplier)
+							M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult * temp_multiplier))
 					if (51 to INFINITY) //everything after
 						var/obj/critter/domestic_bee/B = new/obj/critter/domestic_bee(M.loc)
 						B.name = M.real_name
@@ -517,7 +517,7 @@ datum
 			transparency = 255
 			depletion_rate = 0.2
 
-			on_mob_life(var/mob/living/M, var/mult = 1)
+			on_mob_life(var/mob/living/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 
 				if (!data) data = 1
@@ -534,28 +534,28 @@ datum
 							if (1 to 4)
 								if (prob(33))
 									boutput(H, "<span class='alert'>You feel weak.</span>")
-									M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult))
+									M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult * temp_multiplier))
 							if (5 to 15)
 								if (prob(33))
 									boutput(H, "<span class='alert'><I>You feel very weak.</I></span>")
-									M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult))
+									M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult * temp_multiplier))
 								if (prob(10))
 									boutput(H, "<span class='alert'><I>You have trouble breathing!</I></span>")
-									H.take_oxygen_deprivation(2 * mult)
-									H.losebreath += (1 * mult)
+									H.take_oxygen_deprivation(2 * mult * temp_multiplier)
+									H.losebreath += (1 * mult * temp_multiplier)
 							if (16 to 25)
 								if (prob(33))
 									boutput(H, "<span class='alert'><B>You feel horribly weak.</B></span>")
-									M.setStatus("stunned", max(M.getStatusDuration("stunned"), 40 * mult))
+									M.setStatus("stunned", max(M.getStatusDuration("stunned"), 40 * mult * temp_multiplier))
 								if (prob(10))
 									boutput(H, "<span class='alert'><B>You cannot breathe!</B></span>")
-									H.take_oxygen_deprivation(2 * mult)
-									H.losebreath += (1 * mult)
+									H.take_oxygen_deprivation(2 * mult * temp_multiplier)
+									H.losebreath += (1 * mult * temp_multiplier)
 								if (prob(10))
 									boutput(H, "<span class='alert'><B>Your heart flutters in your chest!</B></span>")
-									H.take_oxygen_deprivation(5 * mult)
-									H.losebreath += (1 * mult)
-									M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult))
+									H.take_oxygen_deprivation(5 * mult * temp_multiplier)
+									H.losebreath += (1 * mult * temp_multiplier)
+									M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult * temp_multiplier))
 							if (26 to INFINITY)
 
 								var/obj/critter/domestic_bee/B
@@ -575,7 +575,7 @@ datum
 								B.update_icon()
 
 								playsound(H.loc, "sound/impact_sounds/Slimy_Splat_1.ogg", 50, 1)
-								take_bleeding_damage(H, null, rand(10,30) * mult, DAMAGE_STAB)
+								take_bleeding_damage(H, null, rand(10,30) * mult * temp_multiplier, DAMAGE_STAB)
 								H.visible_message("<span class='alert'><B>A bee bursts out of [H]'s chest! Oh fuck!</B></span>", \
 								"<span class='alert'><b>A bee bursts out of your chest! OH FUCK!</b></span>")
 								qdel(H.organHolder.heart)
@@ -597,7 +597,7 @@ datum
 			transparency = 255
 			depletion_rate = 0.2
 
-			on_mob_life(var/mob/living/M, var/mult = 1)
+			on_mob_life(var/mob/living/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 
 				if (!data) data = 1
@@ -605,7 +605,7 @@ datum
 
 				var/col = min(data * 5, 255)
 				M.color = rgb(255, 255, 255 - col)
-				M.take_toxin_damage(1 * mult)
+				M.take_toxin_damage(1 * mult * temp_multiplier)
 
 				if (ishuman(M))
 					var/mob/living/carbon/human/H = M
@@ -614,28 +614,28 @@ datum
 							if (1 to 4)
 								if (prob(33))
 									boutput(H, "<span class='alert'>You feel weak.</span>")
-									M.setStatus("weakened", max(M.getStatusDuration("weakened"), 20 * mult))
+									M.setStatus("weakened", max(M.getStatusDuration("weakened"), 20 * mult * temp_multiplier))
 							if (5 to 15)
 								if (prob(33))
 									boutput(H, "<span class='alert'><I>You feel very weak.</I></span>")
-									M.setStatus("weakened", max(M.getStatusDuration("weakened"), 30 * mult))
+									M.setStatus("weakened", max(M.getStatusDuration("weakened"), 30 * mult * temp_multiplier))
 								if (prob(10))
 									boutput(H, "<span class='alert'><I>You have trouble breathing!</I></span>")
-									H.take_oxygen_deprivation(2 * mult)
-									H.losebreath += (1 * mult)
+									H.take_oxygen_deprivation(2 * mult * temp_multiplier)
+									H.losebreath += (1 * mult * temp_multiplier)
 							if (16 to 25)
 								if (prob(33))
 									boutput(H, "<span class='alert'><B>You feel horribly weak.</B></span>")
-									M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult))
+									M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult * temp_multiplier))
 								if (prob(10))
 									boutput(H, "<span class='alert'><B>You cannot breathe!</B></span>")
-									H.take_oxygen_deprivation(2 * mult)
-									H.losebreath += (1 * mult)
+									H.take_oxygen_deprivation(2 * mult * temp_multiplier)
+									H.losebreath += (1 * mult * temp_multiplier)
 								if (prob(10))
 									boutput(H, "<span class='alert'><B>Your heart flutters in your chest!</B></span>")
-									H.take_oxygen_deprivation(5 * mult)
-									H.losebreath += (1 * mult)
-									M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult))
+									H.take_oxygen_deprivation(5 * mult * temp_multiplier)
+									H.losebreath += (1 * mult * temp_multiplier)
+									M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult * temp_multiplier))
 							if (26 to INFINITY)
 
 								var/obj/critter/domestic_bee/queen/B
@@ -693,7 +693,7 @@ datum
 						holder.my_atom:remove_stam_mod_max("r_cholesterol")
 				return
 
-			on_mob_life(var/mob/living/M, var/mult = 1)
+			on_mob_life(var/mob/living/M, var/mult = 1, var/temp_multiplier = 1)
 
 				if (!M) M = holder.my_atom
 				//if (prob(5)) // this is way too annoying and ruins fried foods
@@ -701,19 +701,19 @@ datum
 					//M.stunned ++
 				else if (holder.get_reagent_amount(src.id) >= 25 && prob(holder.get_reagent_amount(src.id)*0.15))
 					boutput(M, "<span class='alert'>Your chest feels [pick("weird","uncomfortable","nasty","gross","odd","unusual","warm")]!</span>")
-					M.take_toxin_damage(rand(1,2 * mult))
+					M.take_toxin_damage(rand(1,2 * mult * temp_multiplier))
 					if (prob(1))
 						M.contract_disease(/datum/ailment/malady/heartdisease, null, null, 1) // path, name, strain, bypass resist
 				else if (holder.get_reagent_amount(src.id) >= 45 && prob(holder.get_reagent_amount(src.id)*0.08))
 					boutput(M, "<span class='alert'>Your chest [pick("hurts","stings","aches","burns")]!</span>")
-					M.take_toxin_damage(rand(2,4) * mult)
-					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult))
+					M.take_toxin_damage(rand(2,4) * mult * temp_multiplier)
+					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult * temp_multiplier))
 					if (prob(5))
 						M.contract_disease(/datum/ailment/malady/heartdisease, null, null, 1) // path, name, strain, bypass resist
 				else if (holder.get_reagent_amount(src.id) >= 150 && prob(holder.get_reagent_amount(src.id)*0.01))
 					boutput(M, "<span class='alert'>Your chest is burning with pain!</span>")
-					//M.losebreath += (1 * mult) //heartfailure handles this just fine
-					M.setStatus("weakened", max(M.getStatusDuration("weakened"), 30 * mult))
+					//M.losebreath += (1 * mult * temp_multiplier) //heartfailure handles this just fine
+					M.setStatus("weakened", max(M.getStatusDuration("weakened"), 30 * mult * temp_multiplier))
 					M.contract_disease(/datum/ailment/malady/heartdisease, null, null, 1) // path, name, strain, bypass resist
 				..()
 
@@ -735,7 +735,7 @@ datum
 			depletion_rate = 0.3
 			penetrates_skin = 1
 
-			on_mob_life(var/mob/M, var/mult = 1) // commence the tickling
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1) // commence the tickling
 				if (!M) M = holder.my_atom
 				if (prob(25)) M.emote(pick("twitch", "laugh", "sneeze", "cry"))
 				if (prob(20))
@@ -743,18 +743,18 @@ datum
 					M.emote(pick("laugh", "giggle"))
 				if (prob(15))
 					M.visible_message("<span class='alert'><b>[M.name]</b> scratches at an itch.</span>")
-					random_brute_damage(M, 1 * mult)
-					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult))
+					random_brute_damage(M, 1 * mult * temp_multiplier)
+					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult * temp_multiplier))
 					M.emote("grumble")
 				if (prob(10))
 					boutput(M, "<span class='alert'><b>So itchy!</b></span>")
-					random_brute_damage(M, 2 * mult)
+					random_brute_damage(M, 2 * mult * temp_multiplier)
 				if (prob(6))
-					M.reagents.add_reagent("histamine", rand(1,3) * mult)
+					M.reagents.add_reagent("histamine", rand(1,3) * mult * temp_multiplier)
 				if (prob(2))
 					boutput(M, "<span class='alert'><b><font size='[rand(2,5)]'>AHHHHHH!</font></b></span>")
-					random_brute_damage(M,5 * mult)
-					M.setStatus("weakened", max(M.getStatusDuration("weakened"), 60 * mult))
+					random_brute_damage(M,5 * mult * temp_multiplier)
+					M.setStatus("weakened", max(M.getStatusDuration("weakened"), 60 * mult * temp_multiplier))
 					M.make_jittery(6)
 					M.visible_message("<span class='alert'><b>[M.name]</b> falls to the floor, scratching themselves violently!</span>")
 					M.emote("scream")
@@ -773,10 +773,10 @@ datum
 			dispersal = 1
 			blob_damage = 4
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
-				M.take_toxin_damage(1 * mult)
-				M.TakeDamage("chest", 0, 1 * mult, 0, DAMAGE_BURN)
+				M.take_toxin_damage(1 * mult * temp_multiplier)
+				M.TakeDamage("chest", 0, 1 * mult * temp_multiplier, 0, DAMAGE_BURN)
 				..()
 				return
 
@@ -897,24 +897,24 @@ datum
 						holder.my_atom:remove_stam_mod_max("r_pancuronium")
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 				if (!counter) counter = 1
-				switch(counter += (1 * mult))
+				switch(counter += (1 * mult * temp_multiplier))
 					if (1 to 5)
 						if (prob(10))
 							M.emote(pick("drool", "tremble"))
 					if (6 to 10)
 						if (prob(8))
 							boutput(M, "<span class='alert'><b>You feel [pick("weak", "horribly weak", "numb", "like you can barely move", "tingly")].</b></span>")
-							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult))
+							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult * temp_multiplier))
 						else if (prob(8))
 							M.emote(pick("drool", "tremble"))
 					if (11 to INFINITY)
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 200 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 200 * mult * temp_multiplier))
 						if (prob(10))
 							M.emote(pick("drool", "tremble", "gasp"))
-							M.losebreath += (1 * mult)
+							M.losebreath += (1 * mult * temp_multiplier)
 						if (prob(9))
 							boutput(M, "<span class='alert'><b>You can't [pick("move", "feel your legs", "feel your face", "feel anything")]!</b></span>")
 						if (prob(7))
@@ -936,9 +936,9 @@ datum
 			penetrates_skin = 1
 			blob_damage = 3
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
-				M.changeStatus("radiation", 50 * mult, 4)
+				M.changeStatus("radiation", 50 * mult * temp_multiplier, 4)
 				..()
 				return
 
@@ -975,27 +975,27 @@ datum
 						holder.my_atom:remove_stam_mod_max("r_sodium_thiopental")
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 				if (!counter) counter = 1
 
-				switch(counter+= (1 * mult))
+				switch(counter+= (1 * mult * temp_multiplier))
 					if (1)
 						M.emote("drool")
-						M.change_misstep_chance(5 * mult)
+						M.change_misstep_chance(5 * mult * temp_multiplier)
 					if (2 to 4)
 						M.drowsyness = max(M.drowsyness, 20)
 					if (5)
 						M.emote("faint")
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult * temp_multiplier))
 					if (6 to INFINITY)
-						M.setStatus("paralysis", max(M.getStatusDuration("paralysis"), 50 * mult))
+						M.setStatus("paralysis", max(M.getStatusDuration("paralysis"), 50 * mult * temp_multiplier))
 
 				M.jitteriness = max(M.jitteriness-50,0)
 
 				if (prob(10))
 					M.emote("drool")
-					M.take_brain_damage(1 * mult)
+					M.take_brain_damage(1 * mult * temp_multiplier)
 
 				..()
 				return
@@ -1030,7 +1030,7 @@ datum
 						holder.my_atom:remove_stam_mod_max("r_ketamine")
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1) // sped this up a bit due to mob loop changes
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1) // sped this up a bit due to mob loop changes
 				if (!M) M = holder.my_atom
 				if (!counter) counter = 1
 				switch(counter += 1)
@@ -1041,9 +1041,9 @@ datum
 						if (prob(35)) M.emote("yawn")
 					if (10)
 						M.emote("faint")
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult))
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult * temp_multiplier))
 					if (11 to INFINITY)
-						M.setStatus("paralysis", max(M.getStatusDuration("paralysis"), 250 * mult))
+						M.setStatus("paralysis", max(M.getStatusDuration("paralysis"), 250 * mult * temp_multiplier))
 
 				..()
 				return
@@ -1078,12 +1078,12 @@ datum
 						holder.my_atom:remove_stam_mod_max("r_sulfonal")
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 				if (!counter) counter = 1
 				M.jitteriness = max(M.jitteriness-30,0)
 
-				switch(counter+= (1 * mult))
+				switch(counter+= (1 * mult * temp_multiplier))
 					if (1 to 10)
 						if (prob(7)) M.emote("yawn")
 					if (11 to 20)
@@ -1093,9 +1093,9 @@ datum
 					if (22 to INFINITY)
 						if (prob(20))
 							M.emote("faint")
-							M.setStatus("paralysis", max(M.getStatusDuration("paralysis"), 80 * mult))
+							M.setStatus("paralysis", max(M.getStatusDuration("paralysis"), 80 * mult * temp_multiplier))
 						M.drowsyness  = max(M.drowsyness, 20)
-				M.take_toxin_damage(1 * mult)
+				M.take_toxin_damage(1 * mult * temp_multiplier)
 				..()
 				return
 
@@ -1110,9 +1110,9 @@ datum
 			transparency = 20
 			blob_damage = 1
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
-				M.take_toxin_damage(2 * mult)
+				M.take_toxin_damage(2 * mult * temp_multiplier)
 				..()
 				return
 
@@ -1130,25 +1130,25 @@ datum
 			transparency = 200
 			depletion_rate = 0.2
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 
 				var/our_amt = holder.get_reagent_amount(src.id)
 				if (prob(25))
-					M.reagents.add_reagent("histamine", rand(5,10) * mult)
+					M.reagents.add_reagent("histamine", rand(5,10) * mult * temp_multiplier)
 				if (our_amt < 20)
-					M.take_toxin_damage(1 * mult)
-					random_brute_damage(M, 1 * mult)
+					M.take_toxin_damage(1 * mult * temp_multiplier)
+					random_brute_damage(M, 1 * mult * temp_multiplier)
 				else if (our_amt < 40)
 					if (prob(8))
 						M.visible_message("<span class='alert'>[M] pukes all over \himself.</span>", "<span class='alert'>You puke all over yourself!</span>")
 						M.vomit()
-					M.take_toxin_damage(2 * mult)
-					random_brute_damage(M, 2 * mult)
+					M.take_toxin_damage(2 * mult * temp_multiplier)
+					random_brute_damage(M, 2 * mult * temp_multiplier)
 
 				if (our_amt > 40 && prob(4))
 					M.visible_message("<span class='alert'><B>[M]</B> starts convulsing violently!</span>", "You feel as if your body is tearing itself apart!")
-					M.setStatus("weakened", max(M.getStatusDuration("weakened"), 150 * mult))
+					M.setStatus("weakened", max(M.getStatusDuration("weakened"), 150 * mult * temp_multiplier))
 					M.make_jittery(1000)
 					SPAWN_DBG(rand(20, 100))
 						if (M) //ZeWaka: Fix for null.gib
@@ -1176,34 +1176,34 @@ datum
 				..()
 				counter = 1
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 				if (!counter) counter = 1
-				switch(counter += (1 * mult))
+				switch(counter += (1 * mult * temp_multiplier))
 					if (1 to 4)
 						return // let's not be incredibly obvious about who stung you for changelings
 					if (5 to 10)
-						M.make_dizzy(1 * mult)
-						M.change_misstep_chance(10 * mult)
+						M.make_dizzy(1 * mult * temp_multiplier)
+						M.change_misstep_chance(10 * mult * temp_multiplier)
 						if (prob(20)) M.emote("drool")
 					if (11 to 17)
 						M.drowsyness  = max(M.drowsyness, 10)
-						M.make_dizzy(1 * mult)
-						M.change_misstep_chance(20 * mult)
+						M.make_dizzy(1 * mult * temp_multiplier)
+						M.change_misstep_chance(20 * mult * temp_multiplier)
 						if (prob(35)) M.emote("drool")
 					if (18 to INFINITY)
 						if (!fainted)
 							M.emote("faint")
 					if (19 to INFINITY)
-						M.setStatus("paralysis", max(M.getStatusDuration("paralysis"), 100 * mult))
+						M.setStatus("paralysis", max(M.getStatusDuration("paralysis"), 100 * mult * temp_multiplier))
 						M.drowsyness  = max(M.drowsyness, 20)
 
 				M.jitteriness = max(M.jitteriness-30,0)
 				if (M.get_brain_damage() <= 80)
-					M.take_brain_damage(1 * mult)
+					M.take_brain_damage(1 * mult * temp_multiplier)
 				else
-					if (prob(10)) M.take_brain_damage(1 * mult) // let's slow down a bit after 80
-				M.take_toxin_damage(1 * mult)
+					if (prob(10)) M.take_brain_damage(1 * mult * temp_multiplier) // let's slow down a bit after 80
+				M.take_toxin_damage(1 * mult * temp_multiplier)
 				..(M, mult)
 				return
 
@@ -1226,9 +1226,9 @@ datum
 					M.bioHolder.RandomEffect("bad")
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
-				M.changeStatus("radiation", 30 * mult, 1)
+				M.changeStatus("radiation", 30 * mult * temp_multiplier, 1)
 				var/mutChance = 4
 				if (M.traitHolder && M.traitHolder.hasTrait("stablegenes")) mutChance = 2
 				if (prob(mutChance))
@@ -1262,9 +1262,9 @@ datum
 					M.bioHolder.RandomEffect("bad")
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
-				M.changeStatus("radiation", 20 * mult)
+				M.changeStatus("radiation", 20 * mult * temp_multiplier)
 				// DNA buckshot
 				var/mutChance = 15
 				if (M.traitHolder && M.traitHolder.hasTrait("stablegenes")) mutChance = 7
@@ -1319,19 +1319,19 @@ datum
 			fluid_g = 198
 			transparency = 20
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 				M.take_toxin_damage(2)
 				if (prob(4))
 					M.emote("drool")
 				if (prob(8))
 					boutput(M, "<span class='alert'>You cannot breathe!</span>")
-					M.losebreath += (1 * mult)
+					M.losebreath += (1 * mult * temp_multiplier)
 					M.emote("gasp")
 				if (prob(10))
 					boutput(M, "<span class='alert'>You feel horribly weak.</span>")
-					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult))
-					M.take_toxin_damage(2 * mult)
+					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult * temp_multiplier))
+					M.take_toxin_damage(2 * mult * temp_multiplier)
 				..()
 				return
 
@@ -1345,14 +1345,14 @@ datum
 			fluid_b = 30
 			transparency = 255
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 
 				if (!M) M = holder.my_atom
 				if (prob(10))
-					M.take_toxin_damage(rand(2.4) * mult)
+					M.take_toxin_damage(rand(2.4) * mult * temp_multiplier)
 				if (prob(7))
 					boutput(M, "<span class='alert'>A horrible migraine overpowers you.</span>")
-					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult))
+					M.setStatus("stunned", max(M.getStatusDuration("stunned"), 30 * mult * temp_multiplier))
 				if (prob(7))
 					for(var/mob/O in AIviewers(M, null))
 						O.show_message("<span class='alert'>[M] vomits up some green goo.</span>", 1)
@@ -1372,7 +1372,7 @@ datum
 			depletion_rate = 0.2
 			overdose = 40
 
-			on_mob_life(var/mob/M, var/mult = 1) // allergies suck fyi
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1) // allergies suck fyi
 				if (!M) M = holder.my_atom
 				if (prob(20)) M.emote(pick("twitch", "grumble", "sneeze", "cough"))
 				if (prob(10))
@@ -1381,11 +1381,11 @@ datum
 					M.change_eye_blurry(3, 3)
 				if (prob(10))
 					M.visible_message("<span class='alert'><b>[M.name]</b> scratches at an itch.</span>")
-					random_brute_damage(M, 1 * mult)
+					random_brute_damage(M, 1 * mult * temp_multiplier)
 					M.emote("grumble")
 				if (prob(5))
 					boutput(M, "<span class='alert'><b>You're getting a rash!</b></span>")
-					random_brute_damage(M, 2 * mult)
+					random_brute_damage(M, 2 * mult * temp_multiplier)
 
 				// Hyperallergic
 				if(M.traitHolder.hasTrait("allergic"))
@@ -1403,27 +1403,27 @@ datum
 					M.emote(pick("drool"))
 				return
 
-			do_overdose(var/severity, var/mob/M, var/mult = 1)
+			do_overdose(var/severity, var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				var/effect = ..(severity, M)
 				if (severity == 1)
 					if (effect <= 2)
 						boutput(M, "<span class='alert'><b>You feel mucus running down the back of your throat.</b></span>")
-						M.take_toxin_damage(1 * mult)
+						M.take_toxin_damage(1 * mult * temp_multiplier)
 						M.make_jittery(4)
 						M.emote("sneeze", "cough")
 					else if (effect <= 4)
 						M.stuttering += rand(0,5)
 						if (prob(25))
 							M.emote(pick("choke","gasp"))
-							M.take_oxygen_deprivation(5 * mult)
+							M.take_oxygen_deprivation(5 * mult * temp_multiplier)
 					else if (effect <= 7)
 						boutput(M, "<span class='alert'><b>Your chest hurts!</b></span>")
 						M.emote(pick("cough","gasp"))
-						M.take_oxygen_deprivation(3 * mult)
+						M.take_oxygen_deprivation(3 * mult * temp_multiplier)
 				else if (severity == 2)
 					if (effect <= 2)
 						M.visible_message("<span class='alert'><b>[M.name]<b> breaks out in hives!</span>")
-						random_brute_damage(M, 6 * mult)
+						random_brute_damage(M, 6 * mult * temp_multiplier)
 					else if (effect <= 4)
 						M.visible_message("<span class='alert'><b>[M.name]</b> has a horrible coughing fit!</span>")
 						M.make_jittery(10)
@@ -1431,15 +1431,15 @@ datum
 						M.emote("cough")
 						if (prob(40))
 							M.emote(pick("choke","gasp"))
-							M.take_oxygen_deprivation(6 * mult)
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 80 * mult))
+							M.take_oxygen_deprivation(6 * mult * temp_multiplier)
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 80 * mult * temp_multiplier))
 					else if (effect <= 7)
 						boutput(M, "<span class='alert'><b>Your heartbeat is pounding inside your head!</b></span>")
 						M.playsound_local(M.loc, "heartbeat.ogg", 50, 1)
 						M.emote("collapse")
-						M.take_oxygen_deprivation(8 * mult)
-						M.take_toxin_damage(3 * mult)
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult))
+						M.take_oxygen_deprivation(8 * mult * temp_multiplier)
+						M.take_toxin_damage(3 * mult * temp_multiplier)
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult * temp_multiplier))
 						M.emote(pick("choke", "gasp"))
 						boutput(M, "<span class='alert'><b>You feel like you're dying!</b></span>")
 
@@ -1462,14 +1462,14 @@ datum
 				..()
 				counter = 1
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 
 				var/progression_speed = 1
 				if(M.reagents.has_reagent("epinephrine"))
 					progression_speed = 0.8
 
-				switch(counter+= (progression_speed * mult))
+				switch(counter+= (progression_speed * mult * temp_multiplier))
 					if (1 to 15)
 						M.make_jittery(20)
 						if (prob(20))
@@ -1480,40 +1480,40 @@ datum
 						M.change_eye_blurry(5, 5)
 						M.stuttering = max(M.stuttering, 5)
 						if (prob(10))
-							M.change_misstep_chance(15 * mult)
+							M.change_misstep_chance(15 * mult * temp_multiplier)
 						if (prob(15))
-							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult))
+							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult * temp_multiplier))
 							if (!isdead(M))
 								M.emote("scream")
 					if (30 to 60)
 						M.change_eye_blurry(5, 5)
 						M.stuttering = max(M.stuttering, 5)
 						if (prob(10))
-							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult))
+							M.setStatus("stunned", max(M.getStatusDuration("stunned"), 20 * mult * temp_multiplier))
 							M.emote(pick("twitch","twitch_v","drool","shake","tremble"))
 						if (prob(5))
 							M.emote("collapse")
 						if (prob(5))
-							M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult))
+							M.setStatus("weakened", max(M.getStatusDuration("weakened"), 40 * mult * temp_multiplier))
 							M.visible_message("<span class='alert'><b>[M] has a seizure!</b></span>")
 							M.make_jittery(1000)
 						if (prob(5))
 							boutput(M, "<span class='alert'><b>You can't breathe!</b></span>")
 							M.emote(pick("gasp", "choke", "cough"))
-							M.losebreath += (1 * mult)
+							M.losebreath += (1 * mult * temp_multiplier)
 					if (61 to INFINITY)
 						if (prob(15))
 							M.emote(pick("gasp", "choke", "cough","twitch", "shake", "tremble","quiver","drool", "twitch_v","collapse"))
-						M.losebreath = max(5, M.losebreath + (5 * mult))
-						M.take_toxin_damage(1 * mult)
-						M.take_brain_damage(1 * mult)
-						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult))
+						M.losebreath = max(5, M.losebreath + (5 * mult * temp_multiplier))
+						M.take_toxin_damage(1 * mult * temp_multiplier)
+						M.take_brain_damage(1 * mult * temp_multiplier)
+						M.setStatus("weakened", max(M.getStatusDuration("weakened"), 50 * mult * temp_multiplier))
 				if (prob(8))
 					M.visible_message("<span class='alert'>[M] pukes all over \himself.</span>", "<span class='alert'>You puke all over yourself!</span>")
 					M.vomit()
-				M.take_toxin_damage(1 * mult)
-				M.take_brain_damage(1 * mult)
-				M.TakeDamage("chest", 0, 1 * mult, 0, DAMAGE_BURN)
+				M.take_toxin_damage(1 * mult * temp_multiplier)
+				M.take_brain_damage(1 * mult * temp_multiplier)
+				M.TakeDamage("chest", 0, 1 * mult * temp_multiplier, 0, DAMAGE_BURN)
 				..()
 				return
 
@@ -1536,7 +1536,7 @@ datum
 				progress_timer = 1
 
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 				//M.changeStatus("radiation", 30, 1)
 				if (!src.data) // Pull bioholder data from blood that's in the same reagentholder
@@ -1551,7 +1551,7 @@ datum
 
 				if (src.data && M.bioHolder && progress_timer <= 10)
 
-					M.bioHolder.StaggeredCopyOther(data, progress_timer+=(1 * mult))
+					M.bioHolder.StaggeredCopyOther(data, progress_timer+=(1 * mult * temp_multiplier))
 					if (prob(50) && progress_timer > 7)
 						boutput(M, "<span class='notice'>You feel a little [pick("unlike yourself", "out of it", "different", "strange")].</span>")
 					if (progress_timer > 10)
@@ -1618,12 +1618,12 @@ datum
 
 			//MBC : you may be wondering why this looks so weird
 			//we need to proc tiered effects IN ORDER, even if they were skipped! that is why! also im bad but this works fine its just harder to read than the OG way ok
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if (!M) M = holder.my_atom
 				var/mob/living/carbon/human/H = M
 				if (!istype(H)) return
 
-				data+=(1 * mult)
+				data+=(1 * mult * temp_multiplier)
 
 				if (t1 && data >= t1)
 					if (prob(33))
@@ -1693,7 +1693,7 @@ datum
 					t7 = 0
 
 					if (prob(20)) //The AI is in control now.
-						H.change_misstep_chance(100 * mult)
+						H.change_misstep_chance(100 * mult * temp_multiplier)
 						H.show_text("You can't seem to control your legs!", "red")
 
 					if (prob(10)) //Stronk
@@ -1724,7 +1724,7 @@ datum
 
 					//POWER UP!!
 					if (prob(20)) //The AI is in control now.
-						H.change_misstep_chance(100 * mult)
+						H.change_misstep_chance(100 * mult * temp_multiplier)
 						H.show_text("You can't seem to control your legs!", "red")
 
 					if (prob(20)) //V. Stronk
@@ -1734,7 +1734,7 @@ datum
 						H.delStatus("paralysis")
 						H.delStatus("disorient")
 
-				H.take_brain_damage(0.5 * mult)
+				H.take_brain_damage(0.5 * mult * temp_multiplier)
 
 				..()
 			on_remove()
@@ -1765,12 +1765,12 @@ datum
 			transparency = 255
 			depletion_rate = 0.2
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 
 				var/mob/living/carbon/human/H = M
 				if (!istype(H)) return
 
-				switch(data+=(1 * mult))
+				switch(data+=(1 * mult * temp_multiplier))
 
 					if(2) //Just started out. Everything's cool
 						H.add_stam_mod_max(src.id, 75)
@@ -1799,7 +1799,7 @@ datum
 				H.remove_stam_mod_regen(src.id)
 
 
-			proc/do_stuff(var/severity, var/mob/living/carbon/human/H, var/mult = 1)
+			proc/do_stuff(var/severity, var/mob/living/carbon/human/H, var/mult = 1, var/temp_multiplier = 1)
 				if(!istype(H)) return
 
 				switch(severity)
@@ -1811,10 +1811,10 @@ datum
 								H.show_text(pick_string("chemistry_reagent_messages.txt", "strychnine1"), "red")
 							if(4) //Drop stuff
 								H.show_text(pick_string("chemistry_reagent_messages.txt", "strychnine1b"), "red")
-								H.changeStatus("stunned", 10 * mult)
+								H.changeStatus("stunned", 10 * mult * temp_multiplier)
 							if(5) //Trip
 								H.show_text(pick_string("chemistry_reagent_messages.txt", "strychnine1c"), "red")
-								H.changeStatus("weakened", 20 * mult)
+								H.changeStatus("weakened", 20 * mult * temp_multiplier)
 							if(6) //Light-headedness
 								H.show_text("You feel light-headed.", "red")
 								H.drowsyness += rand(2,4)
@@ -1824,17 +1824,17 @@ datum
 							if(1) //Chest-heaviness
 								H.show_text("Your chest feels heavy.", "red")
 								H.emote(pick("gasp", "choke", "cough"))
-								H.losebreath += (1 * mult)
+								H.losebreath += (1 * mult * temp_multiplier)
 								H.oxyloss += rand(5, 10) * mult
 							if(2) //Drop stuff
 								H.show_text(pick_string("chemistry_reagent_messages.txt", "strychnine2"), "red")
-								H.changeStatus("stunned", 20 * mult)
-								H.change_misstep_chance(20 * mult)
+								H.changeStatus("stunned", 20 * mult * temp_multiplier)
+								H.change_misstep_chance(20 * mult * temp_multiplier)
 							if(3) //Trip
 								H.show_text(pick_string("chemistry_reagent_messages.txt", "strychnine2b"), "red")
 								H.visible_message("<span class='combat bold'>[H] stumbles and falls!</span>")
 								if(prob(10)) H.emote("scream")
-								H.changeStatus("weakened", 20 * mult)
+								H.changeStatus("weakened", 20 * mult * temp_multiplier)
 							if(4) //Light-headedness
 								H.show_text("You feel like you are about to faint!", "red")
 								H.drowsyness += rand(4,7)
@@ -1852,7 +1852,7 @@ datum
 
 						if(prob(50))
 							H.emote("scream") //It REALLY hurts
-							H.TakeDamage(zone="All", brute=rand(2,5) * mult)
+							H.TakeDamage(zone="All", brute=rand(2,5) * mult * temp_multiplier)
 
 					if(prob(clamp(data/1.5, 100, 30))) //At least 30% risk of oxy damage
 						if(prob(50))H.emote(pick("gasp", "choke", "cough"))
@@ -1869,5 +1869,5 @@ datum
 						H.visible_message("<span class='alert'>[H] [damage > 3 ? "vomits" : "coughs up"] blood!</span>", "<span class='alert'>You [damage > 3 ? "vomit" : "cough up"] blood!</span>")
 						playsound(H.loc, "sound/impact_sounds/Slimy_Splat_1.ogg", 50, 1)
 						H.TakeDamage(zone="All", brute=damage)
-						bleed(H, damage * 2 * mult, 3)
+						bleed(H, damage * 2 * mult * temp_multiplier, 3)
 

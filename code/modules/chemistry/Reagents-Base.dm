@@ -70,7 +70,7 @@ datum
 			transparency = 60
 			penetrates_skin = 1
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				M.TakeDamage("chest", 0, 1*mult, 0, DAMAGE_BURN)
 				..()
@@ -112,7 +112,7 @@ datum
 			transparency = 60
 			penetrates_skin = 1
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				M.take_toxin_damage(1*mult) // buffin this because fluorine is horrible - adding a burn effect
 				M.TakeDamage("chest", 0, 1*mult, 0, DAMAGE_BURN)
@@ -150,7 +150,7 @@ datum
 					holder.my_atom.delStatus("drunk")
 				return
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 
 				if (isliving(M))
@@ -162,7 +162,7 @@ datum
 							H.stuttering += 1
 							if (H.canmove && isturf(H.loc) && prob(10))
 								step(H, pick(cardinal))
-							if (prob(20)) H.make_dizzy(rand(3,5) * mult)
+							if (prob(20)) H.make_dizzy(rand(3,5) * mult * temp_multiplier)
 						if (holder.get_reagent_amount(src.id) >= 25)
 							liver_damage = 0.25
 							if(prob(10)) H.emote(pick("hiccup", "burp"))
@@ -184,27 +184,27 @@ datum
 							if (H.canmove && isturf(H.loc) && prob(15))
 								step(H, pick(cardinal))
 							if(prob(4))
-								H.change_misstep_chance(20 * mult)
+								H.change_misstep_chance(20 * mult * temp_multiplier)
 							if(prob(6))
 								H.visible_message("<span class='alert'>[H] pukes all over \himself.</span>")
 								H.vomit()
 							if(prob(15))
-								H.make_dizzy(5 * mult)
+								H.make_dizzy(5 * mult * temp_multiplier)
 						if (holder.get_reagent_amount(src.id) >= 60)
 							H.change_eye_blurry(10 , 50)
 							if(prob(6)) H.drowsyness += 5
-							if(prob(5)) H.take_toxin_damage(rand(1,2) * mult)
+							if(prob(5)) H.take_toxin_damage(rand(1,2) * mult * temp_multiplier)
 
 					if (ishuman(M))
 						var/mob/living/carbon/human/HH = M
 						if (HH.organHolder && HH.organHolder.liver)			//Hax here, lazy. currently only organ is liver. fix when adding others. -kyle
 							if (HH.organHolder.liver.robotic)
-								M.take_toxin_damage(-liver_damage * 3 * mult)
+								M.take_toxin_damage(-liver_damage * 3 * mult * temp_multiplier)
 							else
 								HH.organHolder.damage_organ(0, 0, liver_damage*mult, "liver")
 					..()
 
-			do_overdose(var/severity, var/mob/M, var/mult = 1)
+			do_overdose(var/severity, var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				//Maybe add a bit that gives you a stamina buff if OD-ing on ethanol and you have a cyberliver.
 				var/mob/living/carbon/human/H = M
 				if (!istype(H) || !isalcoholresistant(H))
@@ -214,11 +214,11 @@ datum
 						if (H.organHolder)
 							var/damage = rand(1,3)
 							if (H.organHolder.left_kidney && prob(30))
-								H.organHolder.damage_organ(0,0,damage * mult * (!H.organHolder.left_kidney.robotic), "left_kidney")
+								H.organHolder.damage_organ(0,0,damage * mult * temp_multiplier * (!H.organHolder.left_kidney.robotic), "left_kidney")
 							if (H.organHolder.right_kidney && prob(30))
-								H.organHolder.damage_organ(0,0,damage * mult * (!H.organHolder.right_kidney.robotic), "right_kidney")
+								H.organHolder.damage_organ(0,0,damage * mult * temp_multiplier * (!H.organHolder.right_kidney.robotic), "right_kidney")
 							if (H.organHolder.liver && prob(30))
-								H.organHolder.damage_organ(0,0,damage * mult * (!H.organHolder.liver.robotic), "liver")
+								H.organHolder.damage_organ(0,0,damage * mult * temp_multiplier * (!H.organHolder.liver.robotic), "liver")
 
 					if (prob(1))
 						H.contract_disease(/datum/ailment/malady/heartdisease,null,null,1)
@@ -256,14 +256,14 @@ datum
 			overdose = 20
 			pathogen_nutrition = list("iron")
 
-			on_mob_life(var/mob/living/H, var/mult = 1)
+			on_mob_life(var/mob/living/H, var/mult = 1, var/temp_multiplier = 1)
 				..()
 				if (H.can_bleed)
 					H.blood_volume += 0.5 * mult
 					if(prob(10))
-						H.take_oxygen_deprivation(-1 * mult)
-			do_overdose(var/severity, var/mob/M, var/mult = 1)
-				M.take_toxin_damage(1 * mult) // Iron overdose fucks you up bad
+						H.take_oxygen_deprivation(-1 * mult * temp_multiplier)
+			do_overdose(var/severity, var/mob/M, var/mult = 1, var/temp_multiplier = 1)
+				M.take_toxin_damage(1 * mult * temp_multiplier) // Iron overdose fucks you up bad
 				if(prob(5))
 					if (M.nutrition > 10) // Not good for your stomach either
 						for(var/mob/O in viewers(M, null))
@@ -285,7 +285,7 @@ datum
 			fluid_b = 220
 			transparency = 255
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(M.canmove && isturf(M.loc))
 					step(M, pick(cardinal))
@@ -322,7 +322,7 @@ datum
 			touch_modifier = 0.2
 			depletion_rate = 0.2
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(prob(70))
 					M.take_brain_damage(1*mult)
@@ -403,11 +403,11 @@ datum
 							SPAWN_DBG(1 DECI SECOND) fireflash(t, min(max(0,((volume/covered.len)/15)),6))
 						holder.del_reagent(id)
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if(holder.has_reagent("epinephrine"))
-					holder.remove_reagent("epinephrine", 2 * mult)
-				M.take_toxin_damage(1 * mult)
+					holder.remove_reagent("epinephrine", 2 * mult * temp_multiplier)
+				M.take_toxin_damage(1 * mult * temp_multiplier)
 				..()
 				return
 
@@ -542,18 +542,18 @@ datum
 						M.remove_stam_mod_regen("r_sugar")
 				..()
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				M.make_jittery(2 )
 				M.drowsyness = max(M.drowsyness-(5), 0)
 				if(prob(4))
-					M.reagents.add_reagent("epinephrine", 1.2 * mult) // let's not metabolize into meth anymore
+					M.reagents.add_reagent("epinephrine", 1.2 * mult * temp_multiplier) // let's not metabolize into meth anymore
 				//if(prob(2))
 					//M.reagents.add_reagent("cholesterol", rand(1,3))
 				..()
 				return
 
-			do_overdose(var/severity, var/mob/M, var/mult = 1)
+			do_overdose(var/severity, var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				if (M.bioHolder?.HasEffect("bee"))
 
@@ -582,11 +582,11 @@ datum
 					if (!M.getStatusDuration("paralysis"))
 						boutput(M, "<span class='alert'>You pass out from hyperglycemic shock!</span>")
 						M.emote("collapse")
-						//M.changeStatus("paralysis", ((2 * severity)*15) * mult)
-						M.changeStatus("weakened", ((4 * severity)*15) * mult)
+						//M.changeStatus("paralysis", ((2 * severity)*15) * mult * temp_multiplier)
+						M.changeStatus("weakened", ((4 * severity)*15) * mult * temp_multiplier)
 
 					if (prob(8))
-						M.take_toxin_damage(severity * mult)
+						M.take_toxin_damage(severity * mult * temp_multiplier)
 				return
 
 		//WHY IS SWEET ***TEA*** A SUBTYPE OF SUGAR?!?!?!?!
@@ -647,7 +647,7 @@ datum
 				if(prob(10))
 					description += " Keep away from forums."
 
-			on_mob_life(var/mob/M, var/mult = 1)
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
 				M.changeStatus("radiation", 30*mult, 1)
 				..()
@@ -690,9 +690,9 @@ datum
 			fluid_b = 40
 			transparency = 255
 
-			on_mob_life(var/mob/M, var/mult = 1 )
+			on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 				if(!M) M = holder.my_atom
-				M.changeStatus("radiation", 30 * mult, 1)
+				M.changeStatus("radiation", 30 * mult * temp_multiplier, 1)
 				..()
 				return
 
@@ -722,7 +722,7 @@ datum
 			description = "A ubiquitous chemical substance that is composed of hydrogen and oxygen."
 #endif
 
-			on_mob_life(var/mob/living/L, var/mult = 1)
+			on_mob_life(var/mob/living/L, var/mult = 1, var/temp_multiplier = 1)
 				..()
 				if (ishuman(L))
 					var/mob/living/carbon/human/H = L

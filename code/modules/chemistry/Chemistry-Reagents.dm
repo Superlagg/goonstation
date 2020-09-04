@@ -249,7 +249,7 @@ datum
 		proc/on_plant_life(var/obj/machinery/plantpot/P)
 			if (!P) return
 
-		proc/check_overdose(var/mob/M, var/mult = 1)
+		proc/check_overdose(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 			if (!M || !M.reagents)
 				return
 			if (!holder)
@@ -264,7 +264,7 @@ datum
 			else if (amount >= src.overdose)
 				return do_overdose(1, M, mult)
 
-		proc/do_overdose(var/severity, var/mob/M, var/mult = 1)
+		proc/do_overdose(var/severity, var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 			// if there's ever stuff that all drug overdoses should do, put it here
 			// for now all this is used for is to determine which overdose effect will happen
 			// and allow the individual effects' scale to be adjusted by severity in one spot

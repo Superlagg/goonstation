@@ -179,7 +179,7 @@ About Reagents:
 			with a turf. You'll want to put stuff like extra
 			slippery floors for lube or something in here.
 
-		on_mob_life(var/mob/M, var/mult = 1)
+		on_mob_life(var/mob/M, var/mult = 1, var/temp_multiplier = 1)
 			This proc is called everytime the mobs life proc executes.
 			This is the place where you put damage for toxins ,
 			drowsyness for sleep toxins etc etc.
