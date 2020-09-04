@@ -954,6 +954,7 @@
 		pixelaction(atom/target, params, mob/user, reach)
 			if(!isturf(target.loc) && !isturf(target)) return
 			if(!usable(user)) return
+			if(user.a_intent != INTENT_DISARM) return //only want this to deploy on disarm intent
 			if(master && istype(master, /obj/item/baton) && !master:can_stun())
 				playsound(get_turf(master), 'sound/weapons/Gunclick.ogg', 50, 0, 0.1, 2)
 				return
@@ -1682,7 +1683,7 @@
 						if (tile)
 							hit = 1
 							user.visible_message("<span class='alert'><b>[user] flings a tile from [turf] into the air!</b></span>")
-							logTheThing("combat", user, "fling throws a floor tile ([F]) from [turf].")
+							logTheThing("combat", user, null, "fling throws a floor tile ([F]) from [turf].")
 
 							user.lastattacked = user //apply combat click delay
 							tile.throw_at(target, tile.throw_range, tile.throw_speed, params)

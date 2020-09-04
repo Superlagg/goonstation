@@ -148,8 +148,8 @@
 		if(!new_dir)
 			new_dir = pick(cardinal)
 		src.set_dir(new_dir)
-		var/turf/start = get_edge_target_turf(target, turn(dir, 180))
-		src.set_loc(start)
+		var/turf/start = get_step(get_edge_target_turf(target, turn(dir, 180)), dir)
+		src.loc = start
 
 proc/launch_with_missile(atom/movable/thing, turf/target)
 	var/obj/arrival_missile/missile = unpool(/obj/arrival_missile)
