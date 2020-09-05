@@ -13,7 +13,6 @@
 	req_access = list(access_engineering_atmos)
 	on = 1
 	health = 20
-	var/stunned = 0 //It can be stunned by tasers. Delicate circuits.
 	locked = 1
 	var/obj/hotspot/oldtarget = null
 	var/oldloc = null

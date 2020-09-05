@@ -123,19 +123,10 @@
 			src.explode()
 		return
 
-	proc/toggle_power(var/force_on = 0)
-		if (!src)
-			return
+	toggle_power(var/force_on = 0)
+		. = ..()
 
-		if (force_on == 1)
-			src.on = 1
-		else
-			src.on = !src.on
-
-		src.anchored = 0
-		src.target = null
 		src.icon_state = "[icon_state_base][src.on]"
-		src.path = null
 		src.targets_invalid = list() // Turf vs decal when emagged, so we gotta clear it.
 		src.lubed_turfs = list()
 		src.clear_invalid_targets = world.time
