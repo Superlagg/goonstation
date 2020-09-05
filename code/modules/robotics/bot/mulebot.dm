@@ -16,20 +16,19 @@
 	locked = 1
 	var/atom/movable/load = null		// the loaded crate (usually)
 
-	var/beacon_freq = 1445
-	var/control_freq = 1447
+	beacon_freq = 1445
+	control_freq = 1447
 
 	suffix = ""
 
-	var/turf/target				// this is turf to navigate to (location of beacon)
+	target				// this is turf to navigate to (location of beacon)
 	var/loaddir = 0				// this the direction to unload onto/load from
-	var/new_destination = ""	// pending new destination (waiting for beacon response)
-	var/destination = ""		// destination description
+	new_destination = ""	// pending new destination (waiting for beacon response)
+	destination = ""		// destination description
 	var/home_destination = "" 	// tag of home beacon
 	req_access = list(access_cargo)
-	var/list/path = null
 
-	var/mode = 0		//0 = idle/ready
+	mode = 0		//0 = idle/ready
 						//1 = loading/unloading
 						//2 = moving to deliver
 						//3 = returning to home
@@ -38,7 +37,7 @@
 						//6 = waiting for nav computation
 						//7 = no destination beacon found (or no route)
 
-	var/blockcount	= 0		//number of times retried a blocked path
+	blockcount	= 0		//number of times retried a blocked path
 	var/reached_target = 1 	//true if already reached the target
 
 	var/auto_return = 1	// true if auto return to home beacon after unload
@@ -634,7 +633,7 @@
 	// sets the current destination
 	// signals all beacons matching the delivery code
 	// beacons will return a signal giving their locations
-	proc/set_destination(var/new_dest)
+	set_destination(var/new_dest)
 		SPAWN_DBG(0)
 			new_destination = new_dest
 			post_signal(beacon_freq, "findbeacon", "delivery")
@@ -818,11 +817,11 @@
 				updateDialog()
 
 	// send a radio signal with a single data key/value pair
-	proc/post_signal(var/freq, var/key, var/value)
+	post_signal(var/freq, var/key, var/value)
 		post_signal_multiple(freq, list("[key]" = value) )
 
 	// send a radio signal with multiple data key/values
-	proc/post_signal_multiple(var/freq, var/list/keyval)
+	post_signal_multiple(var/freq, var/list/keyval)
 
 		if(freq == beacon_freq && !(wires & wire_beacon_tx))
 			return
@@ -842,7 +841,7 @@
 		frequency.post_signal(src, signal)
 
 	// signals bot status etc. to controller
-	proc/send_status()
+	send_status()
 		var/list/kv = new()
 		kv["type"] = "mulebot"
 		kv["name"] = ckey(suffix)

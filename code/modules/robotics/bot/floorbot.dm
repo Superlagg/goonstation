@@ -42,12 +42,10 @@
 	locked = 1
 	health = 25
 	var/const/max_tiles = 500
-	var/atom/target
 	var/atom/oldtarget
 	var/oldloc = null
 	req_access = list(access_engineering)
 	access_lookup = "Chief Engineer"
-	var/list/path = null
 	no_camera = 1
 	var/search_range = 1
 	var/max_search_range = 7

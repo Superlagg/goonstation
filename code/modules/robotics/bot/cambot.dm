@@ -17,12 +17,9 @@
 	locked = 1
 	access_lookup = "Assistant"
 
-	var/target // Current target.
-	var/list/path = null // Path to current target.
 	var/list/targets_invalid = list() // Targets we weren't able to reach.
 	var/clear_invalid_targets = 1 // In relation to world time. Clear list periodically.
 	var/clear_invalid_targets_interval = 1800 // How frequently?
-	var/frustration = 0 // Simple counter. Bot selects new target if current one is too far away.
 
 	var/idle = 1 // In relation to world time. In case there aren't any valid targets nearby.
 	var/idle_delay = 300 // For how long?

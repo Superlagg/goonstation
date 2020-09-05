@@ -15,9 +15,6 @@
 	health = 20
 	var/stunned = 0 //It can be stunned by tasers. Delicate circuits.
 	locked = 1
-	var/frustration = 0
-	var/list/path = null
-	var/obj/hotspot/target = null
 	var/obj/hotspot/oldtarget = null
 	var/oldloc = null
 	var/last_found = 0
