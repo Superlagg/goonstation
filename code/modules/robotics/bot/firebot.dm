@@ -15,8 +15,6 @@
 	health = 20
 	locked = 1
 	var/obj/hotspot/oldtarget = null
-	var/oldloc = null
-	var/last_found = 0
 	var/last_spray = 0
 	var/setup_party = 0
 	//To-Do: Patrol the station for fires maybe??
@@ -370,7 +368,7 @@
 	qdel(src)
 	return
 
-/obj/machinery/bot/firebot/proc/toggle_power()
+/obj/machinery/bot/firebot/toggle_power()
 	src.on = !src.on
 	src.target = null
 	src.oldtarget = null

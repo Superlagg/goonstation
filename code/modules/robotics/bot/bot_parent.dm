@@ -90,7 +90,8 @@
 	var/obj/machinery/camera/cam = null
 	var/emagged = 0
 	var/mob/emagger = null
-	var/mode // Defines what set of instructions to follow
+	var/mode = 0 // Defines what set of instructions to follow
+	var/mode_max = 0
 	var/stunned = 0 //It can be stunned by tasers. Delicate circuits.
 	var/text2speech = 0 // dectalk!
 	var/tacticool = 0 // Do we shit up our report with useless lingo?
@@ -100,8 +101,8 @@
 
 	// pathfinding stuff
 	var/datum/robo_mover/robo_mover = null // The thing that makes a path and shoves us down it
-	var/beacon_freq = 1445 // navigation beacon frequency
-	var/control_freq = 1447 // bot control frequency
+	var/beacon_freq = FREQ_BOT_NAV // navigation beacon frequency
+	var/control_freq = FREQ_SECBOT_CONTROL // bot control frequency
 	var/new_destination // pending new destination (waiting for beacon response)
 	var/destination // destination description tag
 	var/next_destination // the next destination in the patrol route
@@ -115,7 +116,13 @@
 	var/patrol_target // this is turf to navigate to (location of beacon)
 	var/auto_patrol // Do we automatically just go wandering?
 	var/frustration // Increments when unable to get to a place
+	var/frustration_max = 8 // The most frustrated we'll let ourselves get before giving up
 	var/atom/target
+	var/target_lastloc //Loc of target when arrested.
+	var/last_found = 0
+	var/oldloc = null
+	var/move_patrol_delay_mult //There's a delay
+	var/move_summon_delay_mult //There's a delay
 
 	p_class = 2
 
@@ -194,18 +201,12 @@
 
 	proc/toggle_power(var/force_on = 0)
 		if (!src)
-			return
-
+			return 1
 		if (force_on == 1)
 			src.on = 1
 		else
 			src.on = !src.on
-
-		src.anchored = 0
-		src.target = null
-		src.path = null
-
-
+		kill_path(give_up = 1)
 
 	proc/act_n_move()
 		return
@@ -214,15 +215,20 @@
 		return
 
 	proc/be_frustrated()
-		return
+		if (src.frustration >= src.frustration_max)
+			kill_path(give_up = 1)
+			return 1
 
 	proc/do_the_thing()
 		return
 
-	proc/move_the_bot(var/delay = 3)
-		navigate_to(patrol_target, delay)
+	proc/do_mode(var/mode_do)
+		if (isnull(src.mode) || src.mode > mode_max)
 		return
 
+	proc/patrol_the_bot(var/delay = 3) // Quick shorthand for making the bot go to the patrol target
+		navigate_to(patrol_target, delay)
+		return
 
 	// finds a new patrol target
 	proc/find_patrol_target()
@@ -271,18 +277,26 @@
 		post_signal(beacon_freq, "findbeacon", "patrol")
 		awaiting_beacon = 1
 
-	proc/kill_path()
+	proc/kill_path(var/mode_do = 0, var/give_up = 0)
 		if(src.robo_mover)
 			src.robo_mover.master = null
 			src.robo_mover = null
+		src.moving = 0
+		if(give_up)
+			src.frustration = 0
+			src.path = null
+			src.target = null
+			src.last_found = world.time
+			do_mode(mode_do)
 
-	proc/navigate_to(atom/the_target,var/move_delay=3,var/adjacent=0)
-		src.frustration = 0
-		src.path = null
-		kill_path()
-
+	proc/navigate_to(atom/the_target, var/move_delay = 3, var/adjacent = 0, var/reset_mind = 0)
+		var/release_frustration = 0
+		if (src.frustration >= src.frustration_max)
+			release_frustration = 1
+		else
+			release_frustration = reset_mind
+		kill_path(give_up = release_frustration)
 		current_movepath = world.time
-
 		src.robo_mover = new /datum/robo_mover(src)
 
 		// drsingh for cannot modify null.delay
@@ -346,9 +360,6 @@
 			. += "-"
 		. += "[rand(1,99)]-"
 		. += "[rand(1,99)]"
-
-
-
 
 /obj/machinery/bot/examine()
 	. = ..()

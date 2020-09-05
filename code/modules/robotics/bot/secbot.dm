@@ -29,8 +29,6 @@
 	locked = 1 //Behavior Controls lock
 	var/oldtarget_name
 	var/threatlevel = 0
-	var/target_lastloc //Loc of target when arrested.
-	var/last_found //There's a delay
 	emagged = 0 //Emagged Secbots view everyone as a criminal
 	health = 25
 	var/idcheck = 1 //If false, all station IDs are authorized for weapons.
@@ -56,7 +54,7 @@
 #define SECBOT_ARREST_SPEED 2.5
 
 	auto_patrol = 0		// set to make bot automatically patrol
-
+	mode_max = SECBOT_SUMMON
 	robo_mover = null
 	path = null	// list of path turfs
 	blockcount = 0		//number of times retried a blocked path
@@ -73,8 +71,8 @@
 	current_movepath = 0
 
 
-	var/move_patrol_delay_mult = 1	// multiplies how slowly the bot moves on patrol
-	var/move_summon_delay_mult = 1	// same, but for summons. Lower is faster.
+	move_patrol_delay_mult = 1	// multiplies how slowly the bot moves on patrol
+	move_summon_delay_mult = 1	// same, but for summons. Lower is faster.
 	var/move_arrest_delay_mult = 1
 	var/scanrate = 10 // How often do we check for perps while we're ON THE MOVE. in deciseconds
 	var/emag_stages = 2 //number of times we can emag this thing
@@ -177,6 +175,7 @@
 	New()
 		..()
 		src.icon_state = "secbot[src.on]"
+		src.mode = SECBOT_IDLE
 		if (!src.our_baton || !istype(src.our_baton))
 			src.our_baton = new our_baton_type(src)
 		#if ASS_JAM
@@ -399,11 +398,10 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 
 			//qdel(src.mover)
 			kill_path()
-			src.frustration = 0
 		return
 
 	Move(var/turf/NewLoc, direct)
-		var/oldloc = src.loc
+		oldloc = src.loc
 		..()
 		if (src.attack_per_step && prob(src.attack_per_step == 2 ? 25 : 75))
 			if (oldloc != NewLoc && world.time != last_attack)
@@ -415,26 +413,26 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 		if (!src.on)
 			return
 
-		switch(mode)
+		return
+
+	do_mode(var/mode_do)
+		. = ..()
+
+		if(mode_do) src.mode = mode_do
+
+		switch(src.mode)
 
 			if(SECBOT_IDLE)		// idle
 
 				look_for_perp()	// see if any criminals are in range
 				if(auto_patrol)	// still idle, and set to patrol
-					mode = SECBOT_START_PATROL	// switch to patrol mode
+					do_mode(SECBOT_START_PATROL)	// switch to patrol mode
 
 			if(SECBOT_HUNT)		// hunting for perp
 
 				// if can't reach perp for long enough, go idle
-				if (src.frustration >= 8)
-					src.target = null
-					src.last_found = world.time
-					src.frustration = 0
-					src.mode = 0
-					//qdel(src.mover)
-					kill_path()
-					src.moving = 0
-					//walk_to(src,0)
+				if (src.frustration >= src.frustration_max)
+					kill_path(give_up = 1)
 
 				if (target)		// make sure target exists
 					if (get_dist(src, src.target) <= 1)		// if right next to perp
@@ -463,14 +461,8 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 
 			if(SECBOT_ARREST)		// arresting
 
-				if (src.frustration >= 8)
-					src.target = null
-					src.last_found = world.time
-					src.frustration = 0
-					src.mode = 0
-					//qdel(src.mover)
-					kill_path()
-					src.moving = 0
+				if (src.frustration >= src.frustration_max)
+					kill_path(give_up = 1)
 
 				if(src.target)
 					if (src.target.hasStatus("handcuffed"))
@@ -501,12 +493,11 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 						//speak("Engaging patrol mode.")
 
 			if(SECBOT_PATROL)		// patrol mode
-				move_the_bot(SECBOT_PATROL_SPEED * move_patrol_delay_mult)
+				patrol_the_bot(SECBOT_PATROL_SPEED * move_patrol_delay_mult)
 
 			if(SECBOT_SUMMON)		// summoned to PDA
 				if(!src.moving)
 					mode = SECBOT_IDLE	// switch back to what we should be
-		return
 
 
 	// receive a radio signal
@@ -542,7 +533,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 					awaiting_beacon = 0
 					mode = SECBOT_SUMMON
 					speak("Responding.")
-					move_the_bot(SECBOT_SUMMON_SPEED * move_summon_delay_mult)
+					patrol_the_bot(SECBOT_SUMMON_SPEED * move_summon_delay_mult)
 					return
 
 				if("proc")
@@ -591,7 +582,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 		if(!target && path.len % 7 == 1) // Every 7 tiles, look for someone to kill
 			look_for_perp()
 
-	move_the_bot(delay)
+	patrol_the_bot(delay)
 		if(loc == patrol_target) // We where we want to be?
 			at_patrol_target() // Find somewhere else to go!
 			look_for_perp()
@@ -940,11 +931,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 				if(transmit_connection != null)
 					transmit_connection.post_signal(master, pdaSignal)
 
-			master.mode = SECBOT_IDLE
-			master.target = null
-			master.anchored = 0
-			master.last_found = world.time
-			master.frustration = 0
+			master.kill_path(SECBOT_IDLE)
 
 		return
 

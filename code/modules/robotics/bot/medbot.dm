@@ -26,13 +26,12 @@
 	on = 1
 	health = 20
 	locked = 1
+	mode_max = MEDBOT_SUMMON
 
 	var/obj/item/reagent_containers/glass/reagent_glass = null //Can be set to draw from this for reagents.
 	var/skin = null // options are brute1/2, burn1/2, toxin1/2, brain1/2, O21/2/3/4, berserk1/2/3, and psyche
 	var/mob/living/carbon/patient = null
 	var/mob/living/carbon/oldpatient = null
-	var/oldloc = null
-	var/last_found = 0
 	var/last_newpatient_speak = 0 //Don't spam the "HEY I'M COMING" messages
 	var/currently_healing = 0
 	var/injection_amount = 10 //How much reagent do we inject at a time?
@@ -45,6 +44,7 @@
 	var/treatment_tox = "charcoal"
 	var/treatment_virus = "spaceacillin"
 	var/terrifying = 0 // for making the medbots all super fucked up
+	var/move_medicate_delay_mult = 1
 
 /obj/machinery/bot/medbot/no_camera
 	no_camera = 1
@@ -146,6 +146,7 @@
 			src.botcard = new /obj/item/card/id(src)
 			src.botcard.access = get_access(src.access_lookup)
 			src.update_icon()
+			src.mode = 0
 	return
 
 /obj/machinery/bot/medbot/attack_ai(mob/user as mob)
@@ -167,9 +168,9 @@
 	if (!src.locked)
 		dat += "<hr><TT>auto_patrol: "
 		if(src.auto_patrol)
-			dat += "<a href='?src=\ref[src];toggle_patrol'><u>YES</u></a> "
+			dat += "<a href='?src=\ref[src];toggle_patrol=1'><u>YES</u></a> "
 		else
-			dat += "<a href='?src=\ref[src];toggle_patrol'><u>NO</u></a> "
+			dat += "<a href='?src=\ref[src];toggle_patrol=1'><u>NO</u></a> "
 		dat += "</TT><br>"
 
 		dat += "<hr><TT>Healing Threshold: "
@@ -241,13 +242,6 @@
 	return
 
 
-/obj/machinery/bot/medbot/Move(var/turf/NewLoc, direct)
-	..()
-	if (src.patient && (get_dist(src,src.patient) <= 1))
-		if (!src.currently_healing)
-			src.currently_healing = 1
-			src.frustration = 0
-			src.medicate_patient(src.patient)
 
 /obj/machinery/bot/medbot/emag_act(var/mob/user, var/obj/item/card/emag/E)
 	if (!src.emagged)
@@ -356,7 +350,7 @@
 
 	be_frustrated()
 
-	do_the_thing()
+	do_mode()
 
 	return
 
@@ -365,66 +359,66 @@
 		src.update_icon(stun = 1)
 		src.stunned--
 
-		src.oldpatient = src.patient
-		src.patient = null
-		src.currently_healing = 0
+		kill_path(give_up = 1)
 
 		if(src.stunned <= 0)
 			src.stunned = 0
 			src.update_icon()
 		return 1
 
-/obj/machinery/bot/medbot/be_frustrated()
-	if (src.frustration > 8)
+/obj/machinery/bot/medbot/kill_path(var/mode_do = 0, var/give_up = 0)
+	. = ..()
+	if(give_up)
 		src.oldpatient = src.patient
 		src.patient = null
 		src.currently_healing = 0
-		src.last_found = world.time
-		kill_path()
-
-/obj/machinery/bot/medbot/do_the_thing()
-	look_for_patient()
-
-	if (!src.patient)
-		if(prob(1))
-			var/message = pick("Radar, put a mask on!","I'm a doctor.","There's always a catch, and it's the best there is.",\
-			"I knew it, I should've been a plastic surgeon.","What kind of medbay is this? Everyone's dropping like dead flies.","Delicious!")
-			src.speak(message)
-		if(auto_patrol)
-			if(!patrol_target)
-				find_patrol_target()
-
-	else if (src.patient && (get_dist(src,src.patient) <= 1))
-		src.medicate_patient(src.patient)
-
-	else if (src.patient && (get_dist(src,src.patient) > 1))
-		navigate_to(src.patient, MEDBOT_SHUFFLE_OVER_SPEED, 1)
-
-		/* SPAWN_DBG(0)
-			if (!isturf(src.loc))
-				return
-			src.path = AStar(src.loc, get_turf(src.patient), /turf/proc/CardinalTurfsWithAccess, /turf/proc/Distance, adjacent_param = botcard)
-			if (!src.path)
-				src.oldpatient = src.patient
-				src.patient = null
-				src.currently_healing = 0
-				src.last_found = world.time
-		return
-
-	if(src.path && src.path.len && src.patient)
-		step_to(src, src.path[1])
-		src.path -= src.path[1]
-		SPAWN_DBG(0.3 SECONDS)
-			if(src.path && src.path.len)
-				step_to(src, src.path[1])
-				src.path -= src.path[1]
-
-	if(src.path && src.path.len > 8 && src.patient)
-		src.frustration++ */
-
 	return
 
+/obj/machinery/bot/medbot/do_mode(var/mode_do)
+	. = ..()
+
+	if(mode_do) src.mode = mode_do
+
+	switch(src.mode)
+
+		if(MEDBOT_IDLE)
+
+			if(look_for_patient()) do_mode(MEDBOT_HEAL)
+			else if(src.auto_patrol) do_mode(MEDBOT_PATROL)
+			else if(prob(1))
+				var/message = pick("Radar, put a mask on!","I'm a doctor.","There's always a catch, and it's the best there is.",\
+				"I knew it, I should've been a plastic surgeon.","What kind of medbay is this? Everyone's dropping like dead flies.","Delicious!")
+				src.speak(message)
+
+
+		if(MEDBOT_HEAL) // run down someone to heal
+			// if can't reach perp for long enough, go idle
+			if(be_frustrated())
+				do_mode(MEDBOT_IDLE)
+				return
+
+			if(src.patient)
+				medicate_patient()
+
+			if(!currently_healing)
+				do_mode(MEDBOT_IDLE)
+			return
+
+		if(MEDBOT_PATROL)		// patrol mode
+			if(patrol_target)
+				patrol_the_bot(MEDBOT_PATROL_SPEED * move_patrol_delay_mult)
+			else if (auto_patrol)
+				find_patrol_target()
+			return
+
+		if(MEDBOT_SUMMON)		// summoned to PDA
+			if(!src.moving)
+				do_mode(MEDBOT_IDLE)	// switch back to what we should be
+
+
 /obj/machinery/bot/medbot/proc/look_for_patient()
+	if (src.patient)
+		return 1
 	for (var/mob/living/carbon/C in view(7,src)) //Time to find a patient!
 		if ((isdead(C)) || !ishuman(C))
 			continue
@@ -433,6 +427,7 @@
 			continue
 
 		if (src.assess_patient(C))
+			. = 1
 			src.patient = C
 			src.oldpatient = C
 			src.last_found = world.time
@@ -446,10 +441,12 @@
 			break
 		else
 			continue
-
+	return
 
 /obj/machinery/bot/medbot/toggle_power()
-	src.on = !src.on
+	. = ..()
+	if(.) return
+
 	if (src.on)
 		add_simple_light("medbot", list(220, 220, 255, 0.5*255))
 	else
@@ -457,9 +454,7 @@
 	src.patient = null
 	src.oldpatient = null
 	src.oldloc = null
-	kill_path()
 	src.currently_healing = 0
-	src.last_found = world.time
 	src.update_icon()
 	src.updateUsrDialog()
 	return
@@ -522,6 +517,10 @@
 		src.patient = null
 		src.currently_healing = 0
 		src.last_found = world.time
+		return
+
+	if (get_dist(src, src.patient) > 1)
+		navigate_to(src.patient, MEDBOT_SHUFFLE_OVER_SPEED, adjacent = 1, )
 		return
 
 	var/reagent_id = null
@@ -592,13 +591,14 @@
 
 	onUpdate()
 		..()
-		if (!master.patient || get_dist(master,master.patient) > 1 || isdead(master.patient) || !master.on)
+		if (!master.patient || get_dist(master,master.patient) > 1 || isdead(master.patient) || !master.on || !master.currently_healing)
 			interrupt(INTERRUPT_ALWAYS)
 			master.process()
 			return
 
 	onStart()
 		..()
+		master.currently_healing = 1
 		if (!master.patient || get_dist(master,master.patient) > 1 || isdead(master.patient) || !master.on)
 			interrupt(INTERRUPT_ALWAYS)
 			master.process()
@@ -767,23 +767,23 @@
 		// process control input
 		switch(recv)
 			if("stop")
-				kill_path()
+				kill_path(give_up = 1, mode_do = MEDBOT_IDLE)
 				auto_patrol = 0
 				return
 
 			if("go")
-				kill_path()
+				kill_path(give_up = 1, mode_do = MEDBOT_IDLE)
 				auto_patrol = 1
 				return
 
 			if("summon")
-				kill_path()
+				kill_path(give_up = 1, mode_do = MEDBOT_SUMMON)
 				patrol_target = signal.data["target"]
 				next_destination = destination
 				destination = null
 				awaiting_beacon = 0
 				speak("Responding.")
-				move_the_bot(MEDBOT_SUMMON_SPEED /* * move_summon_delay_mult */)
+				patrol_the_bot(MEDBOT_SUMMON_SPEED * move_summon_delay_mult)
 				return
 
 	// receive response from beacon
