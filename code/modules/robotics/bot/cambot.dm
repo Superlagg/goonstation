@@ -13,7 +13,6 @@
 	anchored = 0
 	on = 1
 	health = 20
-	var/stunned = 0 //It can be stunned by tasers. Delicate circuits.
 	locked = 1
 	access_lookup = "Assistant"
 
@@ -117,15 +116,8 @@
 	qdel(src)
 	return
 
-/obj/machinery/bot/cambot/proc/toggle_power(var/force_on = 0)
-	if (!src)
-		return
-
-	if (force_on == 1)
-		src.on = 1
-	else
-		src.on = !src.on
-
+/obj/machinery/bot/cambot/toggle_power()
+	. = ..()
 	src.anchored = 0
 	src.target = null
 	src.icon_state = "cambot[src.on]"

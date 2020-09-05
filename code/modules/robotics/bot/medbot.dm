@@ -25,7 +25,6 @@
 	flags = NOSPLASH
 	on = 1
 	health = 20
-	var/stunned = 0 //It can be stunned by tasers. Delicate circuits.
 	locked = 1
 
 	var/obj/item/reagent_containers/glass/reagent_glass = null //Can be set to draw from this for reagents.
@@ -449,7 +448,7 @@
 			continue
 
 
-/obj/machinery/bot/medbot/proc/toggle_power()
+/obj/machinery/bot/medbot/toggle_power()
 	src.on = !src.on
 	if (src.on)
 		add_simple_light("medbot", list(220, 220, 255, 0.5*255))

@@ -57,7 +57,7 @@
 
 	auto_patrol = 0		// set to make bot automatically patrol
 
-	mover = null
+	robo_mover = null
 	path = null	// list of path turfs
 	blockcount = 0		//number of times retried a blocked path
 	awaiting_beacon	= 0	// count of pticks awaiting a beacon response
@@ -84,9 +84,9 @@
 	var/attack_per_step = 0 // Tries to attack every step. 1 = 75% chance to attack, 2 = 25% chance to attack
 
 	disposing()
-		if(mover)
-			mover.dispose()
-			mover = null
+		if(robo_mover)
+			robo_mover.dispose()
+			robo_mover = null
 		if(our_baton)
 			our_baton.dispose()
 			our_baton = null
@@ -450,7 +450,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 				if ((get_dist(src, src.target) > 1) || ((src.target:loc != src.target_lastloc) && src.target:getStatusDuration("weakened") < 20))
 					src.anchored = 0
 					mode = SECBOT_HUNT
-					if (!src.mover)
+					if (!src.robo_mover)
 						src.moving = 0
 						navigate_to(src.target)
 					return
@@ -481,7 +481,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 						src.anchored = 0
 						mode = SECBOT_HUNT
 
-					if (get_dist(src, src.target) > 1 && (!src.mover || !src.moving))
+					if (get_dist(src, src.target) > 1 && (!src.robo_mover || !src.moving))
 						//qdel(src.mover)
 						navigate_to(src.target)
 						return
@@ -911,8 +911,9 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 				uncuffable = 1
 
 			if(ishuman(master.target) && !uncuffable)
-				master.target.handcuffs = new /obj/item/handcuffs(master.target)
-				master.target.setStatus("handcuffed", duration = INFINITE_STATUS)
+				var/mob/HC = master.target
+				HC.handcuffs = new /obj/item/handcuffs(HC)
+				HC.setStatus("handcuffed", duration = INFINITE_STATUS)
 
 			if(!uncuffable)
 				playsound(master.loc, pick('sound/voice/bgod.ogg', 'sound/voice/biamthelaw.ogg', 'sound/voice/bsecureday.ogg', 'sound/voice/bradio.ogg', 'sound/voice/binsult.ogg', 'sound/voice/bcreep.ogg'), 50, 0, 0, 1)

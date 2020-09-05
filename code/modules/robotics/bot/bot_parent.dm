@@ -1,6 +1,6 @@
 // AI (i.e. game AI, not the AI player) controlled bots
 
-//movement control datum. Why yes, this is copied from guardbot.dm
+//movement control datum. Why yes, this is copied from guardbot.dm. Then also from secbot.dm
 /datum/robo_mover
 	var/obj/machinery/bot/master = null
 	var/delay = 3
@@ -12,12 +12,12 @@
 		return
 
 	disposing()
-		if(master.mover == src)
-			master.mover = null
+		if(master.robo_mover == src)
+			master.robo_mover = null
 		src.master = null
 		..()
 
-	proc/master_move(var/atom/the_target as obj|mob, var/current_movepath,var/adjacent=0, var/scanrate)
+	proc/master_move(var/atom/the_target as obj|mob, var/current_movepath,var/adjacent=0)
 		if(!master || !isturf(master.loc))
 			src.master = null
 			//dispose()
@@ -36,7 +36,7 @@
 				master.path.len-- //Only go UP to the target, not the same tile.
 			if(!master.path || !master.path.len || !the_target)
 				master.frustration = INFINITY
-				master.mover = null
+				master.robo_mover = null
 				master = null
 				return 1
 
@@ -63,7 +63,7 @@
 
 			if (master)
 				master.moving = 0
-				master.mover = null
+				master.robo_mover = null
 				master = null
 
 			//dispose()
@@ -81,7 +81,7 @@
 	var/obj/item/card/id/botcard // ID card that the bot "holds".
 	var/access_lookup = "Captain" // For the get_access() proc. Defaults to all-access.
 	var/locked = null
-	var/on = 1
+	var/on = 1 // We on?
 	var/health = 25
 	var/exploding = 0 //So we don't die like five times at once.
 	var/muted = 0 // shut up omg shut up.
@@ -90,7 +90,8 @@
 	var/obj/machinery/camera/cam = null
 	var/emagged = 0
 	var/mob/emagger = null
-	var/mode
+	var/mode // Defines what set of instructions to follow
+	var/stunned = 0 //It can be stunned by tasers. Delicate circuits.
 	var/text2speech = 0 // dectalk!
 	var/tacticool = 0 // Do we shit up our report with useless lingo?
 	var/badge_number = null // what dumb thing are we calling ourself today?
@@ -98,23 +99,23 @@
 	var/badge_number_length_forcemax = 0 // always make it that long
 
 	// pathfinding stuff
-	var/datum/robo_mover/mover = null // The thing that makes a path and shoves us down it
-	var/beacon_freq = 1445		// navigation beacon frequency
-	var/control_freq = 1447		// bot control frequency
-	var/new_destination		// pending new destination (waiting for beacon response)
-	var/destination			// destination description tag
-	var/next_destination	// the next destination in the patrol route
-	var/list/path = null	// list of path turfs
+	var/datum/robo_mover/robo_mover = null // The thing that makes a path and shoves us down it
+	var/beacon_freq = 1445 // navigation beacon frequency
+	var/control_freq = 1447 // bot control frequency
+	var/new_destination // pending new destination (waiting for beacon response)
+	var/destination // destination description tag
+	var/next_destination // the next destination in the patrol route
+	var/list/path = null // list of path turfs
 	var/moving = 0 //Are we currently ON THE MOVE?
-	var/current_movepath = 0
-	var/blockcount = 0		//number of times retried a blocked path
-	var/awaiting_beacon	= 0	// count of pticks awaiting a beacon response
-	var/nearest_beacon			// the nearest beacon's tag
+	var/current_movepath = 0 // Time we made the path
+	var/blockcount = 0 //number of times retried a blocked path
+	var/awaiting_beacon	= 0 // count of pticks awaiting a beacon response
+	var/nearest_beacon // the nearest beacon's tag
 	var/turf/nearest_beacon_loc	// the nearest beacon's location
-	var/patrol_target	// this is turf to navigate to (location of beacon)
-	var/auto_patrol
-	var/frustration
-	var/target
+	var/patrol_target // this is turf to navigate to (location of beacon)
+	var/auto_patrol // Do we automatically just go wandering?
+	var/frustration // Increments when unable to get to a place
+	var/atom/target
 
 	p_class = 2
 
@@ -191,6 +192,21 @@
 				else
 					return 0
 
+	proc/toggle_power(var/force_on = 0)
+		if (!src)
+			return
+
+		if (force_on == 1)
+			src.on = 1
+		else
+			src.on = !src.on
+
+		src.anchored = 0
+		src.target = null
+		src.path = null
+
+
+
 	proc/act_n_move()
 		return
 
@@ -256,9 +272,9 @@
 		awaiting_beacon = 1
 
 	proc/kill_path()
-		if(src.mover)
-			src.mover.master = null
-			src.mover = null
+		if(src.robo_mover)
+			src.robo_mover.master = null
+			src.robo_mover = null
 
 	proc/navigate_to(atom/the_target,var/move_delay=3,var/adjacent=0)
 		src.frustration = 0
@@ -267,17 +283,17 @@
 
 		current_movepath = world.time
 
-		src.mover = new /datum/robo_mover(src)
+		src.robo_mover = new /datum/robo_mover(src)
 
 		// drsingh for cannot modify null.delay
-		if (!isnull(src.mover))
-			src.mover.master_move(the_target,current_movepath,adjacent)
+		if (!isnull(src.robo_mover))
+			src.robo_mover.master_move(the_target,current_movepath,adjacent)
 
 		// drsingh again for the same thing further down in a moment.
-		// Because master_move can delete the mover
+		// Because master_move can delete the robo_mover
 
-		if (!isnull(src.mover))
-			src.mover.delay = move_delay
+		if (!isnull(src.robo_mover))
+			src.robo_mover.delay = move_delay
 
 		return 0
 
