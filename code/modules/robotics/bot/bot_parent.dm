@@ -1,5 +1,5 @@
 // AI (i.e. game AI, not the AI player) controlled bots
-
+#define DEFAULT_MOVE_SPEED 3
 //movement control datum. Why yes, this is copied from guardbot.dm. Then also from secbot.dm
 /datum/robo_mover
 	var/obj/machinery/bot/master = null
@@ -48,7 +48,8 @@
 					master.frustration = 0
 					break
 
-				master.act_n_move()
+				if(master.act_n_move())
+					break
 
 				if(master?.path)
 					step_to(master, master.path[1])
@@ -64,12 +65,8 @@
 			if (master)
 				master.moving = 0
 				master.robo_mover = null
+				on_finished_moving()
 				master = null
-
-			//dispose()
-			return
-
-		return
 
 /obj/machinery/bot
 	icon = 'icons/obj/bots/aibots.dmi'
@@ -208,6 +205,9 @@
 			src.on = !src.on
 		kill_path(give_up = 1)
 
+	proc/on_finished_moving()
+		return
+
 	proc/act_n_move()
 		return
 
@@ -289,7 +289,7 @@
 			src.last_found = world.time
 			do_mode(mode_do)
 
-	proc/navigate_to(atom/the_target, var/move_delay = 3, var/adjacent = 0, var/reset_mind = 0)
+	proc/navigate_to(atom/the_target, var/move_delay = DEFAULT_MOVE_SPEED, var/adjacent = 0, max_dist=600, var/reset_mind = 0)
 		var/release_frustration = 0
 		if (src.frustration >= src.frustration_max)
 			release_frustration = 1
@@ -369,3 +369,5 @@
 			. += "<span class='alert'>[src]'s parts look loose.</span>"
 		else
 			. += "<span class='alert'><B>[src]'s parts look very loose!</B></span>"
+
+#undef DEFAULT_MOVE_SPEED

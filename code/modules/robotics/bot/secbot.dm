@@ -499,7 +499,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 						//speak("Engaging patrol mode.")
 
 			if(SECBOT_PATROL)		// patrol mode
-				patrol_the_bot(SECBOT_PATROL_SPEED * move_patrol_delay_mult)
+				patrol_the_bot(PATROL_SPEED * move_patrol_delay_mult)
 
 			if(SECBOT_SUMMON)		// summoned to PDA
 				if(!src.moving)
@@ -539,7 +539,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 					awaiting_beacon = 0
 					mode = SECBOT_SUMMON
 					speak("Responding.")
-					patrol_the_bot(SECBOT_SUMMON_SPEED * move_summon_delay_mult)
+					patrol_the_bot(SUMMON_SPEED * move_summon_delay_mult)
 					return
 
 				if("proc")
@@ -591,12 +591,12 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 
 	act_n_move()
 		. = ..()
-			if(!target && path?.len % 5 == 1) // Every 5 tiles, look for someone to kill
-				src.look_for_perp()
+		if(!target && path?.len % 5 == 1) // Every 5 tiles, look for someone to kill
+			src.look_for_perp()
 
-			if(mode == SECBOT_HUNT && target && IN_RANGE(src, src.target, 1))
-				src.baton_attack(src.target)
-				. = 1
+		if(mode == SECBOT_HUNT && target && IN_RANGE(src, src.target, 1))
+			src.baton_attack(src.target)
+			. = 1
 
 	patrol_the_bot(delay)
 		if(loc == patrol_target) // We where we want to be?
