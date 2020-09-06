@@ -321,7 +321,6 @@
 				src.path -= src.path[1]
 			else
 				src.frustration++
-				sleep (10)
 
 			SPAWN_DBG (3)
 				if (src && src.path && src.path.len)

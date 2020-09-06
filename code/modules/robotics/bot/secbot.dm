@@ -4,6 +4,21 @@
 #define IS_BEEPSKY_BUT_HAS_SOME_GENERIC_BATON 3						// A generic-ass shitcurity baton
 #define IS_NOT_BEEPSKY_BUT_HAS_A_GENERIC_SPECIAL_BATON 4	// A generic, non-Beepsky brand secboton
 
+#define SECBOT_IDLE 		0		// idle
+#define SECBOT_HUNT 		1		// found target, hunting
+#define SECBOT_PREP_ARREST 	2		// at target, preparing to arrest
+#define SECBOT_ARREST		3		// arresting target
+#define SECBOT_START_PATROL	4		// start patrol
+#define SECBOT_PATROL		5		// patrolling
+#define SECBOT_SUMMON		6		// summoned by PDA
+
+#define PATROL_SPEED 6
+#define SUMMON_SPEED 3
+#define ARREST_SPEED 2.5
+
+#define BATON_INITIAL_DELAY (0.3 SECONDS)
+#define BATON_DELAY_PER_STUN (0.2 SECONDS)
+
 /obj/machinery/bot/secbot
 	name = "Securitron"
 	botname = "secbot"
@@ -41,17 +56,6 @@
 	var/our_baton_type = /obj/item/baton/secbot
 	var/loot_baton_type = /obj/item/scrap
 	var/stun_type = "stun"
-#define SECBOT_IDLE 		0		// idle
-#define SECBOT_HUNT 		1		// found target, hunting
-#define SECBOT_PREP_ARREST 	2		// at target, preparing to arrest
-#define SECBOT_ARREST		3		// arresting target
-#define SECBOT_START_PATROL	4		// start patrol
-#define SECBOT_PATROL		5		// patrolling
-#define SECBOT_SUMMON		6		// summoned by PDA
-
-#define SECBOT_PATROL_SPEED 6
-#define SECBOT_SUMMON_SPEED 3
-#define SECBOT_ARREST_SPEED 2.5
 
 	auto_patrol = 0		// set to make bot automatically patrol
 	mode_max = SECBOT_SUMMON
@@ -69,8 +73,6 @@
 	next_destination	// the next destination in the patrol route
 	moving = 0 //Are we currently ON THE MOVE?
 	current_movepath = 0
-
-
 	move_patrol_delay_mult = 1	// multiplies how slowly the bot moves on patrol
 	move_summon_delay_mult = 1	// same, but for summons. Lower is faster.
 	var/move_arrest_delay_mult = 1
@@ -103,10 +105,10 @@
 	idcheck = 1
 	auto_patrol = 1
 	report_arrests = 1
+	move_arrest_delay_mult = 0.9 // beepsky has some experience chasing crimers
 	loot_baton_type = /obj/item/baton/beepsky
 	is_beepsky = IS_BEEPSKY_AND_HAS_HIS_SPECIAL_BATON
 	hat = "nt"
-	attack_per_step = 1
 
 	New()
 		. = ..()
@@ -292,12 +294,9 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 			mode = SECBOT_IDLE
 			src.target = null
 
-			#if ASS_JAM // triple-emagged bots move REALLY FUCKING FAST
+			#if ASS_JAM
 			if(src.emagged >= 3)
 				src.stun_type = "harm_classic"
-				move_arrest_delay_mult = 0.5
-				move_patrol_delay_mult = 0.1
-				move_summon_delay_mult = 0.1
 				processing_bucket = 1
 				processing_tier = PROCESSING_FULL
 				current_processing_tier = PROCESSING_FULL
@@ -362,31 +361,38 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 				src.mode = SECBOT_HUNT
 			..()
 
-
-
 	proc/baton_attack(var/mob/living/carbon/M)
+		sleep(BATON_INITIAL_DELAY)
+		if(!IN_RANGE(src, src.target, 1))
+			return
+
 		src.icon_state = "secbot-c[src.emagged >= 2 ? "-wild" : null]"
 		var/maxstuns = 4
 		var/stuncount = (src.emagged >= 2) ? rand(5,10) : 1
 
 		last_attack = world.time
 
+		// No need for unnecessary hassle, just make it ignore charges entirely for the time being.
+		if (src.our_baton && istype(src.our_baton))
+			if (src.our_baton.uses_electricity == 0)
+				src.our_baton.uses_electricity = 1
+			if (src.our_baton.uses_charges != 0)
+				src.our_baton.uses_charges = 0
+		else
+			src.our_baton = new our_baton_type(src)
+
 		while (stuncount > 0 && src.target)
-			// No need for unnecessary hassle, just make it ignore charges entirely for the time being.
-			if (src.our_baton && istype(src.our_baton))
-				if (src.our_baton.uses_electricity == 0)
-					src.our_baton.uses_electricity = 1
-				if (src.our_baton.uses_charges != 0)
-					src.our_baton.uses_charges = 0
-			else
-				src.our_baton = new our_baton_type(src)
+			// they moved while we were sleeping, abort
+			if(!IN_RANGE(src, src.target, 1))
+				src.icon_state = "secbot[src.on][(src.on && src.emagged >= 2) ? "-wild" : null]"
+				return
 
 			stuncount--
 			src.our_baton.do_stun(src, M, src.stun_type, 2)
 			if (!stuncount && maxstuns-- <= 0)
 				target = null
 			if (stuncount > 0)
-				sleep(0.3 SECONDS)
+				sleep(BATON_DELAY_PER_STUN)
 
 		SPAWN_DBG(0.2 SECONDS)
 			src.icon_state = "secbot[src.on][(src.on && src.emagged >= 2) ? "-wild" : null]"
@@ -406,7 +412,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 		if (src.attack_per_step && prob(src.attack_per_step == 2 ? 25 : 75))
 			if (oldloc != NewLoc && world.time != last_attack)
 				if (mode == SECBOT_HUNT && target)
-					if (get_dist(src, src.target) <= 1)
+					if (IN_RANGE(src, src.target, 1))
 						src.baton_attack(src.target)
 
 	process()
@@ -430,16 +436,12 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 
 			if(SECBOT_HUNT)		// hunting for perp
 
-				// if can't reach perp for long enough, go idle
-				if (src.frustration >= src.frustration_max)
+				if (src.target.hasStatus("handcuffed") || src.frustration >= 8) // if can't reach perp for long enough, go idle
 					kill_path(give_up = 1)
-
-				if (target)		// make sure target exists
-					if (get_dist(src, src.target) <= 1)		// if right next to perp
-						src.baton_attack(src.target)
-					else								// not next to perp
+				else if (target)		// make sure target exists
+					if (!IN_RANGE(src, src.target, 1))
 						src.moving = 0
-						navigate_to(src.target,(src.emagged >= 2) ? (SECBOT_ARREST_SPEED/2 * move_arrest_delay_mult) : (SECBOT_ARREST_SPEED * move_arrest_delay_mult))
+						navigate_to(src.target, ARREST_SPEED * move_arrest_delay_mult, max_dist = 50)
 						return
 
 			if(SECBOT_PREP_ARREST)		// preparing to arrest target
@@ -453,10 +455,14 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 						navigate_to(src.target)
 					return
 
-				if (!src.target.hasStatus("handcuffed") && !src.arrest_type)
-					actions.start(new/datum/action/bar/icon/secbot_cuff(src, src.target, src), src)
+				if (!src.arrest_type)
+					if(!src.target.hasStatus("handcuffed"))
+						actions.start(new/datum/action/bar/icon/secbot_cuff(src, src.target, src), src)
+					else
+						src.mode = SECBOT_IDLE
 				else if (get_dist(src, src.target) <= 1)
-					src.baton_attack(src.target)
+					SPAWN_DBG(0)
+						src.baton_attack(src.target)
 
 
 			if(SECBOT_ARREST)		// arresting
@@ -577,10 +583,20 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 
 	// send a radio signal with a single data key/value pair
 
+	on_finished_moving()
+		. = ..()
+		if(src.mode == SECBOT_HUNT && src.target && src.frustration < 8 && !IN_RANGE(src, src.target, 1))
+			src.navigate_to(src.target, ARREST_SPEED * src.move_arrest_delay_mult, max_dist = max_dist)
+		return
+
 	act_n_move()
 		. = ..()
-		if(!target && path.len % 7 == 1) // Every 7 tiles, look for someone to kill
-			look_for_perp()
+			if(!target && path?.len % 5 == 1) // Every 5 tiles, look for someone to kill
+				src.look_for_perp()
+
+			if(mode == SECBOT_HUNT && target && IN_RANGE(src, src.target, 1))
+				src.baton_attack(src.target)
+				. = 1
 
 	patrol_the_bot(delay)
 		if(loc == patrol_target) // We where we want to be?
@@ -990,7 +1006,6 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 				S.beacon_freq = src.beacon_freq
 				S.hat = src.hat
 				S.name = src.created_name		// We get an upgraded securitron
-				S.attack_per_step = 2				// 25% chance to attack_on_move, as opposed to 75%
 				S.loot_baton_type = W.type	// So we can drop it all over again.
 				if (Y.beepsky_held_this == 1)
 					S.is_beepsky = IS_NOT_BEEPSKY_BUT_HAS_HIS_SPECIAL_BATON	// So we drop Beepsky's baton, and not just some generic secbot one
@@ -1003,7 +1018,6 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 			if (src.is_dead_beepsky)	// On Beepsky's corpse
 				boutput(user, "You give Officer Beepsky a stun baton, reassembling the Securitron! Beep boop.")
 				var/obj/machinery/bot/secbot/beepsky/S = new /obj/machinery/bot/secbot/beepsky(get_turf(src))
-				S.attack_per_step = 0		// We just get a surly head of robosecurity
 				S.is_beepsky = IS_BEEPSKY_BUT_HAS_SOME_GENERIC_BATON // So Beepsky's corpse is his corpse
 				S.loot_baton_type = W.type	// Our baton isn't special
 				qdel(src)
@@ -1015,7 +1029,6 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 				S.beacon_freq = src.beacon_freq
 				S.hat = src.hat
 				S.name = src.created_name
-				S.attack_per_step = 0		// We get a loot pinata
 				S.is_beepsky = IS_NOT_BEEPSKY_AND_HAS_SOME_GENERIC_BATON // You're still not Beepsky
 				S.loot_baton_type = W.type	// Our baton isn't special either
 				qdel(src)
@@ -1042,7 +1055,6 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 		else if (src.is_dead_beepsky)	// On Beepsky's corpse
 			boutput(user, "You add wires to Officer Beepsky, reassembling the Securitron! Beep boop.")
 			var/obj/machinery/bot/secbot/beepsky/S = new /obj/machinery/bot/secbot/beepsky(get_turf(src))
-			S.attack_per_step = 0		// We just get a surly head of robosecurity
 			S.is_beepsky = IS_BEEPSKY_BUT_HAS_SOME_GENERIC_BATON	// So Beepsky's corpse is his corpse
 			S.loot_baton_type = /obj/item/scrap	// our baton's a hunk of junk!
 			qdel(src)
@@ -1071,6 +1083,8 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 #undef IS_NOT_BEEPSKY_BUT_HAS_HIS_SPECIAL_BATON
 #undef IS_BEEPSKY_BUT_HAS_SOME_GENERIC_BATON
 #undef IS_NOT_BEEPSKY_BUT_HAS_A_GENERIC_SPECIAL_BATON
-#undef SECBOT_PATROL_SPEED
-#undef SECBOT_SUMMON_SPEED
-#undef SECBOT_ARREST_SPEED
+#undef PATROL_SPEED
+#undef SUMMON_SPEED
+#undef ARREST_SPEED
+#undef BATON_INITIAL_DELAY
+#undef BATON_DELAY_PER_STUN
