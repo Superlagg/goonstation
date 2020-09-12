@@ -18,6 +18,26 @@
 	stamina_cost = 0
 	stamina_crit_chance = 5
 	inventory_counter_enabled = 1
+	var/amount_left = 0.0
+	var/max_amount = 1000
+	var/unusualCell
+
+	var/is_listmag = 0 // Do we read bullets from a list, or just count the shots?
+	var/list/mag_contents = list() // Override this if you want mags with multiple different kinds mixed in
+	var/list/ammo_types = list() // the mag filler'll pick from these at random
+
+	var/icon_dynamic = 0 // For dynamic desc and/or icon updates (Convair880).
+	var/icon_short = null // If dynamic = 1, the short icon_state has to be specified as well.
+	var/icon_empty = null
+
+	// This is needed to avoid duplicating empty magazines (Convair880).
+	var/delete_on_reload = 0
+	var/force_new_current_projectile = 0 //for custom grenade shells
+
+	var/load_mode = 0 // Load them into the mag 1 at a time, or all at once?
+
+	var/sound_load = 'sound/weapons/gunload_light.ogg'
+
 
 	proc
 		update_icon()
@@ -28,6 +48,15 @@
 
 		use(var/amt = 0)
 			return 0
+
+		load_up_the_magazine()
+			if (!is_listmag) return
+
+		put_bullet_in_magazine()
+			if (!is_listmag) return
+
+		remove_bullet_from_magazine()
+			if (!is_listmag) return
 
 /////////////////////////////// Bullets for kinetic firearms /////////////////////////////////
 
@@ -51,28 +80,45 @@
 	icon_state = "power_cell"
 	m_amt = 40000
 	g_amt = 0
-	var/amount_left = 0.0
-	var/max_amount = 1000
-	var/unusualCell
+
 	ammo_type = new/datum/projectile/bullet
 	module_research = list("weapons" = 2, "miniaturization" = 5)
 	module_research_type = /obj/item/ammo/bullets
 
-	var/icon_dynamic = 0 // For dynamic desc and/or icon updates (Convair880).
-	var/icon_short = null // If dynamic = 1, the short icon_state has to be specified as well.
-	var/icon_empty = null
-
-	// This is needed to avoid duplicating empty magazines (Convair880).
-	var/delete_on_reload = 0
-	var/force_new_current_projectile = 0 //for custom grenade shells
-
-	var/sound_load = 'sound/weapons/gunload_light.ogg'
 
 	New()
 		..()
 		SPAWN_DBG(2 SECONDS)
 			src.update_icon() // So we get dynamic updates right off the bat. Screw static descs.
 		return
+
+	load_up_the_magazine() // initial mag filler
+		. = ..()
+		if (mag_contents.len >= 1) return // already loaded up!
+		var/load_this_many = src.max_amount
+		var/list/bullets = list()
+		if (ammo_types.len)
+			bullets = ammo_types
+		else
+			bullets = ammo_type
+		while(load_this_many >= 1)
+			src.mag_contents.Add(bullets)
+			load_this_many--
+		return
+
+	put_bullets_in_magazine(var/obj/item/ammo/bullets/move_these, var/obj/item/ammo/bullets/into_this)
+		if(move_these.len < 1 || into_this.amount_left >= into_this.max_amount) return // outta ammo or the thing's full
+
+		var/load_this_many = min((into_this.max_amount - into_this.amount_left), move_these.len)
+		while(load_this_many >= 1)
+			into_this.mag_contents.Insert(1, move_these[1])
+			move_these--
+			load_this_many--
+		return
+
+	remove_bullets_from_magazine(var/obj/item/ammo/bullets/remove_these_bullets, var/obj/item/ammo/bullets/from_this_mag)
+
+
 
 	use(var/amt = 0)
 		if(amount_left >= amt)
