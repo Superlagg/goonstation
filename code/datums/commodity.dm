@@ -602,7 +602,7 @@
 
 /datum/commodity/contraband/artillery_ammo
 	comname = "40mm HE Ammunition"
-	comtype = /obj/item/ammo/bullets/autocannon
+	comtype = /obj/item/ammo/magazine/autocannon
 	desc = "High explosive grenades, for the resupplement of artillery assault platforms."
 	price = 100000
 	baseprice = 100000
@@ -1015,7 +1015,7 @@
 
 /datum/commodity/contraband/birdbomb
 	comname = "12ga AEX ammo"
-	comtype = /obj/item/ammo/bullets/aex
+	comtype = /obj/item/ammo/magazine/aex
 	desc = "12 gauge ammo marked 12ga AEX Large Wildlife Dispersal Cartridge. Huh."
 	price = 40000
 	baseprice = 40000
@@ -1024,7 +1024,7 @@
 
 /datum/commodity/contraband/flare
 	comname = "12ga Flare Shells"
-	comtype = /obj/item/ammo/bullets/flare
+	comtype = /obj/item/ammo/magazine/flare
 	desc = "Military-grade 12 gauge flare shells. Guaranteed to brighten your day."
 	price = 15000
 	baseprice = 15000
@@ -2598,7 +2598,7 @@
 
 /datum/commodity/airbag
 	comname = "Airzooka Replacement Bag"
-	comtype = /obj/item/ammo/bullets/airzooka
+	comtype = /obj/item/ammo/magazine/airzooka
 	desc = "A replacement bag for your Donk Co brand Airzooka!"
 	onmarket = 0
 	price = 500
@@ -2608,7 +2608,7 @@
 
 /datum/commodity/dangerbag
 	comname = "Airzooka Replacement Bag: Xtreme Edition"
-	comtype = /obj/item/ammo/bullets/airzooka/bad
+	comtype = /obj/item/ammo/magazine/airzooka/bad
 	desc = "A replacement bag for your Donk Co brand Airzooka, now with plasma lining!"
 	onmarket = 0
 	price = 3000

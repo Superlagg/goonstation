@@ -773,7 +773,7 @@
 		slot_head = /obj/item/clothing/head/helmet/welding
 		slot_belt = /obj/item/tank/emergency_oxygen
 		slot_mask = /obj/item/clothing/mask/breath
-		items_in_backpack = list(/obj/item/crowbar,/obj/item/device/light/flashlight,/obj/item/device/light/glowstick,/obj/item/gun/kinetic/flaregun,/obj/item/ammo/bullets/flare,/obj/item/cell/cerenkite)
+		items_in_backpack = list(/obj/item/crowbar,/obj/item/device/light/flashlight,/obj/item/device/light/glowstick,/obj/item/gun/kinetic/flaregun,/obj/item/ammo/magazine/flare,/obj/item/cell/cerenkite)
 
 		special_setup(var/mob/living/carbon/human/M)
 			..()

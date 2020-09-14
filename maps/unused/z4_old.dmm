@@ -4074,9 +4074,9 @@
 /area/syndicate_station)
 "le" = (
 /obj/table/auto,
-/obj/item/ammo/bullets/rpg,
-/obj/item/ammo/bullets/rpg,
-/obj/item/ammo/bullets/rpg,
+/obj/item/ammo/magazine/rpg,
+/obj/item/ammo/magazine/rpg,
+/obj/item/ammo/magazine/rpg,
 /turf/simulated/floor/shuttle{
 	icon_state = "floor4"
 	},

@@ -15017,8 +15017,8 @@
 /area/station/security/detectives_office)
 "aIi" = (
 /obj/table/wood/auto,
-/obj/item/ammo/bullets/a38/stun,
-/obj/item/ammo/bullets/a38,
+/obj/item/ammo/magazine/a38/stun,
+/obj/item/ammo/magazine/a38,
 /obj/item/reagent_containers/food/drinks/bottle/bojackson,
 /obj/item/cigpacket/propuffs,
 /obj/item/device/light/zippo,
@@ -43117,8 +43117,8 @@
 /area/station/security/main)
 "bTd" = (
 /obj/rack,
-/obj/item/ammo/bullets/smoke,
-/obj/item/ammo/bullets/smoke,
+/obj/item/ammo/magazine/smoke,
+/obj/item/ammo/magazine/smoke,
 /obj/item/gun/kinetic/riot40mm,
 /obj/item/gun/kinetic/riot40mm,
 /obj/item/wrench,
@@ -48904,8 +48904,8 @@
 /obj/item/gun/kinetic/riot40mm{
 	pixel_y = 10
 	},
-/obj/item/ammo/bullets/smoke,
-/obj/item/ammo/bullets/smoke,
+/obj/item/ammo/magazine/smoke,
+/obj/item/ammo/magazine/smoke,
 /obj/item/gun/kinetic/riot40mm,
 /turf/simulated/floor/engine,
 /area/station/ai_monitored/armory)

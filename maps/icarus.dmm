@@ -3634,8 +3634,8 @@
 /area/station/security/detectives_office)
 "aiq" = (
 /obj/table/wood/auto,
-/obj/item/ammo/bullets/a38/stun,
-/obj/item/ammo/bullets/a38,
+/obj/item/ammo/magazine/a38/stun,
+/obj/item/ammo/magazine/a38,
 /obj/item/reagent_containers/food/drinks/bottle/bojackson,
 /obj/item/cigpacket/propuffs,
 /obj/item/device/light/zippo,
@@ -6962,8 +6962,8 @@
 /area/station/security/main)
 "apx" = (
 /obj/rack,
-/obj/item/ammo/bullets/smoke,
-/obj/item/ammo/bullets/smoke,
+/obj/item/ammo/magazine/smoke,
+/obj/item/ammo/magazine/smoke,
 /obj/item/gun/kinetic/riot40mm,
 /obj/item/gun/kinetic/riot40mm,
 /obj/item/wrench,

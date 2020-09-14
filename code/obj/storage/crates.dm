@@ -370,7 +370,7 @@
 		name = "Class Crate - Heavy Weapons Specialist"
 		desc = "A crate containing a Specialist Operative loadout. This one features a light machine gun, several belts of ammunition and a pouch of grenades."
 		spawn_contents = list(/obj/item/gun/kinetic/light_machine_gun,
-		/obj/item/ammo/bullets/lmg = 3,
+		/obj/item/ammo/magazine/lmg = 3,
 		/obj/item/storage/grenade_pouch/high_explosive,
 		/obj/item/clothing/suit/space/industrial/syndicate/specialist,
 		/obj/item/clothing/head/helmet/space/syndicate/specialist)
@@ -615,5 +615,5 @@
 
 	weapons4
 		spawn_contents = list(/obj/item/gun/kinetic/zipgun,
-		/obj/item/ammo/bullets/a38 = 2)
+		/obj/item/ammo/magazine/a38 = 2)
 

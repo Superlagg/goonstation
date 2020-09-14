@@ -17616,8 +17616,8 @@
 /area/station/security/detectives_office)
 "aUz" = (
 /obj/rack,
-/obj/item/ammo/bullets/a38,
-/obj/item/ammo/bullets/a38/stun,
+/obj/item/ammo/magazine/a38,
+/obj/item/ammo/magazine/a38/stun,
 /obj/item/gun/kinetic/detectiverevolver,
 /turf/simulated/floor/carpet/grime,
 /area/station/security/detectives_office)
@@ -25697,7 +25697,7 @@
 	req_access_txt = "37"
 	},
 /obj/item/gun/kinetic/flaregun,
-/obj/item/ammo/bullets/flare,
+/obj/item/ammo/magazine/flare,
 /turf/simulated/floor/red,
 /area/station/security/armory)
 "bsa" = (

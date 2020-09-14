@@ -27186,8 +27186,8 @@
 /area/station/janitor)
 "bgx" = (
 /obj/rack,
-/obj/item/ammo/bullets/smoke,
-/obj/item/ammo/bullets/smoke,
+/obj/item/ammo/magazine/smoke,
+/obj/item/ammo/magazine/smoke,
 /obj/item/gun/kinetic/riot40mm,
 /obj/item/gun/kinetic/riot40mm,
 /obj/item/wrench,

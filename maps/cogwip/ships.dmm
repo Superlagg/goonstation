@@ -1157,7 +1157,7 @@
 "wm" = (/turf/unsimulated/floor/black{icon_state = "cairngorm12"},/area)
 "wn" = (/obj/cable{icon_state = "1-2"},/turf/unsimulated/floor/black{icon_state = "cairngorm13"},/area)
 "wo" = (/obj/table/auto,/obj/item/gun/kinetic/rpg7,/obj/decal/tile_edge/stripe{dir = 6; icon_state = "delivery2"},/turf/unsimulated/floor/darkblue,/area)
-"wp" = (/obj/table/auto,/obj/item/ammo/bullets/rpg,/obj/item/ammo/bullets/rpg,/obj/item/ammo/bullets/rpg,/obj/decal/tile_edge/stripe{dir = 6; icon_state = "delivery2"},/turf/unsimulated/floor/darkblue,/area)
+"wp" = (/obj/table/auto,/obj/item/ammo/magazine/rpg,/obj/item/ammo/magazine/rpg,/obj/item/ammo/magazine/rpg,/obj/decal/tile_edge/stripe{dir = 6; icon_state = "delivery2"},/turf/unsimulated/floor/darkblue,/area)
 "wq" = (/obj/table/auto,/obj/item/old_grenade/stinger/frag,/obj/item/old_grenade/stinger/frag,/obj/item/old_grenade/stinger/frag,/obj/item/old_grenade/stinger/frag,/obj/decal/tile_edge/stripe{dir = 6; icon_state = "delivery2"},/turf/unsimulated/floor/darkblue,/area)
 "wr" = (/obj/table/auto,/obj/decal/tile_edge/stripe{dir = 6; icon_state = "delivery2"},/obj/item/old_grenade/stinger,/obj/item/old_grenade/stinger,/obj/item/old_grenade/stinger,/obj/item/old_grenade/stinger,/obj/machinery/light/small/floor,/turf/unsimulated/floor/darkblue,/area)
 "ws" = (/obj/table/reinforced/auto,/turf/unsimulated/floor/plating/random,/area)

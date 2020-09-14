@@ -2551,8 +2551,8 @@
 	d2 = 8
 	},
 /obj/item/shipcomponent/mainweapon/laser,
-/obj/item/ammo/bullets/autocannon/seeker,
-/obj/item/ammo/bullets/autocannon/seeker,
+/obj/item/ammo/magazine/autocannon/seeker,
+/obj/item/ammo/magazine/autocannon/seeker,
 /turf/simulated/floor/black,
 /area/station/security/armory)
 "afT" = (
@@ -16227,8 +16227,8 @@
 /area/station/maintenance/westsolar)
 "aIX" = (
 /obj/rack,
-/obj/item/ammo/bullets/smoke,
-/obj/item/ammo/bullets/smoke,
+/obj/item/ammo/magazine/smoke,
+/obj/item/ammo/magazine/smoke,
 /obj/item/gun/kinetic/riot40mm,
 /obj/item/gun/kinetic/riot40mm,
 /obj/item/wrench,

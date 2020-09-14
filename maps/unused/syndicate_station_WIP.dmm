@@ -1104,9 +1104,9 @@
 /area/syndicate_station/battlecruiser)
 "cU" = (
 /obj/table/auto,
-/obj/item/ammo/bullets/rpg,
-/obj/item/ammo/bullets/rpg,
-/obj/item/ammo/bullets/rpg,
+/obj/item/ammo/magazine/rpg,
+/obj/item/ammo/magazine/rpg,
+/obj/item/ammo/magazine/rpg,
 /obj/decal/tile_edge/stripe{
 	dir = 6;
 	icon_state = "delivery2"

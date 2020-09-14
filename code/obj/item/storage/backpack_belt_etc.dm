@@ -433,7 +433,7 @@
 	desc = "A rugged belt fitted with ammo pouches."
 	icon_state = "minerbelt"
 	item_state = "utility"
-	can_hold = list(/obj/item/ammo/bullets)
+	can_hold = list(/obj/item/ammo/magazine)
 	in_list_or_max = 0
 
 /obj/item/storage/belt/revolver
@@ -443,8 +443,8 @@
 	item_state = "revolver_belt"
 	slots = 3
 	in_list_or_max = 0
-	can_hold = list(/obj/item/gun/kinetic/revolver, /obj/item/ammo/bullets/a357)
-	spawn_contents = list(/obj/item/gun/kinetic/revolver, /obj/item/ammo/bullets/a357 = 2)
+	can_hold = list(/obj/item/gun/kinetic/revolver, /obj/item/ammo/magazine/a357)
+	spawn_contents = list(/obj/item/gun/kinetic/revolver, /obj/item/ammo/magazine/a357 = 2)
 
 /obj/item/storage/belt/pistol
 	name = "pistol belt"
@@ -453,8 +453,8 @@
 	item_state = "pistol_belt"
 	slots = 5
 	in_list_or_max = 0
-	can_hold = list(/obj/item/gun/kinetic/pistol, /obj/item/ammo/bullets/bullet_9mm)
-	spawn_contents = list(/obj/item/gun/kinetic/pistol, /obj/item/ammo/bullets/bullet_9mm = 4)
+	can_hold = list(/obj/item/gun/kinetic/pistol, /obj/item/ammo/magazine/bullet_9mm)
+	spawn_contents = list(/obj/item/gun/kinetic/pistol, /obj/item/ammo/magazine/bullet_9mm = 4)
 
 // fancy shoulder sling for grenades
 
@@ -466,7 +466,7 @@
 	can_hold = list(/obj/item/old_grenade,
 	/obj/item/chem_grenade,
 	/obj/item/storage/grenade_pouch,
-	/obj/item/ammo/bullets/grenade_round)
+	/obj/item/ammo/magazine/grenade_round)
 	in_list_or_max = 0
 
 // combat medic storage 7 slot

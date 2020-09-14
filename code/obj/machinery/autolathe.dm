@@ -204,9 +204,9 @@
 	src.LL += new /obj/item/device/infra(src)
 	src.LL += new /obj/item/device/infra_sensor(src)
 	src.LL += new /obj/item/handcuffs(src)
-	src.LL += new /obj/item/ammo/bullets/a357(src)
-	src.LL += new /obj/item/ammo/bullets/a38(src)
-	src.LL += new /obj/item/ammo/bullets/a12(src)
+	src.LL += new /obj/item/ammo/magazine/a357(src)
+	src.LL += new /obj/item/ammo/magazine/a38(src)
+	src.LL += new /obj/item/ammo/magazine/a12(src)
 	src.wires["Light Red"] = 0
 	src.wires["Dark Red"] = 0
 	src.wires["Blue"] = 0

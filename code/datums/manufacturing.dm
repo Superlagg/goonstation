@@ -203,7 +203,7 @@
 	item_paths = list("MET-1","CON-1", "CRY-1")
 	item_names = list("Metal","Conductive Material", "Crystal")
 	item_amounts = list(3,2,2)
-	item_outputs = list(/obj/item/ammo/bullets/a38/stun)
+	item_outputs = list(/obj/item/ammo/magazine/a38/stun)
 	time = 20 SECONDS
 	create = 1
 	category = "Resource"
@@ -213,7 +213,7 @@
 	item_paths = list("MET-2","CON-1")
 	item_names = list("Sturdy Metal","Conductive Material")
 	item_amounts = list(30,24)
-	item_outputs = list(/obj/item/ammo/bullets/bullet_22)
+	item_outputs = list(/obj/item/ammo/magazine/bullet_22)
 	time = 30 SECONDS
 	create = 1
 	category = "Resource"
@@ -223,7 +223,7 @@
 	item_paths = list("MET-2","CON-1")
 	item_names = list("Sturdy Metal","Conductive Material")
 	item_amounts = list(40,30)
-	item_outputs = list(/obj/item/ammo/bullets/nails)
+	item_outputs = list(/obj/item/ammo/magazine/nails)
 	time = 30 SECONDS
 	create = 1
 	category = "Resource"
@@ -233,7 +233,7 @@
 	item_paths = list("MET-2","CON-1")
 	item_names = list("Sturdy Metal","Conductive Material")
 	item_amounts = list(30,25)
-	item_outputs = list(/obj/item/ammo/bullets/smoke)
+	item_outputs = list(/obj/item/ammo/magazine/smoke)
 	time = 35 SECONDS
 	create = 1
 	category = "Resource"

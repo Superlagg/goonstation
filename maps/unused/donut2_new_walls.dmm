@@ -28908,7 +28908,7 @@
 	},
 /obj/storage/secure/crate/plasma/armory/anti_biological,
 /obj/item/gun/kinetic/flaregun,
-/obj/item/ammo/bullets/flare,
+/obj/item/ammo/magazine/flare,
 /turf/simulated/floor/caution/west,
 /area/station/security/armory)
 "biX" = (

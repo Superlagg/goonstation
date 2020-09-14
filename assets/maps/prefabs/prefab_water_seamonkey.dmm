@@ -15,7 +15,7 @@
 "ao" = (/obj/table/auto,/obj/item/storage/box/biohazard_bags,/turf/simulated/floor/white,/area/sea_monkey_hideout)
 "ap" = (/obj/rack,/obj/item/clothing/suit/labcoat/science,/obj/item/clothing/suit/labcoat,/turf/simulated/floor/white,/area/sea_monkey_hideout)
 "aq" = (/obj/rack,/obj/item/clothing/glasses/spectro,/obj/item/clothing/glasses/spectro,/turf/simulated/floor/white,/area/sea_monkey_hideout)
-"ar" = (/obj/decal/cleanable/blood{icon_state = "floor6"},/obj/item/ammo/bullets/a38/stun,/turf/simulated/floor/black,/area/sea_monkey_hideout)
+"ar" = (/obj/decal/cleanable/blood{icon_state = "floor6"},/obj/item/ammo/magazine/a38/stun,/turf/simulated/floor/black,/area/sea_monkey_hideout)
 "as" = (/obj/critter/gunbot,/turf/simulated/floor/black,/area/sea_monkey_hideout)
 "at" = (/turf/simulated/floor/black/grime,/area/sea_monkey_hideout)
 "au" = (/obj/reagent_dispensers/fueltank,/obj/decal/cleanable/dirt,/obj/decal/cleanable/blood{icon_state = "floor6"},/turf/simulated/floor/white,/area/sea_monkey_hideout)

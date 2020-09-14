@@ -9117,8 +9117,8 @@
 /area/station/security/detectives_office)
 "auO" = (
 /obj/rack,
-/obj/item/ammo/bullets/a38,
-/obj/item/ammo/bullets/a38/stun,
+/obj/item/ammo/magazine/a38,
+/obj/item/ammo/magazine/a38/stun,
 /turf/simulated/floor/carpet/grime,
 /area/station/security/detectives_office)
 "auP" = (
@@ -14965,9 +14965,9 @@
 "aII" = (
 /obj/rack,
 /obj/item/gun/kinetic/dart_rifle,
-/obj/item/ammo/bullets/tranq_darts,
-/obj/item/ammo/bullets/tranq_darts,
-/obj/item/ammo/bullets/tranq_darts,
+/obj/item/ammo/magazine/tranq_darts,
+/obj/item/ammo/magazine/tranq_darts,
+/obj/item/ammo/magazine/tranq_darts,
 /turf/simulated/floor/black,
 /area/station/security/armory)
 "aIJ" = (
@@ -17388,8 +17388,8 @@
 /area/station/security/main)
 "aOC" = (
 /obj/table/auto,
-/obj/item/ammo/bullets/smoke,
-/obj/item/ammo/bullets/smoke,
+/obj/item/ammo/magazine/smoke,
+/obj/item/ammo/magazine/smoke,
 /obj/item/gun/kinetic/riot40mm,
 /obj/item/gun/kinetic/riot40mm,
 /obj/item/clothing/head/helmet/camera/security,

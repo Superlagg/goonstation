@@ -2835,13 +2835,13 @@ Returns:
 			new/obj/item/plank(T)
 		else if(prob(1) && prob(40))
 			new/obj/item/gun/kinetic/spes(T)
-			new/obj/item/ammo/bullets/a12(T)
-			new/obj/item/ammo/bullets/a12(T)
+			new/obj/item/ammo/magazine/a12(T)
+			new/obj/item/ammo/magazine/a12(T)
 
 		else if(prob(1) && prob(40))
 			new/obj/item/gun/kinetic/flaregun(T)
-			new/obj/item/ammo/bullets/flare(T)
-			new/obj/item/ammo/bullets/flare(T)
+			new/obj/item/ammo/magazine/flare(T)
+			new/obj/item/ammo/magazine/flare(T)
 
 /mob/living/carbon/human/proc/zombify()
 	var/datum/ailment_data/disease/ZOM = contract_disease(/datum/ailment/disease/necrotic_degeneration, null, null, 1)

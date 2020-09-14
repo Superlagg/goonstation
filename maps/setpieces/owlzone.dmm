@@ -2718,8 +2718,8 @@
 	pixel_y = 8
 	},
 /obj/rack,
-/obj/item/ammo/bullets/abg,
-/obj/item/ammo/bullets/abg,
+/obj/item/ammo/magazine/abg,
+/obj/item/ammo/magazine/abg,
 /turf/unsimulated/floor/redblack/corner{
 	icon_state = "redblackcorner";
 	dir = 4

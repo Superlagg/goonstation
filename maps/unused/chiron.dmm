@@ -34008,8 +34008,8 @@
 /area/shuttle/escape/station/cogmap)
 "bpA" = (
 /obj/storage/secure/crate/weapon/armory/tranquilizer,
-/obj/item/ammo/bullets/tranq_darts,
-/obj/item/ammo/bullets/tranq_darts,
+/obj/item/ammo/magazine/tranq_darts,
+/obj/item/ammo/magazine/tranq_darts,
 /turf/simulated/floor/caution/west,
 /area/station/security/armory)
 "bpB" = (
@@ -34083,8 +34083,8 @@
 /area/station/engine/core)
 "bpN" = (
 /obj/storage/secure/closet/security/armory,
-/obj/item/ammo/bullets/flare,
-/obj/item/ammo/bullets/flare,
+/obj/item/ammo/magazine/flare,
+/obj/item/ammo/magazine/flare,
 /obj/item/gun/kinetic/flaregun,
 /turf/simulated/floor/caution/west,
 /area/station/security/armory)

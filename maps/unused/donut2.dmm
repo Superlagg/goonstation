@@ -31483,8 +31483,8 @@
 /obj/item/reagent_containers/syringe/haloperidol,
 /obj/item/shipcomponent/mainweapon/laser,
 /obj/item/shipcomponent/mainweapon/laser,
-/obj/item/ammo/bullets/autocannon/seeker,
-/obj/item/ammo/bullets/autocannon/seeker,
+/obj/item/ammo/magazine/autocannon/seeker,
+/obj/item/ammo/magazine/autocannon/seeker,
 /obj/window/reinforced{
 	icon_state = "rwindow";
 	dir = 4
@@ -32023,8 +32023,8 @@
 	icon_state = "rwindow";
 	dir = 2
 	},
-/obj/item/ammo/bullets/autocannon/seeker,
-/obj/item/ammo/bullets/autocannon/seeker,
+/obj/item/ammo/magazine/autocannon/seeker,
+/obj/item/ammo/magazine/autocannon/seeker,
 /turf/simulated/floor/caution/west,
 /area/station/security/armory)
 "blz" = (

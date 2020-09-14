@@ -429,7 +429,7 @@
 
 	if(istype(src.r_hand,/obj/item/gun/kinetic) && !src.r_hand:canshoot())
 		var/obj/item/gun/kinetic/GN = src.r_hand
-		for(var/obj/item/ammo/bullets/BB in src.contents)
+		for(var/obj/item/ammo/magazine/BB in src.contents)
 			src.l_hand = BB
 			GN:attackby(BB,src)
 			src.u_equip(BB)

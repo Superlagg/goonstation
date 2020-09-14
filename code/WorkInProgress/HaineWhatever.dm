@@ -478,7 +478,7 @@ var/list/special_parrot_species = list("ikea" = /datum/species_info/parrot/kea/i
 	hit_type = DAMAGE_BLUNT
 	hit_ground_chance = 50
 
-/obj/item/ammo/bullets/paintball
+/obj/item/ammo/magazine/paintball
 	sname = "paintball"
 	name = "paintball jug"
 	icon_state = "357-2"

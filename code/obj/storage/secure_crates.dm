@@ -33,8 +33,8 @@
 		tranquilizer
 			name = "tranquilizer crate"
 			spawn_contents = list(/obj/item/gun/kinetic/dart_rifle = 2,\
-			/obj/item/ammo/bullets/tranq_darts = 2,\
-			/obj/item/ammo/bullets/tranq_darts/anti_mutant)
+			/obj/item/ammo/magazine/tranq_darts = 2,\
+			/obj/item/ammo/magazine/tranq_darts/anti_mutant)
 
 		phaser
 			name = "phaser crate"
@@ -43,13 +43,13 @@
 		shotgun
 			name = "shotgun crate"
 			spawn_contents = list(/obj/item/gun/kinetic/riotgun = 4,\
-			/obj/item/ammo/bullets/abg = 4)
+			/obj/item/ammo/magazine/abg = 4)
 
 		pod_weapons
 			name = "pod weapons crate"
 			spawn_contents = list(/obj/item/shipcomponent/mainweapon/disruptor_light = 2,\
 			/obj/item/shipcomponent/mainweapon/laser = 2,\
-			/obj/item/ammo/bullets/autocannon/seeker = 2)
+			/obj/item/ammo/magazine/autocannon/seeker = 2)
 
 /obj/storage/secure/crate/plasma
 	desc = "A secure plasma crate."

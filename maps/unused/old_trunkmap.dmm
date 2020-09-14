@@ -5611,7 +5611,7 @@
 /area/station/security/main)
 "ami" = (
 /obj/table/auto,
-/obj/item/ammo/bullets/smoke,
+/obj/item/ammo/magazine/smoke,
 /obj/item/gun/kinetic/riot40mm,
 /turf/simulated/floor,
 /area/station/security/main)
@@ -13839,8 +13839,8 @@
 	dir = 5
 	},
 /obj/item/gun/kinetic/detectiverevolver,
-/obj/item/ammo/bullets/a38,
-/obj/item/ammo/bullets/a38/stun,
+/obj/item/ammo/magazine/a38,
+/obj/item/ammo/magazine/a38/stun,
 /turf/simulated/floor/carpet/grime,
 /area/station/security/detectives_office)
 "aGn" = (

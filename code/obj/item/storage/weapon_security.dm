@@ -43,8 +43,8 @@
 	desc = "A box containing a syndicate revolver and ammo."
 	// cogwerks - i think the ammo boxes are dumb, giving the starting box more ammo
 	spawn_contents = list(/obj/item/gun/kinetic/revolver,\
-	/obj/item/ammo/bullets/a357 = 3,\
-	/obj/item/ammo/bullets/a357/AP = 2)
+	/obj/item/ammo/magazine/a357 = 3,\
+	/obj/item/ammo/magazine/a357/AP = 2)
 
 /obj/item/storage/box/detectivegun
 	name = ".38 revolver box"
@@ -52,8 +52,8 @@
 	desc = "A box containing a .38 caliber revolver and ammunition."
 	// Reduced the amount of ammo. The detective had four lethal and five stun speedloaders total in his closet, perhaps a bit too much (Convair880).
 	spawn_contents = list(/obj/item/gun/kinetic/detectiverevolver,\
-	/obj/item/ammo/bullets/a38 = 2,\
-	/obj/item/ammo/bullets/a38/stun = 2)
+	/obj/item/ammo/magazine/a38 = 2,\
+	/obj/item/ammo/magazine/a38/stun = 2)
 
 /obj/item/storage/box/ak47 // cogwerks, terrorism update
 	name = "rifle box"
@@ -61,7 +61,7 @@
 	desc = "A box containing a syndicate rifle and some ammo."
 	// this might be a terrible idea giving them so much ammo, but whatevs
 	spawn_contents = list(/obj/item/gun/kinetic/ak47,\
-	/obj/item/ammo/bullets/ak47 = 2)
+	/obj/item/ammo/magazine/ak47 = 2)
 
 /obj/item/storage/box/pistol
 	name = "suppressed pistol box"
@@ -69,46 +69,46 @@
 	desc = "A box containing a sneaky pistol and some ammo."
 	// this might be a terrible idea giving them so much ammo, but whatevs
 	spawn_contents = list(/obj/item/gun/kinetic/silenced_22,\
-	/obj/item/ammo/bullets/bullet_22HP = 3)
+	/obj/item/ammo/magazine/bullet_22HP = 3)
 
 /obj/item/storage/box/derringer
 	name = "derringer box"
 	icon_state = "hard_case"
 	desc = "A box containing a derringer and some ammo."
 	spawn_contents = list(/obj/item/gun/kinetic/derringer,\
-	/obj/item/ammo/bullets/derringer = 4)
+	/obj/item/ammo/magazine/derringer = 4)
 
 /obj/item/storage/box/shotgun
 	name = "shotgun box"
 	icon_state = "hard_case"
 	desc = "A box containing a high-powered shotgun and some ammo."
 	spawn_contents = list(/obj/item/gun/kinetic/spes,\
-	/obj/item/ammo/bullets/a12 = 4)
+	/obj/item/ammo/magazine/a12 = 4)
 
 /obj/item/storage/box/revolver_ammo
 	name = "revolver ammo box"
 	icon_state = "revolver"
 	desc = "A box containing armour-piercing (AP) revolver rounds."
-	spawn_contents = list(/obj/item/ammo/bullets/a357/AP = 3)
+	spawn_contents = list(/obj/item/ammo/magazine/a357/AP = 3)
 
 /obj/item/storage/box/revolver_ammo2
 	name = "revolver ammo box"
 	icon_state = "revolver"
 	desc = "A box containing standard revolver rounds."
-	spawn_contents = list(/obj/item/ammo/bullets/a357 = 3)
+	spawn_contents = list(/obj/item/ammo/magazine/a357 = 3)
 
 /obj/item/storage/box/ammo38AP // 2 TC for 1 speedloader was very poor value compared to other guns and traitor items in general (Convair880).
 	name = ".38 AP ammo box"
 	icon_state = "revolver"
 	desc = "A box containing a couple of AP speedloaders for a .38 Special revolver."
-	spawn_contents = list(/obj/item/ammo/bullets/a38/AP = 3)
+	spawn_contents = list(/obj/item/ammo/magazine/a38/AP = 3)
 
 /obj/item/storage/box/flaregun // For surplus crates (Convair880).
 	name = "flare gun box"
 	icon_state = "revolver"
 	desc = "A box containing a flare gun and spare ammo."
 	spawn_contents = list(/obj/item/gun/kinetic/flaregun,\
-	/obj/item/ammo/bullets/flare)
+	/obj/item/ammo/magazine/flare)
 
 /* -------------------- Grenades -------------------- */
 
@@ -324,7 +324,7 @@
 	spawn_contents = list(/obj/item/clothing/head/safari,\
 	/obj/item/clothing/under/gimmick/safari,\
 	/obj/item/boomerang,\
-	/obj/item/ammo/bullets/tranq_darts/syndicate = 4)
+	/obj/item/ammo/magazine/tranq_darts/syndicate = 4)
 
 // Starter kit used in the conspiracy/spy game mode.
 /obj/item/storage/box/spykit
@@ -332,7 +332,7 @@
 	icon_state = "implant"
 	spawn_contents = list(/obj/item/dagger/syndicate,\
 	/obj/item/gun/kinetic/silenced_22,\
-	/obj/item/ammo/bullets/bullet_22,\
+	/obj/item/ammo/magazine/bullet_22,\
 	/obj/item/card/id/syndicate,\
 	/obj/item/device/spy_implanter)
 

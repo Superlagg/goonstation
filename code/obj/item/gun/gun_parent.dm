@@ -448,7 +448,7 @@ var/list/forensic_IDs = new/list() //Global list of all guns, based on bioholder
 	if (!user || !G || !A)
 		return
 
-	else if (istype(G, /obj/item/gun/kinetic) && istype(A, /obj/item/ammo/bullets))
+	else if (istype(G, /obj/item/gun/kinetic) && istype(A, /obj/item/ammo/magazine))
 		logTheThing("combat", user, null, "reloads [G] (<b>Ammo type:</b> <i>[G.current_projectile.type]</i>) at [log_loc(user)].")
 		return
 

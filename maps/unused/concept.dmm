@@ -25082,8 +25082,8 @@
 /area/security/detectives_office)
 "aVB" = (
 /obj/rack,
-/obj/item/ammo/bullets/a38,
-/obj/item/ammo/bullets/a38/stun,
+/obj/item/ammo/magazine/a38,
+/obj/item/ammo/magazine/a38/stun,
 /obj/item/gun/kinetic/detectiverevolver,
 /obj/machinery/light/small{
 	dir = 4

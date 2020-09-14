@@ -1648,7 +1648,7 @@ proc/get_gang_gear(var/mob/living/carbon/human/user)
 	desc = "A speedloader containing 7 rounds of Colt .45 ammunition.."
 	class2 = "weapon"
 	price = 700
-	item_path = /obj/item/ammo/bullets/c_45
+	item_path = /obj/item/ammo/magazine/c_45
 
 
 /datum/gang_item/misc/bathsalts

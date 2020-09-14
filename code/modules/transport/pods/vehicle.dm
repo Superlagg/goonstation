@@ -112,7 +112,7 @@
 			Install(W)
 			return
 
-		if (istype(W, /obj/item/ammo/bullets))
+		if (istype(W, /obj/item/ammo/magazine))
 			if (W.disposed)
 				return
 			if (src.m_w_system)
@@ -122,7 +122,7 @@
 				if (src.m_w_system.remaining_ammunition >= 50)
 					boutput(user, "<span class='alert'>The automated loader for the weapon cannot hold any more ammunition.</span>")
 					return
-				var/obj/item/ammo/bullets/ammo = W
+				var/obj/item/ammo/magazine/ammo = W
 				if (!ammo.amount_left)
 					return
 				if (src.m_w_system.current_projectile.type != ammo.ammo_type.type)

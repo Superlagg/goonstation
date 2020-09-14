@@ -37170,10 +37170,10 @@
 	icon_state = "0-8"
 	},
 /obj/table/wood/auto,
-/obj/item/ammo/bullets/a38,
+/obj/item/ammo/magazine/a38,
 /obj/item/spraybottle/detective,
 /obj/disposalpipe/segment/brig,
-/obj/item/ammo/bullets/a38/stun,
+/obj/item/ammo/magazine/a38/stun,
 /turf/simulated/floor/carpet/grime,
 /area/station/security/detectives_office)
 "bEE" = (

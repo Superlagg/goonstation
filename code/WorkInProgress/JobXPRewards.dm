@@ -297,7 +297,7 @@ mob/verb/checkrewards()
 			colt.ammo = tmp_ammo
 			colt.current_projectile = tmp_current_projectile
 		if (!colt.ammo)
-			colt.ammo = new/obj/item/ammo/bullets/a38/stun
+			colt.ammo = new/obj/item/ammo/magazine/a38/stun
 		if (!colt.current_projectile)
 			colt.current_projectile = new/datum/projectile/bullet/revolver_38/stunners
 

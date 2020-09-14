@@ -21587,8 +21587,8 @@
 /area/station/security/detectives_office)
 "aUz" = (
 /obj/rack,
-/obj/item/ammo/bullets/a38,
-/obj/item/ammo/bullets/a38/stun,
+/obj/item/ammo/magazine/a38,
+/obj/item/ammo/magazine/a38/stun,
 /obj/item/gun/kinetic/detectiverevolver,
 /turf/simulated/floor/carpet/grime,
 /area/station/security/detectives_office)

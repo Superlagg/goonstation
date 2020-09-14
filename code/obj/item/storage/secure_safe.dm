@@ -503,7 +503,7 @@
 					S.setup(src)
 			if (7)
 				new /obj/item/gun/kinetic/riotgun(src)
-				new /obj/item/ammo/bullets/abg(src)
+				new /obj/item/ammo/magazine/abg(src)
 				for (var/i=3, i>0, i--)
 					var/obj/item/spacecash/thousand/S = unpool(/obj/item/spacecash/thousand)
 					S.setup(src)
@@ -531,7 +531,7 @@
 				/obj/item/raw_material/miracle,\
 				/obj/item/raw_material/uqill,\
 				/obj/item/rcd = /obj/item/rcd_ammo/big,\
-				/obj/item/gun/kinetic/riotgun = /obj/item/ammo/bullets/abg,\
+				/obj/item/gun/kinetic/riotgun = /obj/item/ammo/magazine/abg,\
 				/obj/item/gun/energy/taser_gun,\
 				/obj/item/gun/energy/phaser_gun,\
 				/obj/item/gun/energy/laser_gun,\
@@ -629,7 +629,7 @@
 				S.setup(src)
 			if (3)
 				new /obj/item/gun/kinetic/riotgun(src)
-				new /obj/item/ammo/bullets/abg(src)
+				new /obj/item/ammo/magazine/abg(src)
 			if (4)
 				new /obj/item/paper/freeze(src)
 

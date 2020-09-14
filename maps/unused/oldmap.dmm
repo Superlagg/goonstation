@@ -3011,7 +3011,7 @@
 /turf/simulated/floor,
 /area/crew_quarters/captain)
 "gK" = (
-/obj/item/ammo/bullets/a357,
+/obj/item/ammo/magazine/a357,
 /turf/simulated/floor/plating,
 /area/crew_quarters/captain)
 "gL" = (

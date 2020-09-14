@@ -38433,8 +38433,8 @@
 	dir = 4
 	},
 /obj/rack,
-/obj/item/ammo/bullets/smoke,
-/obj/item/ammo/bullets/smoke,
+/obj/item/ammo/magazine/smoke,
+/obj/item/ammo/magazine/smoke,
 /obj/item/gun/kinetic/riot40mm,
 /turf/simulated/floor/caution/westeast,
 /area/station/security/main)

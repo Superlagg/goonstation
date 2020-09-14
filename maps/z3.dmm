@@ -1350,7 +1350,7 @@
 "azX" = (/obj/decal/fakeobjects/teleport_pad,/obj/map/light/dimred,/obj/marker/supplymarker,/turf/simulated/floor/plating/damaged3,/area/martian_trader)
 "azY" = (/obj/item/beach_ball,/turf/simulated/martian/floor,/area/martian_trader)
 "azZ" = (/obj/item/tile/steel,/turf/simulated/floor/plating/damaged3,/area/martian_trader)
-"aAa" = (/obj/item/ammo/bullets/rifle_3006,/obj/decal/fakeobjects/robot,/obj/decal/cleanable/oil,/turf/simulated/floor/plating/damaged3,/area/martian_trader)
+"aAa" = (/obj/item/ammo/magazine/rifle_3006,/obj/decal/fakeobjects/robot,/obj/decal/cleanable/oil,/turf/simulated/floor/plating/damaged3,/area/martian_trader)
 "aAb" = (/obj/rack,/obj/item/storage/firstaid/regular,/turf/simulated/floor/white,/area/evilreaver/genetics)
 "aAc" = (/obj/decal/cleanable/blood/splatter,/obj/rack,/obj/item/storage/firstaid/fire,/turf/simulated/floor/white,/area/evilreaver/genetics)
 "aAd" = (/obj/decal/fakeobjects/lighttube_broken,/turf/simulated/floor/white,/area/evilreaver/genetics)

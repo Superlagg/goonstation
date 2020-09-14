@@ -7009,7 +7009,7 @@
 /area/station/crew_quarters/kitchen)
 "pV" = (
 /obj/item/reagent_containers/glass/beaker,
-/obj/item/ammo/bullets/a12,
+/obj/item/ammo/magazine/a12,
 /turf/simulated/floor/carpet,
 /area/station/crew_quarters/kitchen)
 "pW" = (

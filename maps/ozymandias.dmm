@@ -3767,8 +3767,8 @@
 /area/station/hallway/secondary/north)
 "bfR" = (
 /obj/table/wood/auto,
-/obj/item/ammo/bullets/a38,
-/obj/item/ammo/bullets/a38/stun,
+/obj/item/ammo/magazine/a38,
+/obj/item/ammo/magazine/a38/stun,
 /turf/simulated/floor/carpet/red/standard/edge/east,
 /area/station/security/detectives_office)
 "bfU" = (
@@ -58799,8 +58799,8 @@
 /obj/item/gun/kinetic/riot40mm{
 	pixel_y = 10
 	},
-/obj/item/ammo/bullets/smoke,
-/obj/item/ammo/bullets/smoke,
+/obj/item/ammo/magazine/smoke,
+/obj/item/ammo/magazine/smoke,
 /obj/item/gun/kinetic/riot40mm,
 /obj/machinery/light{
 	dir = 1;
@@ -74115,8 +74115,8 @@
 /area/station/maintenance/disposal)
 "vII" = (
 /obj/rack,
-/obj/item/ammo/bullets/smoke,
-/obj/item/ammo/bullets/smoke,
+/obj/item/ammo/magazine/smoke,
+/obj/item/ammo/magazine/smoke,
 /obj/item/gun/kinetic/riot40mm,
 /obj/item/gun/kinetic/riot40mm,
 /obj/item/wrench,

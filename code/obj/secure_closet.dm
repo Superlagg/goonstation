@@ -221,7 +221,7 @@
 	new /obj/item/clothing/glasses/sunglasses(src)
 	new /obj/item/clothing/suit/armor/EOD(src)
 	new /obj/item/clothing/head/helmet/EOD(src)
-	new /obj/item/ammo/bullets/abg(src)
+	new /obj/item/ammo/magazine/abg(src)
 	new /obj/item/gun/kinetic/riotgun(src)
 	return ..()
 
@@ -436,8 +436,8 @@
 //	new /obj/item/fcardholder(src) // Ditto.
 	new /obj/item/device/detective_scanner(src)
 	new /obj/item/storage/box/detectivegun(src)
-/*	new /obj/item/ammo/bullets/a38(src)  The detective's got more than enough ammo already (Convair880).
-	new /obj/item/ammo/bullets/a38/stun(src)
+/*	new /obj/item/ammo/magazine/a38(src)  The detective's got more than enough ammo already (Convair880).
+	new /obj/item/ammo/magazine/a38/stun(src)
 	new /obj/item/gun/kinetic/detectiverevolver(src)  Moved to that box (Convair880).*/
 	new /obj/item/device/flash(src)
 	return ..()
@@ -587,8 +587,8 @@
 	new /obj/item/clothing/suit/labcoat(src)
 	new /obj/item/clothing/shoes/brown(src)
 	new /obj/item/gun/kinetic/dart_rifle(src)
-	new /obj/item/ammo/bullets/tranq_darts(src)
-	new /obj/item/ammo/bullets/tranq_darts/anti_mutant(src)
+	new /obj/item/ammo/magazine/tranq_darts(src)
+	new /obj/item/ammo/magazine/tranq_darts/anti_mutant(src)
 	new /obj/item/storage/box/syringes(src)
 	new /obj/item/robodefibrillator(src)
 	new /obj/item/clothing/gloves/latex(src)

@@ -6014,14 +6014,14 @@
 /turf/simulated/floor/plating/jen,
 /area/station/maintenance/outer/west)
 "bwT" = (
-/obj/item/ammo/bullets/antisingularity{
+/obj/item/ammo/magazine/antisingularity{
 	pixel_x = -7;
 	pixel_y = 3
 	},
-/obj/item/ammo/bullets/antisingularity{
+/obj/item/ammo/magazine/antisingularity{
 	pixel_y = 3
 	},
-/obj/item/ammo/bullets/antisingularity{
+/obj/item/ammo/magazine/antisingularity{
 	pixel_x = 7;
 	pixel_y = 3
 	},
@@ -28329,19 +28329,19 @@
 	pixel_x = 2;
 	pixel_y = 4
 	},
-/obj/item/ammo/bullets/tranq_darts/anti_mutant{
+/obj/item/ammo/magazine/tranq_darts/anti_mutant{
 	pixel_x = -10;
 	pixel_y = -6
 	},
-/obj/item/ammo/bullets/tranq_darts/anti_mutant{
+/obj/item/ammo/magazine/tranq_darts/anti_mutant{
 	pixel_x = -4;
 	pixel_y = -6
 	},
-/obj/item/ammo/bullets/tranq_darts/anti_mutant{
+/obj/item/ammo/magazine/tranq_darts/anti_mutant{
 	pixel_x = 9;
 	pixel_y = -6
 	},
-/obj/item/ammo/bullets/tranq_darts/anti_mutant{
+/obj/item/ammo/magazine/tranq_darts/anti_mutant{
 	pixel_x = 3;
 	pixel_y = -6
 	},
@@ -58765,7 +58765,7 @@
 /obj/machinery/light/incandescent/netural{
 	dir = 1
 	},
-/obj/item/ammo/bullets/abg,
+/obj/item/ammo/magazine/abg,
 /obj/item/hand_labeler,
 /turf/simulated/floor/carpet/grime,
 /area/station/crew_quarters/bar)
@@ -77490,11 +77490,11 @@
 /area/station/security/hos)
 "wXb" = (
 /obj/rack,
-/obj/item/ammo/bullets/smoke{
+/obj/item/ammo/magazine/smoke{
 	pixel_x = 4;
 	pixel_y = 6
 	},
-/obj/item/ammo/bullets/smoke{
+/obj/item/ammo/magazine/smoke{
 	pixel_x = 4;
 	pixel_y = -8
 	},
@@ -81124,19 +81124,19 @@
 /obj/table/reinforced/auto{
 	icon_state = "3"
 	},
-/obj/item/ammo/bullets/tranq_darts{
+/obj/item/ammo/magazine/tranq_darts{
 	pixel_x = 9;
 	pixel_y = 8
 	},
-/obj/item/ammo/bullets/tranq_darts{
+/obj/item/ammo/magazine/tranq_darts{
 	pixel_x = 3;
 	pixel_y = 8
 	},
-/obj/item/ammo/bullets/tranq_darts{
+/obj/item/ammo/magazine/tranq_darts{
 	pixel_x = -4;
 	pixel_y = 8
 	},
-/obj/item/ammo/bullets/tranq_darts{
+/obj/item/ammo/magazine/tranq_darts{
 	pixel_x = -10;
 	pixel_y = 8
 	},

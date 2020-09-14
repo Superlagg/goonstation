@@ -3,7 +3,7 @@
 	icon = 'icons/obj/items/gun.dmi'
 	item_state = "gun"
 	m_amt = 2000
-	var/obj/item/ammo/bullets/ammo = null
+	var/obj/item/ammo/magazine/ammo = null
 	var/max_ammo_capacity = 1 // How much ammo can this gun hold? Don't make this null (Convair880).
 	var/caliber = null // Can be a list too. The .357 Mag revolver can also chamber .38 Spc rounds, for instance (Convair880).
 
@@ -68,12 +68,12 @@
 		return 0
 
 	MouseDrop_T(atom/movable/O as mob|obj, mob/user as mob)
-		if (istype(O, /obj/item/ammo/bullets) && allowDropReload)
+		if (istype(O, /obj/item/ammo/magazine) && allowDropReload)
 			attackby(O, user)
 		return ..()
 
-	attackby(obj/item/ammo/bullets/b as obj, mob/user as mob)
-		if(istype(b, /obj/item/ammo/bullets))
+	attackby(obj/item/ammo/magazine/b as obj, mob/user as mob)
+		if(istype(b, /obj/item/ammo/magazine))
 			switch (src.ammo.loadammo(b,src))
 				if(0)
 					user.show_text("You can't reload this gun.", "red")
@@ -136,7 +136,7 @@
 					return
 
 			// Make a copy here to avoid item teleportation issues.
-			var/obj/item/ammo/bullets/ammoHand = new src.ammo.type
+			var/obj/item/ammo/magazine/ammoHand = new src.ammo.type
 			ammoHand.amount_left = src.ammo.amount_left
 			ammoHand.name = src.ammo.name
 			ammoHand.icon = src.ammo.icon
@@ -302,7 +302,7 @@
 	w_class = 4
 
 	New()
-		ammo = new/obj/item/ammo/bullets/minigun
+		ammo = new/obj/item/ammo/magazine/minigun
 		current_projectile = new/datum/projectile/bullet/minigun
 		..()
 
@@ -320,7 +320,7 @@
 	max_ammo_capacity = 7
 
 	New()
-		ammo = new/obj/item/ammo/bullets/a357
+		ammo = new/obj/item/ammo/magazine/a357
 		current_projectile = new/datum/projectile/bullet/revolver_357
 		..()
 
@@ -348,7 +348,7 @@
 		return
 
 	New()
-		ammo = new/obj/item/ammo/bullets/derringer
+		ammo = new/obj/item/ammo/magazine/derringer
 		current_projectile = new/datum/projectile/bullet/derringer
 		..()
 
@@ -364,7 +364,7 @@
 	muzzle_flash = null
 
 	New()
-		ammo = new/obj/item/ammo/bullets/bullet_22/faith
+		ammo = new/obj/item/ammo/magazine/bullet_22/faith
 		current_projectile = new/datum/projectile/bullet/bullet_22
 		..()
 
@@ -387,7 +387,7 @@
 	max_ammo_capacity = 7
 
 	New()
-		ammo = new/obj/item/ammo/bullets/a38/stun
+		ammo = new/obj/item/ammo/magazine/a38/stun
 		current_projectile = new/datum/projectile/bullet/revolver_38/stunners
 		..()
 
@@ -411,11 +411,11 @@
 		caliber = 0.38
 		New()
 			..()
-			ammo = new/obj/item/ammo/bullets/a38/stun
+			ammo = new/obj/item/ammo/magazine/a38/stun
 			current_projectile = new/datum/projectile/bullet/revolver_38/stunners
 
 	New()
-		ammo = new/obj/item/ammo/bullets/c_45
+		ammo = new/obj/item/ammo/magazine/c_45
 		current_projectile = new/datum/projectile/bullet/revolver_45
 		..()
 
@@ -458,7 +458,7 @@
 			icon_state = "clock-188-black"
 			item_state = "clock-188-black"
 
-		ammo = new/obj/item/ammo/bullets/nine_mm_NATO
+		ammo = new/obj/item/ammo/magazine/nine_mm_NATO
 		current_projectile = new/datum/projectile/bullet/nine_mm_NATO
 		if(throw_return)
 			projectiles = list(current_projectile)
@@ -542,7 +542,7 @@
 	New()
 		if(prob(10))
 			name = pick("SPEZZ-12", "SPESS-12", "SPETZ-12", "SPOCK-12", "SCHPATZL-12", "SABRINA-12", "SAURUS-12", "SABER-12", "SOSIG-12", "DINOHUNTER-12", "PISS-12", "ASS-12", "SPES-12", "SHIT-12", "SHOOT-12", "SHOTGUN-12", "FAMILYGUY-12", "SPAGOOTER-12")
-		ammo = new/obj/item/ammo/bullets/a12
+		ammo = new/obj/item/ammo/magazine/a12
 		current_projectile = new/datum/projectile/bullet/a12
 		..()
 
@@ -569,7 +569,7 @@
 
 		New()
 			..()
-			ammo = new/obj/item/ammo/bullets/a12/weak
+			ammo = new/obj/item/ammo/magazine/a12/weak
 			current_projectile = new/datum/projectile/bullet/a12/weak
 
 
@@ -590,14 +590,14 @@
 	two_handed = 1
 
 	New()
-		ammo = new/obj/item/ammo/bullets/abg
+		ammo = new/obj/item/ammo/magazine/abg
 		current_projectile = new/datum/projectile/bullet/abg
 		..()
 
 /obj/item/gun/kinetic/riotgun/pbr
 
 	New()
-		ammo = new/obj/item/ammo/bullets/pbr
+		ammo = new/obj/item/ammo/magazine/pbr
 		current_projectile = new/datum/projectile/bullet/pbr
 		..()
 
@@ -616,7 +616,7 @@
 	two_handed = 1
 
 	New()
-		ammo = new/obj/item/ammo/bullets/ak47
+		ammo = new/obj/item/ammo/magazine/ak47
 		current_projectile = new/datum/projectile/bullet/ak47
 		..()
 
@@ -637,7 +637,7 @@
 	two_handed = 1
 
 	New()
-		ammo = new/obj/item/ammo/bullets/rifle_3006
+		ammo = new/obj/item/ammo/magazine/rifle_3006
 		current_projectile = new/datum/projectile/bullet/rifle_3006
 		..()
 
@@ -658,7 +658,7 @@
 	two_handed = 1
 
 	New()
-		ammo = new/obj/item/ammo/bullets/tranq_darts
+		ammo = new/obj/item/ammo/magazine/tranq_darts
 		current_projectile = new/datum/projectile/bullet/tranq_dart
 		..()
 
@@ -681,7 +681,7 @@
 		qdel(src)
 		return // Sorry! No zipguns during ASS JAM
 #else
-		ammo = new/obj/item/ammo/bullets/derringer
+		ammo = new/obj/item/ammo/magazine/derringer
 		ammo.amount_left = 0 // start empty
 		current_projectile = new/datum/projectile/bullet/derringer
 		..()
@@ -719,7 +719,7 @@
 	muzzle_flash = null
 
 	New()
-		ammo = new/obj/item/ammo/bullets/bullet_22HP
+		ammo = new/obj/item/ammo/magazine/bullet_22HP
 		current_projectile = new/datum/projectile/bullet/bullet_22/HP
 		..()
 
@@ -740,7 +740,7 @@
 	max_ammo_capacity = 200
 
 	New()
-		ammo = new/obj/item/ammo/bullets/vbullet
+		ammo = new/obj/item/ammo/magazine/vbullet
 		current_projectile = new/datum/projectile/bullet/vbullet
 		..()
 
@@ -764,7 +764,7 @@
 	max_ammo_capacity = 1
 
 	New()
-		ammo = new/obj/item/ammo/bullets/flare/single
+		ammo = new/obj/item/ammo/magazine/flare/single
 		current_projectile = new/datum/projectile/bullet/flare
 		..()
 
@@ -780,7 +780,7 @@
 	muzzle_flash = "muzzle_flash_launch"
 
 	New()
-		ammo = new/obj/item/ammo/bullets/smoke/single
+		ammo = new/obj/item/ammo/magazine/smoke/single
 		current_projectile = new/datum/projectile/bullet/smoke
 		..()
 
@@ -790,7 +790,7 @@
 				boutput(user, "<span class='alert'>The [src] already has something in it! You can't use the conversion chamber right now! You'll have to manually unload the [src]!</span>")
 				return
 			else
-				var/obj/item/ammo/bullets/grenade_shell/TO_LOAD = new /obj/item/ammo/bullets/grenade_shell
+				var/obj/item/ammo/magazine/grenade_shell/TO_LOAD = new /obj/item/ammo/magazine/grenade_shell
 				TO_LOAD.attackby(b, user)
 				src.attackby(TO_LOAD, user)
 				return
@@ -821,7 +821,7 @@
 	muzzle_flash = "muzzle_flash_launch"
 
 	New()
-		ammo = new /obj/item/ammo/bullets/rpg
+		ammo = new /obj/item/ammo/magazine/rpg
 		ammo.amount_left = 0 // Spawn empty.
 		current_projectile = new /datum/projectile/bullet/rpg
 		..()
@@ -855,7 +855,7 @@
 	max_ammo_capacity = 2
 
 	New()
-		ammo = new/obj/item/ammo/bullets/rod
+		ammo = new/obj/item/ammo/magazine/rod
 		current_projectile = new/datum/projectile/bullet/rod
 		..()
 
@@ -868,7 +868,7 @@
 	muzzle_flash = "muzzle_flash_launch"
 
 	New()
-		ammo = new/obj/item/ammo/bullets/airzooka
+		ammo = new/obj/item/ammo/magazine/airzooka
 		current_projectile = new/datum/projectile/bullet/airzooka
 		..()
 
@@ -887,7 +887,7 @@
 	c_interval = 1.1
 
 	New()
-		ammo = new/obj/item/ammo/bullets/bullet_9mm/smg
+		ammo = new/obj/item/ammo/magazine/bullet_9mm/smg
 		current_projectile = new/datum/projectile/bullet/bullet_9mm/smg
 		..()
 
@@ -906,7 +906,7 @@
 	auto_eject = 1
 
 	New()
-		ammo = new/obj/item/ammo/bullets/bullet_9mm
+		ammo = new/obj/item/ammo/magazine/bullet_9mm
 		current_projectile = new/datum/projectile/bullet/bullet_9mm
 		..()
 
@@ -933,7 +933,7 @@
 	muzzle_flash = null
 
 	New()
-		ammo = new/obj/item/ammo/bullets/tranq_darts/syndicate/pistol
+		ammo = new/obj/item/ammo/magazine/tranq_darts/syndicate/pistol
 		current_projectile = new/datum/projectile/bullet/tranq_dart/syndicate/pistol
 		..()
 
@@ -952,7 +952,7 @@
 	can_dual_wield = 0
 
 	New()
-		ammo = new/obj/item/ammo/bullets/buckshot_burst
+		ammo = new/obj/item/ammo/magazine/buckshot_burst
 		current_projectile = new/datum/projectile/special/spreader/buckshot_burst/
 		..()
 
@@ -986,17 +986,17 @@
 	spread_angle = 0
 
 	New()
-		ammo = new/obj/item/ammo/bullets/assault_rifle
+		ammo = new/obj/item/ammo/magazine/assault_rifle
 		current_projectile = new/datum/projectile/bullet/assault_rifle
 		projectiles = list(current_projectile,new/datum/projectile/bullet/assault_rifle/burst)
 		..()
 
-	attackby(obj/item/ammo/bullets/b, mob/user)  // has to account for whether regular or armor-piercing ammo is loaded AND which firing mode it's using
+	attackby(obj/item/ammo/magazine/b, mob/user)  // has to account for whether regular or armor-piercing ammo is loaded AND which firing mode it's using
 		var/obj/previous_ammo = ammo
 		var/mode_was_burst = (istype(current_projectile, /datum/projectile/bullet/assault_rifle/burst/))  // was previous mode burst fire?
 		..()
 		if(previous_ammo.type != ammo.type)  // we switched ammo types
-			if(istype(ammo, /obj/item/ammo/bullets/assault_rifle/armor_piercing)) // we switched from normal to armor_piercing
+			if(istype(ammo, /obj/item/ammo/magazine/assault_rifle/armor_piercing)) // we switched from normal to armor_piercing
 				if(mode_was_burst) // we were in burst shot mode
 					current_projectile = new/datum/projectile/bullet/assault_rifle/burst/armor_piercing
 					projectiles = list(new/datum/projectile/bullet/assault_rifle/armor_piercing, current_projectile)
@@ -1047,7 +1047,7 @@
 	w_class = 4
 
 	New()
-		ammo = new/obj/item/ammo/bullets/lmg
+		ammo = new/obj/item/ammo/magazine/lmg
 		current_projectile = new/datum/projectile/bullet/lmg
 		..()
 
@@ -1083,7 +1083,7 @@
 
 
 	New()
-		ammo = new/obj/item/ammo/bullets/cannon/single
+		ammo = new/obj/item/ammo/magazine/cannon/single
 		current_projectile = new/datum/projectile/bullet/cannon
 		..()
 
@@ -1109,7 +1109,7 @@
 	object_flags = NO_ARM_ATTACH
 
 	New()
-		ammo = new/obj/item/ammo/bullets/grenade_round/explosive
+		ammo = new/obj/item/ammo/magazine/grenade_round/explosive
 		current_projectile = new/datum/projectile/bullet/grenade_round/explosive
 		..()
 
@@ -1119,7 +1119,7 @@
 				boutput(user, "<span class='alert'>The [src] already has something in it! You can't use the conversion chamber right now! You'll have to manually unload the [src]!</span>")
 				return
 			else
-				var/obj/item/ammo/bullets/grenade_shell/TO_LOAD = new /obj/item/ammo/bullets/grenade_shell
+				var/obj/item/ammo/magazine/grenade_shell/TO_LOAD = new /obj/item/ammo/magazine/grenade_shell
 				TO_LOAD.attackby(b, user)
 				src.attackby(TO_LOAD, user)
 				return
@@ -1149,7 +1149,7 @@
 
 	New()
 		current_projectile = new/datum/projectile/bullet/nails
-		ammo = new /obj/item/ammo/bullets/a12
+		ammo = new /obj/item/ammo/magazine/a12
 		ammo.amount_left = 0 // Spawn empty.
 		..()
 
@@ -1220,7 +1220,7 @@
 					return
 
 			// Make a copy here to avoid item teleportation issues.
-			var/obj/item/ammo/bullets/ammoHand = new src.ammo.type
+			var/obj/item/ammo/magazine/ammoHand = new src.ammo.type
 			ammoHand.amount_left = src.ammo.amount_left
 			ammoHand.name = src.ammo.name
 			ammoHand.icon = src.ammo.icon
@@ -1245,10 +1245,10 @@
 		..()
 
 	attackby(obj/item/b as obj, mob/user as mob)
-		if (istype(b, /obj/item/ammo/bullets) && src.icon_state == "slamgun-ready")
+		if (istype(b, /obj/item/ammo/magazine) && src.icon_state == "slamgun-ready")
 			boutput(user, "<span class='alert'>You can't shove shells down the barrel! You'll have to open the [src]!</span>")
 			return
-		if (istype(b, /obj/item/ammo/bullets) && (src.ammo.amount_left > 0 || src.casings_to_eject > 0))
+		if (istype(b, /obj/item/ammo/magazine) && (src.ammo.amount_left > 0 || src.casings_to_eject > 0))
 			boutput(user, "<span class='alert'>The [src] already has a shell inside! You'll have to unload the [src]!</span>")
 			return
 		..()
@@ -1278,7 +1278,7 @@
 	var/datum/movement_controller/snipermove = null
 
 	New()
-		ammo = new/obj/item/ammo/bullets/rifle_762_NATO
+		ammo = new/obj/item/ammo/magazine/rifle_762_NATO
 		current_projectile = new/datum/projectile/bullet/rifle_762_NATO
 		snipermove = new/datum/movement_controller/sniper_look()
 		..()
@@ -1376,7 +1376,7 @@
 
 
 	New()
-		ammo = new/obj/item/ammo/bullets/cannon
+		ammo = new/obj/item/ammo/magazine/cannon
 		current_projectile = new/datum/projectile/bullet/cannon
 		snipermove = new/datum/movement_controller/sniper_look()
 		..()
@@ -1399,7 +1399,7 @@
 	var/failure_chance = 1
 
 	New()
-		ammo = new/obj/item/ammo/bullets/flintlock
+		ammo = new/obj/item/ammo/magazine/flintlock
 		current_projectile = new/datum/projectile/bullet/flintlock
 		..()
 
@@ -1433,7 +1433,7 @@
 	muzzle_flash = "muzzle_flash_launch"
 
 	New()
-		ammo = new /obj/item/ammo/bullets/antisingularity
+		ammo = new /obj/item/ammo/magazine/antisingularity
 		ammo.amount_left = 0 // Spawn empty.
 		current_projectile = new /datum/projectile/bullet/antisingularity
 		..()
@@ -1454,7 +1454,7 @@
 	force = 5
 
 	New()
-		ammo = new /obj/item/ammo/bullets/gun
+		ammo = new /obj/item/ammo/magazine/gun
 		ammo.amount_left = 6 //spawn full please
 		current_projectile = new /datum/projectile/special/spawner/gun
 		..()
@@ -1479,7 +1479,7 @@
 	w_class = 4
 
 	New()
-		ammo = new/obj/item/ammo/bullets/meowitzer
+		ammo = new/obj/item/ammo/magazine/meowitzer
 		current_projectile = new/datum/projectile/special/meowitzer
 		..()
 
@@ -1496,7 +1496,7 @@
 /obj/item/gun/kinetic/meowitzer/inert
 	New()
 		..()
-		ammo = new/obj/item/ammo/bullets/meowitzer/inert
+		ammo = new/obj/item/ammo/magazine/meowitzer/inert
 		current_projectile = new/datum/projectile/special/meowitzer/inert
 
 
@@ -1524,7 +1524,7 @@
 
 
 	New()
-		ammo = new/obj/item/ammo/bullets/nine_mm_NATO
+		ammo = new/obj/item/ammo/magazine/nine_mm_NATO
 		current_projectile = new/datum/projectile/bullet/nine_mm_NATO/burst
 		..()
 
@@ -1536,7 +1536,7 @@
 		else
 			boutput(user, "<span class='alert'>You can't unload the [src] while it is closed.</span>")
 
-	attackby(obj/item/ammo/bullets/b as obj, mob/user)
+	attackby(obj/item/ammo/magazine/b as obj, mob/user)
 		if(open)
 			.=..()
 		else

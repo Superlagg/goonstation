@@ -1174,7 +1174,7 @@
 	name = "Anti-Singularity Pack"
 	desc = "Everything that the crew needs to take down a rogue singularity."
 	category = "Engineering Department"
-	contains = list(/obj/item/paper/antisingularity,/obj/item/ammo/bullets/antisingularity = 5,/obj/item/gun/kinetic/antisingularity)
+	contains = list(/obj/item/paper/antisingularity,/obj/item/ammo/magazine/antisingularity = 5,/obj/item/gun/kinetic/antisingularity)
 	cost = 10000
 	containertype = /obj/storage/crate/classcrate/qm
 	containername = "Anti-Singularity Supply Pack"

@@ -16,34 +16,34 @@
 	assault_rifle
 		name = "rifle magazine pouch"
 		icon_state = "ammopouch-large"
-		spawn_contents = list(/obj/item/ammo/bullets/assault_rifle = 5)
+		spawn_contents = list(/obj/item/ammo/magazine/assault_rifle = 5)
 
 		mixed
-			spawn_contents = list(/obj/item/ammo/bullets/assault_rifle = 3, /obj/item/ammo/bullets/assault_rifle/armor_piercing = 2)
+			spawn_contents = list(/obj/item/ammo/magazine/assault_rifle = 3, /obj/item/ammo/magazine/assault_rifle/armor_piercing = 2)
 
 	bullet_9mm
 		name = "pistol magazine pouch"
 		icon_state = "ammopouch-double"
-		spawn_contents = list(/obj/item/ammo/bullets/bullet_9mm = 5)
+		spawn_contents = list(/obj/item/ammo/magazine/bullet_9mm = 5)
 
 		small
 			name = "small pistol magazine pouch"
-			spawn_contents = list(/obj/item/ammo/bullets/bullet_9mm = 2)
+			spawn_contents = list(/obj/item/ammo/magazine/bullet_9mm = 2)
 
 	tranq_pistol_dart
 		name = "tranq pistol dart pouch"
 		icon_state = "ammopouch-double"
-		spawn_contents = list(/obj/item/ammo/bullets/tranq_darts/syndicate/pistol = 5)
+		spawn_contents = list(/obj/item/ammo/magazine/tranq_darts/syndicate/pistol = 5)
 
 	det_38
 		name = ".38 rounds pouch"
 		icon_state = "ammopouch-double"
-		spawn_contents = list(/obj/item/ammo/bullets/a38/stun = 3)
+		spawn_contents = list(/obj/item/ammo/magazine/a38/stun = 3)
 
 	clock
 		name = "9mm rounds pouch"
 		icon_state = "ammopouch-double"
-		spawn_contents = list(/obj/item/ammo/bullets/nine_mm_NATO = 5)
+		spawn_contents = list(/obj/item/ammo/magazine/nine_mm_NATO = 5)
 
 
 	powercell_medium
@@ -55,31 +55,31 @@
 		name = "sniper magazine pouch"
 		icon_state = "ammopouch-double"
 		slots = 5
-		spawn_contents = list(/obj/item/ammo/bullets/rifle_762_NATO = 5)
+		spawn_contents = list(/obj/item/ammo/magazine/rifle_762_NATO = 5)
 
 	shotgun
 		name = "shotgun shell pouch"
 		icon_state = "ammopouch-large"
-		spawn_contents = list(/obj/item/ammo/bullets/a12 = 5)
+		spawn_contents = list(/obj/item/ammo/magazine/a12 = 5)
 
 		weak
-			spawn_contents = list(/obj/item/ammo/bullets/a12/weak = 5)
+			spawn_contents = list(/obj/item/ammo/magazine/a12/weak = 5)
 
 	revolver
 		name = "revolver speedloader pouch"
 		icon_state = "ammopouch-double"
-		spawn_contents = list(/obj/item/ammo/bullets/a357=5)
+		spawn_contents = list(/obj/item/ammo/magazine/a357=5)
 
 	grenade_round
 		name = "grenade round pouch"
 		slots = 4
-		spawn_contents = list(/obj/item/ammo/bullets/grenade_round/explosive = 2,
-		/obj/item/ammo/bullets/grenade_round/high_explosive = 2)
+		spawn_contents = list(/obj/item/ammo/magazine/grenade_round/explosive = 2,
+		/obj/item/ammo/magazine/grenade_round/high_explosive = 2)
 
 	rpg
 		name = "MPRT rocket pouch"
 		slots = 4
-		spawn_contents = list(/obj/item/ammo/bullets/rpg = 2)
+		spawn_contents = list(/obj/item/ammo/magazine/rpg = 2)
 
 /obj/item/storage/grenade_pouch
 	name = "grenade pouch"

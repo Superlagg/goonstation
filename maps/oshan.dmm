@@ -4161,11 +4161,11 @@
 /obj/item/gun/kinetic/riot40mm{
 	pixel_y = 8
 	},
-/obj/item/ammo/bullets/smoke{
+/obj/item/ammo/magazine/smoke{
 	pixel_x = 2;
 	pixel_y = -3
 	},
-/obj/item/ammo/bullets/smoke{
+/obj/item/ammo/magazine/smoke{
 	pixel_x = -2;
 	pixel_y = -3
 	},
@@ -21374,7 +21374,7 @@
 /turf/simulated/martian/floor,
 /area)
 "aXt" = (
-/obj/item/ammo/bullets/rifle_3006,
+/obj/item/ammo/magazine/rifle_3006,
 /obj/decal/fakeobjects/robot,
 /obj/decal/cleanable/oil,
 /turf/simulated/floor/plating/damaged3,
@@ -42119,9 +42119,9 @@
 /area/station/security/main)
 "bVZ" = (
 /obj/storage/secure/crate/weapon/armory/tranquilizer,
-/obj/item/ammo/bullets/tranq_darts,
-/obj/item/ammo/bullets/tranq_darts,
-/obj/item/ammo/bullets/tranq_darts,
+/obj/item/ammo/magazine/tranq_darts,
+/obj/item/ammo/magazine/tranq_darts,
+/obj/item/ammo/magazine/tranq_darts,
 /obj/machinery/light/incandescent/harsh/very,
 /turf/simulated/floor/redblack,
 /area/station/ai_monitored/armory)
@@ -43033,8 +43033,8 @@
 "bYq" = (
 /obj/storage/secure/crate/plasma/armory/anti_biological,
 /obj/item/gun/kinetic/flaregun,
-/obj/item/ammo/bullets/flare,
-/obj/item/ammo/bullets/flare,
+/obj/item/ammo/magazine/flare,
+/obj/item/ammo/magazine/flare,
 /obj/item/flamethrower/assembled/loaded,
 /obj/machinery/light/incandescent/greenish,
 /turf/simulated/floor/redblack{

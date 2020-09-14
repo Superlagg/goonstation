@@ -6,7 +6,7 @@
 		. = ..()
 		src.reagents.add_reagent("sheltestgrog", 100)
 
-/obj/item/ammo/bullets/beepsky
+/obj/item/ammo/magazine/beepsky
 	sname = "Beepsky"
 	name = "beepsky box"
 	desc = "A box of large Beepsky-shaped bullets"
@@ -43,7 +43,7 @@
 	w_class = 4
 
 	New()
-		ammo = new/obj/item/ammo/bullets/beepsky
+		ammo = new/obj/item/ammo/magazine/beepsky
 		current_projectile = new/datum/projectile/special/spawner/beepsky
 		..()
 

@@ -11912,13 +11912,13 @@
 /area/station/engine/power)
 "aAC" = (
 /obj/table/reinforced/bar/auto,
-/obj/item/ammo/bullets/antisingularity{
+/obj/item/ammo/magazine/antisingularity{
 	pixel_x = -4
 	},
-/obj/item/ammo/bullets/antisingularity{
+/obj/item/ammo/magazine/antisingularity{
 	pixel_x = 2
 	},
-/obj/item/ammo/bullets/antisingularity{
+/obj/item/ammo/magazine/antisingularity{
 	pixel_x = 8
 	},
 /turf/simulated/floor/orangeblack,
@@ -18687,10 +18687,10 @@
 	network = "Minerva5"
 	},
 /obj/storage/secure/crate/weapon,
-/obj/item/ammo/bullets/tranq_darts/anti_mutant,
-/obj/item/ammo/bullets/tranq_darts/anti_mutant,
-/obj/item/ammo/bullets/tranq_darts,
-/obj/item/ammo/bullets/tranq_darts,
+/obj/item/ammo/magazine/tranq_darts/anti_mutant,
+/obj/item/ammo/magazine/tranq_darts/anti_mutant,
+/obj/item/ammo/magazine/tranq_darts,
+/obj/item/ammo/magazine/tranq_darts,
 /obj/access_spawn/medical_director,
 /turf/simulated/floor/black,
 /area/station/medical/head)
@@ -20226,8 +20226,8 @@
 /obj/item/shipcomponent/mainweapon/laser,
 /obj/item/shipcomponent/mainweapon/disruptor_light,
 /obj/item/shipcomponent/mainweapon/disruptor_light,
-/obj/item/ammo/bullets/autocannon/seeker,
-/obj/item/ammo/bullets/autocannon/seeker,
+/obj/item/ammo/magazine/autocannon/seeker,
+/obj/item/ammo/magazine/autocannon/seeker,
 /obj/machinery/light/incandescent/warm,
 /turf/simulated/floor/black,
 /area/station/ai_monitored/armory)
@@ -25632,8 +25632,8 @@
 /obj/cable,
 /obj/machinery/power/apc/autoname_south,
 /obj/table/reinforced/auto,
-/obj/item/ammo/bullets/smoke,
-/obj/item/ammo/bullets/smoke,
+/obj/item/ammo/magazine/smoke,
+/obj/item/ammo/magazine/smoke,
 /obj/item/gun/kinetic/riot40mm,
 /turf/simulated/floor/redblack{
 	icon_state = "redblack";
