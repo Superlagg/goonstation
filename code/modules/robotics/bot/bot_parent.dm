@@ -17,7 +17,7 @@
 		src.master = null
 		..()
 
-	proc/master_move(var/atom/the_target as obj|mob, var/current_movepath,var/adjacent=0)
+	proc/master_move(var/atom/the_target as obj|mob, var/current_movepath,var/adjacent=0,var/max_dist=600)
 		if(!master || !isturf(master.loc))
 			src.master = null
 			//dispose()
@@ -31,7 +31,7 @@
 			if (!master)
 				return
 			var/compare_movepath = current_movepath
-			master.path = AStar(get_turf(master), target_turf, /turf/proc/CardinalTurfsWithAccess, /turf/proc/Distance, 600, master.botcard)
+			master.path = AStar(get_turf(master), target_turf, /turf/proc/CardinalTurfsWithAccess, /turf/proc/Distance, max_dist, master.botcard)
 			if(adjacent && master.path && master.path.len) //Make sure to check it isn't null!!
 				master.path.len-- //Only go UP to the target, not the same tile.
 			if(!master.path || !master.path.len || !the_target)
@@ -65,7 +65,7 @@
 			if (master)
 				master.moving = 0
 				master.robo_mover = null
-				on_finished_moving()
+				master.on_finished_moving()
 				master = null
 
 /obj/machinery/bot
@@ -224,7 +224,7 @@
 
 	proc/do_mode(var/mode_do)
 		if (isnull(src.mode) || src.mode > mode_max)
-		return
+			return
 
 	proc/patrol_the_bot(var/delay = 3) // Quick shorthand for making the bot go to the patrol target
 		navigate_to(patrol_target, delay)

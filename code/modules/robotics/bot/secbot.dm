@@ -589,7 +589,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 	on_finished_moving()
 		. = ..()
 		if(src.mode == SECBOT_HUNT && src.target && src.frustration < 8 && !IN_RANGE(src, src.target, 1))
-			src.navigate_to(src.target, ARREST_SPEED * src.move_arrest_delay_mult, max_dist = max_dist)
+			src.navigate_to(src.target, ARREST_SPEED * src.move_arrest_delay_mult, max_dist = 50)
 		return
 
 	act_n_move()

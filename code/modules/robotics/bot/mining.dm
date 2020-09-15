@@ -13,10 +13,7 @@
 	var/diglevel = 2
 	var/digsuspicious = 0
 	var/hardthreshold = 2
-	var/turf/target
 	var/turf/oldtarget
-	var/oldloc = null
-	var/list/path = null
 	var/list/digbottargets = list()
 	var/lumlevel = 0.2
 	var/use_medium_light = 1
@@ -96,7 +93,7 @@
 		src.oldtarget = null
 		src.anchored = 0
 		src.emagged = 1
-		if(!src.on) 
+		if(!src.on)
 			turnOn()
 
 /obj/machinery/bot/mining/process()
@@ -138,7 +135,7 @@
 				pointAtTarget()
 				break
 	return
-	
+
 /obj/machinery/bot/mining/proc/pointAtTarget()
 	if (src.target)
 		for (var/mob/O in hearers(src, null))
@@ -149,7 +146,7 @@
 		SPAWN_DBG (20)
 			P.invisibility = 101
 			qdel(P)
-	
+
 /obj/machinery/bot/mining/proc/buildPath()
 	if (!isturf(src.loc)) return
 	if (!target) return
@@ -233,23 +230,23 @@
 	onUpdate()
 		..()
 		if(!checkStillValid()) return
-	
+
 	onEnd()
-		if(checkStillValid()) 
+		if(checkStillValid())
 			target.damage_asteroid(bot.diglevel)
 			if(!istype(target, /turf/simulated/wall/asteroid/))
 				bot.target = null
 		if(bot != null)
 			bot.stopDiggingEffects()
 		..()
-	
+
 	onDelete()
 		..()
 		if(bot != null)
 			bot.stopDiggingEffects()
 
 	proc/checkStillValid()
-		if(bot == null || target == null) 
+		if(bot == null || target == null)
 			interrupt(INTERRUPT_ALWAYS)
 			return false
 		if(!bot.on || !istype(target, /turf/simulated/wall/asteroid/))
@@ -350,5 +347,5 @@
 			else
 				boutput(user,  "It's not ready for that part yet.")
 				return
-		else 
+		else
 			..()
