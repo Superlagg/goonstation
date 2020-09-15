@@ -21,6 +21,7 @@
 
 /obj/machinery/bot/secbot
 	name = "Securitron"
+	botname = "secbot"
 #ifdef HALLOWEEN
 	desc = "A little security robot, apparently carved out of a pumpkin.  He looks...spooky?"
 	icon = 'icons/misc/halloween.dmi'
@@ -41,12 +42,8 @@
 
 	on = 1
 	locked = 1 //Behavior Controls lock
-	var/mob/living/carbon/target
 	var/oldtarget_name
 	var/threatlevel = 0
-	var/target_lastloc //Loc of target when arrested.
-	var/last_found //There's a delay
-	var/frustration = 0
 	emagged = 0 //Emagged Secbots view everyone as a criminal
 	health = 25
 	var/idcheck = 1 //If false, all station IDs are authorized for weapons.
@@ -59,45 +56,37 @@
 	var/our_baton_type = /obj/item/baton/secbot
 	var/loot_baton_type = /obj/item/scrap
 	var/stun_type = "stun"
-	var/mode = 0
 
-	var/auto_patrol = 0		// set to make bot automatically patrol
-	var/beacon_freq = 1445		// navigation beacon frequency
-	var/control_freq = 1447		// bot control frequency
-	var/tacticool = 0 // Do we shit up our report with useless lingo?
-	var/badge_number = null // what dumb thing are we calling ourself today?
-	var/badge_number_length = 2 // How long is that dumb thing supposed to be?
-	var/badge_number_length_forcemax = 0 // always make it that long
-
-	var/turf/patrol_target	// this is turf to navigate to (location of beacon)
-	var/new_destination		// pending new destination (waiting for beacon response)
-	var/destination			// destination description tag
-	var/next_destination	// the next destination in the patrol route
-	var/list/path = null	// list of path turfs
-
-	var/moving = 0 //Are we currently ON THE MOVE?
-	var/current_movepath = 0
-	var/datum/secbot_mover/mover = null
-	var/move_patrol_delay_mult = 1	// multiplies how slowly the bot moves on patrol
-	var/move_summon_delay_mult = 1	// same, but for summons. Lower is faster.
+	auto_patrol = 0		// set to make bot automatically patrol
+	mode_max = SECBOT_SUMMON
+	robo_mover = null
+	path = null	// list of path turfs
+	blockcount = 0		//number of times retried a blocked path
+	awaiting_beacon	= 0	// count of pticks awaiting a beacon response
+	nearest_beacon			// the nearest beacon's tag
+	nearest_beacon_loc	// the nearest beacon's location
+	beacon_freq = 1445		// navigation beacon frequency
+	control_freq = 1447		// bot control frequency
+	patrol_target	// this is turf to navigate to (location of beacon)
+	new_destination		// pending new destination (waiting for beacon response)
+	destination			// destination description tag
+	next_destination	// the next destination in the patrol route
+	moving = 0 //Are we currently ON THE MOVE?
+	current_movepath = 0
+	move_patrol_delay_mult = 1	// multiplies how slowly the bot moves on patrol
+	move_summon_delay_mult = 1	// same, but for summons. Lower is faster.
 	var/move_arrest_delay_mult = 1
 	var/scanrate = 10 // How often do we check for perps while we're ON THE MOVE. in deciseconds
 	var/emag_stages = 2 //number of times we can emag this thing
 	var/proc_available = 1 // Are we not on cooldown from having forced a process()?
 
-	var/blockcount = 0		//number of times retried a blocked path
-	var/awaiting_beacon	= 0	// count of pticks awaiting a beacon response
-
-	var/nearest_beacon			// the nearest beacon's tag
-	var/turf/nearest_beacon_loc	// the nearest beacon's location
-
 	var/last_attack = 0
 	var/attack_per_step = 0 // Tries to attack every step. 1 = 75% chance to attack, 2 = 25% chance to attack
 
 	disposing()
-		if(mover)
-			mover.dispose()
-			mover = null
+		if(robo_mover)
+			robo_mover.dispose()
+			robo_mover = null
 		if(our_baton)
 			our_baton.dispose()
 			our_baton = null
@@ -188,6 +177,7 @@
 	New()
 		..()
 		src.icon_state = "secbot[src.on]"
+		src.mode = SECBOT_IDLE
 		if (!src.our_baton || !istype(src.our_baton))
 			src.our_baton = new our_baton_type(src)
 		#if ASS_JAM
@@ -371,54 +361,6 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 				src.mode = SECBOT_HUNT
 			..()
 
-	proc/make_tacticool()
-		src.tacticool = 1
-		src.badge_number = generate_dorkcode(src.badge_number_length, src.badge_number_length_forcemax)
-
-	proc/generate_dorkcode(var/num_of_em = 1, var/force_max = 0)
-		var/how_many_dorkcodes = force_max ? num_of_em : rand(1, num_of_em)
-		while(how_many_dorkcodes >= 1)
-			how_many_dorkcodes--
-			switch(pick(1,5))
-				if (1)
-					. += pick_string("agent_callsigns.txt", "nato")
-				if (2)
-					. += pick_string("agent_callsigns.txt", "birds")
-				if (3)
-					. += pick_string("agent_callsigns.txt", "mammals")
-				if (4)
-					. += pick_string("agent_callsigns.txt", "colors")
-				if (5)
-					. += pick_string("shittybill.txt", "nouns")
-			. += "-"
-		. += "[rand(1,99)]-"
-		. += "[rand(1,99)]"
-
-
-
-	proc/navigate_to(atom/the_target, var/move_delay = SUMMON_SPEED, var/adjacent = 0, max_dist=600)
-		src.frustration = 0
-		src.path = null
-		if(src.mover)
-			src.mover.master = null
-			src.mover = null
-
-		current_movepath = world.time
-
-		src.mover = new /datum/secbot_mover(src)
-
-		// drsingh for cannot modify null.delay
-		if (!isnull(src.mover))
-			src.mover.master_move(the_target,current_movepath,adjacent,scanrate,max_dist)
-
-		// drsingh again for the same thing further down in a moment.
-		// Because master_move can delete the mover
-
-		if (!isnull(src.mover))
-			src.mover.delay = move_delay
-
-		return 0
-
 	proc/baton_attack(var/mob/living/carbon/M)
 		sleep(BATON_INITIAL_DELAY)
 		if(!IN_RANGE(src, src.target, 1))
@@ -461,14 +403,11 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 			moving = 0
 
 			//qdel(src.mover)
-			if (src.mover)
-				src.mover.master = null
-				src.mover = null
-			src.frustration = 0
+			kill_path()
 		return
 
 	Move(var/turf/NewLoc, direct)
-		var/oldloc = src.loc
+		oldloc = src.loc
 		..()
 		if (src.attack_per_step && prob(src.attack_per_step == 2 ? 25 : 75))
 			if (oldloc != NewLoc && world.time != last_attack)
@@ -480,26 +419,25 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 		if (!src.on)
 			return
 
-		switch(mode)
+		return
+
+	do_mode(var/mode_do)
+		. = ..()
+
+		if(mode_do) src.mode = mode_do
+
+		switch(src.mode)
 
 			if(SECBOT_IDLE)		// idle
 
 				look_for_perp()	// see if any criminals are in range
 				if(auto_patrol)	// still idle, and set to patrol
-					mode = SECBOT_START_PATROL	// switch to patrol mode
+					do_mode(SECBOT_START_PATROL)	// switch to patrol mode
 
 			if(SECBOT_HUNT)		// hunting for perp
 
 				if (src.target.hasStatus("handcuffed") || src.frustration >= 8) // if can't reach perp for long enough, go idle
-					src.target = null
-					src.last_found = world.time
-					src.frustration = 0
-					src.mode = SECBOT_IDLE
-					//qdel(src.mover)
-					if (src.mover)
-						src.mover.master = null
-						src.mover = null
-					src.moving = 0
+					kill_path(give_up = 1)
 				else if (target)		// make sure target exists
 					if (!IN_RANGE(src, src.target, 1))
 						src.moving = 0
@@ -515,7 +453,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 				if ((get_dist(src, src.target) > 1) || ((src.target:loc != src.target_lastloc) && src.target:getStatusDuration("weakened") < 20))
 					src.anchored = 0
 					mode = SECBOT_HUNT
-					if (!src.mover)
+					if (!src.robo_mover)
 						src.moving = 0
 						navigate_to(src.target)
 					return
@@ -532,16 +470,8 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 
 			if(SECBOT_ARREST)		// arresting
 
-				if (src.frustration >= 8)
-					src.target = null
-					src.last_found = world.time
-					src.frustration = 0
-					src.mode = 0
-					//qdel(src.mover)
-					if (src.mover)
-						src.mover.master = null
-						src.mover = null
-					src.moving = 0
+				if (src.frustration >= src.frustration_max)
+					kill_path(give_up = 1)
 
 				if(src.target)
 					if (src.target.hasStatus("handcuffed"))
@@ -552,7 +482,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 						src.anchored = 0
 						mode = SECBOT_HUNT
 
-					if (get_dist(src, src.target) > 1 && (!src.mover || !src.moving))
+					if (get_dist(src, src.target) > 1 && (!src.robo_mover || !src.moving))
 						//qdel(src.mover)
 						navigate_to(src.target)
 						return
@@ -572,72 +502,12 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 						//speak("Engaging patrol mode.")
 
 			if(SECBOT_PATROL)		// patrol mode
-				move_the_bot(PATROL_SPEED * move_patrol_delay_mult)
+				patrol_the_bot(PATROL_SPEED * move_patrol_delay_mult)
 
 			if(SECBOT_SUMMON)		// summoned to PDA
 				if(!src.moving)
 					mode = SECBOT_IDLE	// switch back to what we should be
-		return
 
-	proc/move_the_bot(var/delay = 3)
-
-		if(loc == patrol_target) // We where we want to be?
-			at_patrol_target() // Find somewhere else to go!
-			look_for_perp()
-
-		else if (patrol_target) // valid path
-			navigate_to(patrol_target, delay)
-
-		else	// no path, so calculate new one
-			mode = SECBOT_START_PATROL
-
-
-	// finds a new patrol target
-	proc/find_patrol_target()
-		send_status()
-		if(awaiting_beacon)			// awaiting beacon response
-			awaiting_beacon++
-			if(awaiting_beacon > 5)	// wait 5 secs for beacon response
-				find_nearest_beacon()	// then go to nearest instead
-				return 0
-			else
-				return 1
-
-		if(next_destination)
-			set_destination(next_destination)
-			return 1
-		else
-			find_nearest_beacon()
-			return 0
-
-	// finds the nearest beacon to self
-	// signals all beacons matching the patrol code
-	proc/find_nearest_beacon()
-		nearest_beacon = null
-		new_destination = "__nearest__"
-		post_signal(beacon_freq, "findbeacon", "patrol")
-		awaiting_beacon = 1
-		SPAWN_DBG(1 SECOND)
-			awaiting_beacon = 0
-			if(nearest_beacon)
-				set_destination(nearest_beacon)
-			else
-				auto_patrol = 0
-				mode = SECBOT_IDLE
-				//speak("Disengaging patrol mode.")
-				send_status()
-
-	proc/at_patrol_target()
-		find_patrol_target()
-		return
-
-	// sets the current destination
-	// signals all beacons matching the patrol code
-	// beacons will return a signal giving their locations
-	proc/set_destination(var/new_dest)
-		new_destination = new_dest
-		post_signal(beacon_freq, "findbeacon", "patrol")
-		awaiting_beacon = 1
 
 	// receive a radio signal
 	// used for beacon reception
@@ -672,7 +542,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 					awaiting_beacon = 0
 					mode = SECBOT_SUMMON
 					speak("Responding.")
-					move_the_bot(SUMMON_SPEED * move_summon_delay_mult)
+					patrol_the_bot(SUMMON_SPEED * move_summon_delay_mult)
 					return
 
 				if("proc")
@@ -715,32 +585,32 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 
 
 	// send a radio signal with a single data key/value pair
-	proc/post_signal(var/freq, var/key, var/value)
-		post_signal_multiple(freq, list("[key]" = value) )
 
-	// send a radio signal with multiple data key/values
-	proc/post_signal_multiple(var/freq, var/list/keyval)
+	on_finished_moving()
+		. = ..()
+		if(src.mode == SECBOT_HUNT && src.target && src.frustration < 8 && !IN_RANGE(src, src.target, 1))
+			src.navigate_to(src.target, ARREST_SPEED * src.move_arrest_delay_mult, max_dist = max_dist)
+		return
 
-		var/datum/radio_frequency/frequency = radio_controller.return_frequency("[freq]")
+	act_n_move()
+		. = ..()
+		if(!target && path?.len % 5 == 1) // Every 5 tiles, look for someone to kill
+			src.look_for_perp()
 
-		if(!frequency) return
+		if(mode == SECBOT_HUNT && target && IN_RANGE(src, src.target, 1))
+			src.baton_attack(src.target)
+			. = 1
 
-		var/datum/signal/signal = get_free_signal()
-		signal.source = src
-		signal.transmission_method = 1
-		for(var/key in keyval)
-			signal.data[key] = keyval[key]
-			//boutput(world, "sent [key],[keyval[key]] on [freq]")
-		frequency.post_signal(src, signal)
+	patrol_the_bot(delay)
+		if(loc == patrol_target) // We where we want to be?
+			at_patrol_target() // Find somewhere else to go!
+			look_for_perp()
 
-	// signals bot status etc. to controller
-	proc/send_status()
-		var/list/kv = new()
-		kv["type"] = "secbot"
-		kv["name"] = name
-		kv["loca"] = get_area(src)
-		kv["mode"] = mode
-		post_signal_multiple(control_freq, kv)
+		else if (patrol_target) // valid path
+			. = ..()
+
+		else	// no path, so calculate new one
+			mode = SECBOT_START_PATROL
 
 // look for a criminal in view of the bot
 
@@ -1003,81 +873,6 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 		elecflash(src, radius=1, power=3, exclude_center = 0)
 		qdel(src)
 
-
-//movement control datum. Why yes, this is copied from guardbot.dm
-/datum/secbot_mover
-	var/obj/machinery/bot/secbot/master = null
-	var/delay = 3
-
-	New(var/newmaster)
-		..()
-		if(istype(newmaster, /obj/machinery/bot/secbot))
-			src.master = newmaster
-		return
-
-	disposing()
-		if(master.mover == src)
-			master.mover = null
-		src.master = null
-		..()
-
-	proc/master_move(var/atom/the_target as obj|mob, var/current_movepath,var/adjacent=0, var/scanrate, max_dist=600)
-		if(!master || !isturf(master.loc))
-			src.master = null
-			//dispose()
-			return
-		var/target_turf = null
-		if(isturf(the_target))
-			target_turf = the_target
-		else
-			target_turf = get_turf(the_target)
-		SPAWN_DBG(0)
-			if (!master)
-				return
-			var/compare_movepath = current_movepath
-			master.path = AStar(get_turf(master), target_turf, /turf/proc/CardinalTurfsWithAccess, /turf/proc/Distance, max_dist, master.botcard)
-			if(adjacent && master.path && master.path.len) //Make sure to check it isn't null!!
-				master.path.len-- //Only go UP to the target, not the same tile.
-			if(!master.path || !master.path.len || !the_target)
-				master.frustration = INFINITY
-				master.mover = null
-				master = null
-				return 1
-
-			master.moving = 1
-
-			while(master && master.path && master.path.len && target_turf)
-				if(compare_movepath != current_movepath) break
-				if(!master.on)
-					master.frustration = 0
-					break
-
-				if(!master.target && master?.path.len % 5 == 1) // Every 5 tiles, look for someone to kill
-					master.look_for_perp()
-
-				if(master?.mode == SECBOT_HUNT && master.target && IN_RANGE(master, master.target, 1))
-					master.baton_attack(master.target)
-					break
-
-				if(master?.path)
-					step_to(master, master.path[1])
-					if(master.loc != master.path[1])
-						master.frustration++
-						sleep(delay)
-						continue
-					master?.path -= master?.path[1]
-					sleep(delay)
-				else
-					break // i dunno, it runtimes
-
-			if (master)
-				master.moving = 0
-				master.mover = null
-				if(master.mode == SECBOT_HUNT && master.target && master.frustration < 8 && !IN_RANGE(master, master.target, 1))
-					master.navigate_to(master.target, ARREST_SPEED * master.move_arrest_delay_mult, max_dist = max_dist)
-				master = null
-
-
 //secbot handcuff bar thing
 /datum/action/bar/icon/secbot_cuff
 	duration = 60
@@ -1126,8 +921,9 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 				uncuffable = 1
 
 			if(ishuman(master.target) && !uncuffable)
-				master.target.handcuffs = new /obj/item/handcuffs(master.target)
-				master.target.setStatus("handcuffed", duration = INFINITE_STATUS)
+				var/mob/HC = master.target
+				HC.handcuffs = new /obj/item/handcuffs(HC)
+				HC.setStatus("handcuffed", duration = INFINITE_STATUS)
 
 			if(!uncuffable)
 				playsound(master.loc, pick('sound/voice/bgod.ogg', 'sound/voice/biamthelaw.ogg', 'sound/voice/bsecureday.ogg', 'sound/voice/bradio.ogg', 'sound/voice/binsult.ogg', 'sound/voice/bcreep.ogg'), 50, 0, 0, 1)
@@ -1154,11 +950,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 				if(transmit_connection != null)
 					transmit_connection.post_signal(master, pdaSignal)
 
-			master.mode = SECBOT_IDLE
-			master.target = null
-			master.anchored = 0
-			master.last_found = world.time
-			master.frustration = 0
+			master.kill_path(SECBOT_IDLE)
 
 		return
 

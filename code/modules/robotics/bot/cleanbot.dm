@@ -50,12 +50,9 @@
 	no_camera = 1
 	access_lookup = "Janitor"
 
-	var/target // Current target.
-	var/list/path = null // Path to current target.
 	var/list/targets_invalid = list() // Targets we weren't able to reach.
 	var/clear_invalid_targets = 1 // In relation to world time. Clear list periodically.
 	var/clear_invalid_targets_interval = 1800 // How frequently?
-	var/frustration = 0 // Simple counter. Bot selects new target if current one is too far away.
 
 	var/idle = 1 // In relation to world time. In case there aren't any valid targets nearby.
 	var/idle_delay = 210 // For how long?
@@ -126,19 +123,10 @@
 			src.explode()
 		return
 
-	proc/toggle_power(var/force_on = 0)
-		if (!src)
-			return
+	toggle_power(var/force_on = 0)
+		. = ..()
 
-		if (force_on == 1)
-			src.on = 1
-		else
-			src.on = !src.on
-
-		src.anchored = 0
-		src.target = null
 		src.icon_state = "[icon_state_base][src.on]"
-		src.path = null
 		src.targets_invalid = list() // Turf vs decal when emagged, so we gotta clear it.
 		src.lubed_turfs = list()
 		src.clear_invalid_targets = world.time

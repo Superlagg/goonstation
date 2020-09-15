@@ -66,7 +66,7 @@
 //				boutput(world, "[compare_movepath] : [current_movepath]")
 				//if(compare_movepath != current_movepath)
 				//	break
-				if(master.frustration >= 10 || master.stunned || master.idle || !master.on)
+				if(master.frustration >= master.frustration_max || master.stunned || master.idle || !master.on)
 					master.frustration = 0
 					if(master.task)
 						master.task.task_input("path_blocked")
@@ -100,13 +100,9 @@
 	req_access = list(access_heads)
 	on = 1
 	var/idle = 0 //Sleeping on the job??
-	var/stunned = 0 //Are we stunned?
 	locked = 1 //Behavior Controls and Tool lock
 
-	var/list/path = null
-	var/frustration = 0
-	var/moving = 0 //Are we currently ON THE MOVE?
-	//var/current_movepath = 0 //If we need to switch movement halfway
+//var/current_movepath = 0 //If we need to switch movement halfway
 	var/datum/guardbot_mover/mover = null
 
 	var/emotion = null //How are you feeling, buddy?
@@ -137,6 +133,8 @@
 	var/flashlight_red = 0.1
 	var/flashlight_green = 0.4
 	var/flashlight_blue = 0.1
+
+	frustration_max = 10
 
 	////////////////////// GUN STUFF -V
 	// Lifted from secbot!
@@ -192,8 +190,8 @@
 
 	var/datum/radio_frequency/radio_connection
 	var/datum/radio_frequency/beacon_connection
-	var/control_freq = 1219		// bot control frequency
-	var/beacon_freq = 1445
+	control_freq = 1219		// bot control frequency
+	beacon_freq = 1445
 	var/net_id = null
 	var/last_comm = 0 //World time of last transmission
 	var/reply_wait = 0
@@ -1582,29 +1580,6 @@
 			icon_needs_update = 1
 			set_emotion()
 
-		navigate_to(atom/the_target,var/move_delay=3,var/adjacent=0,var/clear_frustration=1)
-			if(src.moving)
-				return 1
-			src.moving = 1
-			if (clear_frustration)
-				src.frustration = 0
-			if(src.mover)
-				src.mover.master = null
-				//qdel(src.mover)
-				src.mover = null
-			//boutput(world, "TEST: Navigate to [target]")
-
-			//current_movepath = world.time
-
-			src.mover = new /datum/guardbot_mover(src)
-
-			// drsingh for cannot modify null.delay
-			if (!isnull(src.mover))
-				src.mover.delay = max(min(move_delay,5),2)
-				src.mover.master_move(the_target,adjacent)
-
-			return 0
-
 		bot_attack(var/atom/target as mob|obj, lethal=0)
 			if(src.tool && (src.tool.tool_id == "GUN"))
 				if (istype(src.budgun, /obj/item/bang_gun))
@@ -1847,6 +1822,29 @@
 			radio_controller.remove_object(src, "[src.control_freq]")
 			src.control_freq = newfreq
 			src.radio_connection = radio_controller.add_object(src, "[src.control_freq]")
+
+	navigate_to(atom/the_target,var/move_delay=3,var/adjacent=0,var/clear_frustration=1)
+		if(src.moving)
+			return 1
+		src.moving = 1
+		if (clear_frustration)
+			src.frustration = 0
+		if(src.mover)
+			src.mover.master = null
+			//qdel(src.mover)
+			src.mover = null
+		//boutput(world, "TEST: Navigate to [target]")
+
+		//current_movepath = world.time
+
+		src.mover = new /datum/guardbot_mover(src)
+
+		// drsingh for cannot modify null.delay
+		if (!isnull(src.mover))
+			src.mover.delay = max(min(move_delay,5),2)
+			src.mover.master_move(the_target,adjacent)
+
+		return 0
 
 	process()
 

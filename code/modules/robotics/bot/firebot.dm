@@ -13,14 +13,8 @@
 	req_access = list(access_engineering_atmos)
 	on = 1
 	health = 20
-	var/stunned = 0 //It can be stunned by tasers. Delicate circuits.
 	locked = 1
-	var/frustration = 0
-	var/list/path = null
-	var/obj/hotspot/target = null
 	var/obj/hotspot/oldtarget = null
-	var/oldloc = null
-	var/last_found = 0
 	var/last_spray = 0
 	var/setup_party = 0
 	//To-Do: Patrol the station for fires maybe??
@@ -374,7 +368,7 @@
 	qdel(src)
 	return
 
-/obj/machinery/bot/firebot/proc/toggle_power()
+/obj/machinery/bot/firebot/toggle_power()
 	src.on = !src.on
 	src.target = null
 	src.oldtarget = null
