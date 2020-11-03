@@ -17,6 +17,9 @@
 	var/move_triggered = 0
 	var/object_flags = 0
 
+	/// lagg's a dip and didnt realize you cant really set bitflags in mapobjects, so just make New() do all the work
+	var/on
+
 	proc/move_trigger(var/mob/M, var/kindof)
 		var/atom/movable/x = loc
 		while (x && !isarea(x) && x != M)
@@ -62,6 +65,8 @@
 
 	New()
 		setupProperties()
+		if(on)
+			src.flags |= THING_IS_ON
 		. = ..()
 
 	ex_act(severity)
@@ -196,7 +201,7 @@
 				if (I.w_class > 3)
 					return
 				if (istype(usr:abilityHolder, /datum/abilityHolder/ghost_observer))
-					var/datum/abilityHolder/ghost_observer/GH = usr:abilityHolder		
+					var/datum/abilityHolder/ghost_observer/GH = usr:abilityHolder
 					if (GH.spooking)
 						src.throw_at(over_object, 7-I.w_class, 1)
 						logTheThing("combat", usr, null, "throws [src] with g_tk.")

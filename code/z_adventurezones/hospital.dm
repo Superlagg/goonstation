@@ -499,7 +499,7 @@ var/list/hospital_fx_sounds = list('sound/ambience/spooky/Hospital_Chords.ogg', 
 	turn_on()
 		if(!src.cell || src.cell.charge <= 0)
 			return
-		src.on = 1
+		src.flags |= THING_IS_ON
 		src.idle = 0
 		src.moving = 0
 		src.task = null
@@ -548,11 +548,11 @@ var/list/hospital_fx_sounds = list('sound/ambience/spooky/Hospital_Chords.ogg', 
 
 		if(src.locked)
 
-			dat += "&#x41f;&#x438;&#x442;&#x430;&#x43D;&#x438;&#x435;: [src.on ? "&#x412;&#x43A;&#x43B;" : "&#x412;&#x44b;&#x43A;&#x43B;"]<br>"
+			dat += "&#x41f;&#x438;&#x442;&#x430;&#x43D;&#x438;&#x435;: [src.flags & THING_IS_ON ? "&#x412;&#x43A;&#x43B;" : "&#x412;&#x44b;&#x43A;&#x43B;"]<br>"
 
 		else
 
-			dat += "&#x41f;&#x438;&#x442;&#x430;&#x43D;&#x438;&#x435;: <a href='?src=\ref[src];power=1'>[src.on ? "&#x412;&#x43A;&#x43B;" : "&#x412;&#x44b;&#x43A;&#x43B;"]</a><br>"
+			dat += "&#x41f;&#x438;&#x442;&#x430;&#x43D;&#x438;&#x435;: <a href='?src=\ref[src];power=1'>[src.flags & THING_IS_ON ? "&#x412;&#x43A;&#x43B;" : "&#x412;&#x44b;&#x43A;&#x43B;"]</a><br>"
 
 		dat += "<br>&#x418;&#x414;: <b>\[[uppertext(src.net_id)]]</b><br>"
 
@@ -597,7 +597,7 @@ var/list/hospital_fx_sounds = list('sound/ambience/spooky/Hospital_Chords.ogg', 
 			O.throw_at(edge, 100, 4)
 
 		SPAWN_DBG(0) //Delete the overlay when finished with it.
-			src.on = 0
+			src.flags &= ~THING_IS_ON
 			sleep(1.5 SECONDS)
 			qdel(Ov)
 			qdel(src)
@@ -709,7 +709,7 @@ var/list/hospital_fx_sounds = list('sound/ambience/spooky/Hospital_Chords.ogg', 
 		master.post_status("!BEACON!", "findbeacon", "patrol")
 		awaiting_beacon = 5
 		SPAWN_DBG(1 SECOND)
-			if(!master || !master.on || master.stunned || master.idle)
+			if(!master || master.flags & ~THING_IS_ON || master.stunned || master.idle)
 				return
 			if(master.task != src)
 				return

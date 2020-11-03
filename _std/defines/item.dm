@@ -42,6 +42,10 @@
 #define HAS_EQUIP_CLICK			 (1<<18)
 /// Has the possibility for a TGUI interface
 #define TGUI_INTERACTIVE		 (1<<19)
+/// the thing is active and we don't have to keep doing W:on
+#define THING_IS_ON 					 (1<<20)
+/// the thing is broken and we don't have to keep doing src.on = -1
+#define THING_IS_BROKEN 			 (1<<21)
 
 //Item function flags
 
@@ -49,6 +53,7 @@
 #define USE_INTENT_SWITCH_TRIGGER 1
 /// allows special attacks to be performed on help and grab intent with this item
 #define USE_SPECIALS_ON_ALL_INTENTS 2
+
 
 //tool flags
 #define TOOL_CLAMPING 1
@@ -98,3 +103,9 @@
 //item attack bitflags
 /// The pre-attack signal doesnt want the attack to continue, so don't
 #define ATTACK_PRE_DONT_ATTACK 1
+
+// componentized item effect stuff
+/// Whatever we wanted the item to do, it couldn't do it
+#define ITEM_EFFECT_NOTHING 0
+/// The item has declared that it is ready and willing to set something on fire
+#define ITEM_EFFECT_BURN (1<<0)

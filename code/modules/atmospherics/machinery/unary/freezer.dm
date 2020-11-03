@@ -33,7 +33,6 @@
 	kitchen
 		name = "freezer (kitchen)"
 		current_temperature = 150
-		on = 1
 
 		north
 			dir = NORTH
@@ -46,6 +45,7 @@
 
 	New()
 		..()
+		src.flags |= THING_IS_ON
 		pipe_direction = src.dir
 		initialize_directions = pipe_direction
 

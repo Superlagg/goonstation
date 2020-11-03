@@ -506,7 +506,7 @@ proc/empty_mouse_params()//TODO MOVE THIS!!!
 					greeted_murray = 1
 					say("[BILL_PICK("greetings")] Murray! How's it [BILL_PICK("verbs")]?")
 					SPAWN_DBG(rand(20,40))
-						if (murray && murray.on && !murray.idle)
+						if (murray && murray.flags & THING_IS_ON && !murray.idle)
 							murray.speak("Hi, Bill! It's [BILL_PICK("murraycompliment")] to see you again!")
 
 				else

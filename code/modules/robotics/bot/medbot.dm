@@ -14,7 +14,6 @@
 	req_access = list(access_medical)
 	access_lookup = "Medical Doctor"
 	flags = NOSPLASH
-	on = 1
 	health = 20
 	var/stunned = 0 //It can be stunned by tasers. Delicate circuits.
 	locked = 1
@@ -105,7 +104,7 @@
 		src.overlays = null
 
 	if (src.terrifying)
-		src.icon_state = "medibot[src.on]"
+		src.icon_state = "medibot[src.flags & THING_IS_ON ? 1 : 0]"
 		if (stun)
 			src.overlays += "medibota"
 		if (heal)
@@ -125,7 +124,7 @@
 			if (stun)
 				src.overlays += "medibot-light-stun"
 			else
-				src.overlays += "medibot-light[src.on]"
+				src.overlays += "medibot-light[src.flags & THING_IS_ON ? 1 : 0]"
 		/*
 		if (emagged)
 			src.overlays += "medibot-spark"
@@ -151,7 +150,7 @@
 
 	var/dat
 	dat += "<TT><B>Automatic Medical Unit v1.0</B></TT><BR><BR>"
-	dat += "Status: <A href='?src=\ref[src];power=1'>[src.on ? "On" : "Off"]</A><BR>"
+	dat += "Status: <A href='?src=\ref[src];power=1'>[src.flags & THING_IS_ON ? "On" : "Off"]</A><BR>"
 	dat += "Beaker: "
 	if (src.reagent_glass)
 		dat += "<A href='?src=\ref[src];eject=1'>Loaded \[[src.reagent_glass.reagents.total_volume]/[src.reagent_glass.reagents.maximum_volume]\]</a>"
@@ -246,7 +245,7 @@
 		src.last_found = world.time
 		src.anchored = 0
 		src.emagged = 1
-		src.on = 1
+		src.flags |= THING_IS_ON
 		src.update_icon()
 		logTheThing("station", user, null, "emagged a [src] at [log_loc(src)].")
 		return 1
@@ -331,7 +330,7 @@
 			qdel(D)
 
 /obj/machinery/bot/medbot/process()
-	if (!src.on)
+	if (src.flags & ~THING_IS_ON)
 		src.stunned = 0
 		return
 
@@ -420,8 +419,8 @@
 	return
 
 /obj/machinery/bot/medbot/proc/toggle_power()
-	src.on = !src.on
-	if (src.on)
+	src.flags ^= THING_IS_ON
+	if (src.flags & THING_IS_ON)
 		add_simple_light("medbot", list(220, 220, 255, 0.5*255))
 	else
 		remove_simple_light("medbot")
@@ -476,7 +475,7 @@
 	return 0
 
 /obj/machinery/bot/medbot/proc/medicate_patient(mob/living/carbon/C as mob)
-	if(!src.on)
+	if(src.flags & ~THING_IS_ON)
 		return
 
 	if(!istype(C))
@@ -542,7 +541,7 @@
 		src.update_icon(stun = 0, heal = 1)
 		src.visible_message("<span class='alert'><B>[src] is trying to inject [src.patient]!</B></span>")
 		SPAWN_DBG(3 SECONDS)
-			if ((get_dist(src, src.patient) <= 1) && (src.on))
+			if ((get_dist(src, src.patient) <= 1) && (src.flags & THING_IS_ON))
 				if ((reagent_id == "internal_beaker") && (src.reagent_glass) && (src.reagent_glass.reagents.total_volume))
 					src.reagent_glass.reagents.trans_to(src.patient,src.injection_amount) //Inject from beaker instead.
 					src.reagent_glass.reagents.reaction(src.patient, 2, src.injection_amount)
@@ -587,7 +586,7 @@
 #define fontSizeMin -3
 
 /obj/machinery/bot/medbot/terrifying/speak(var/message)
-	if ((!src.on) || (!message))
+	if ((src.flags & ~THING_IS_ON) || (!message))
 		return
 
 	var/list/audience = hearers(src, null)
@@ -643,7 +642,7 @@
 	if(!src.emagged && prob(75))
 		src.emagged = 1
 		src.visible_message("<span class='alert'><B>[src] buzzes oddly!</B></span>")
-		src.on = 1
+		src.flags |= THING_IS_ON
 	else
 		src.explode()
 	return
@@ -663,7 +662,7 @@
 /obj/machinery/bot/medbot/explode()
 	if(src.exploding) return
 	src.exploding = 1
-	src.on = 0
+	src.flags &= ~THING_IS_ON
 	for(var/mob/O in hearers(src, null))
 		O.show_message("<span class='alert'><B>[src] blows apart!</B></span>", 1)
 	var/turf/Tsec = get_turf(src)

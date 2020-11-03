@@ -371,7 +371,7 @@
 		var/obj/item/clothing/head/helmet/space/engineer/J = the_item
 
 		J.flashlight_toggle(the_mob)
-		if (J.on) src.icon_state = "off"
+		if (J.flags & THING_IS_ON) src.icon_state = "off"
 		else  src.icon_state = "on"
 		..()
 
@@ -385,7 +385,7 @@
 		var/obj/item/clothing/head/helmet/hardhat/J = the_item
 
 		J.flashlight_toggle(the_mob)
-		src.icon_state = J.on ? "off" : "on"
+		src.icon_state = J.flags & THING_IS_ON ? "off" : "on"
 		..()
 
 ////////////////////////////////////////////////////////////
@@ -397,7 +397,7 @@
 	execute_ability()
 		var/obj/item/device/t_scanner/J = the_item
 		J.attack_self(the_mob)
-		if(J.on) icon_state = "off"
+		if(J.flags & THING_IS_ON) icon_state = "off"
 		else  icon_state = "on"
 		..()
 
@@ -410,7 +410,7 @@
 	execute_ability()
 		var/obj/item/clothing/glasses/meson/J = the_item
 		J.attack_self(the_mob)
-		if(J.on) icon_state = "meson1"
+		if(J.flags & THING_IS_ON) icon_state = "meson1"
 		else  icon_state = "meson0"
 		..()
 
@@ -423,7 +423,7 @@
 	execute_ability()
 		var/obj/item/clothing/head/helmet/space/syndicate/specialist/engineer/J = the_item
 		J.attack_self(the_mob)
-		if(J.on) icon_state = "meson1"
+		if(J.flags & THING_IS_ON) icon_state = "meson1"
 		else  icon_state = "meson0"
 		..()
 
@@ -436,7 +436,7 @@
 	execute_ability()
 		var/obj/item/tank/jetpack/jetpackmk2/J = the_item
 		J.toggle()
-		if(J.on) icon_state = "jet2off"
+		if(J.flags & THING_IS_ON) icon_state = "jet2off"
 		else  icon_state = "jet2on"
 		..()
 
@@ -447,7 +447,7 @@
 	execute_ability()
 		var/obj/item/tank/jetpack/J = the_item
 		J.toggle()
-		if(J.on) icon_state = "jetoff"
+		if(J.flags & THING_IS_ON) icon_state = "jetoff"
 		else  icon_state = "jeton"
 		..()
 
@@ -460,7 +460,7 @@
 	execute_ability()
 		var/obj/item/clothing/shoes/jetpack/J = the_item
 		J.toggle()
-		icon_state = "jet[J.on ? "off" : "on"]"
+		icon_state = "jet[J.flags & THING_IS_ON ? "off" : "on"]"
 		..()
 
 ////////////////////////////////////////////////////////////

@@ -196,7 +196,7 @@ var/static/list/santa_snacks = list(/obj/item/reagent_containers/food/drinks/egg
 			O.throw_at(edge, 100, 4)
 
 		SPAWN_DBG(0) //Delete the overlay when finished with it.
-			src.on = 0
+			src.flags &= ~THING_IS_ON
 			sleep(1.5 SECONDS)
 			qdel(Ov)
 			qdel(src)

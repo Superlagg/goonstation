@@ -1942,7 +1942,7 @@ Returns:
 	attackby(obj/item/W as obj, mob/user as mob)
 		if(istype(W, /obj/item/clothing/mask/cigarette))
 			var/obj/item/clothing/mask/cigarette/C = W
-			if(!C.on)
+			if(C.flags & ~THING_IS_ON && C.flags & ~THING_IS_BROKEN)
 				C.light(user, "<span class='alert'>[user] lights the [C] with [src]. That seems appropriate.</span>")
 
 /*
@@ -3533,7 +3533,6 @@ var/list/lag_list = new/list()
 			SPAWN_DBG(0.5 SECONDS) update()
 
 /obj/spook
-	var/active = 0
 	invisibility = 100
 	anchored = 1
 	density = 0
@@ -3550,7 +3549,7 @@ var/list/lag_list = new/list()
 
 	proc/loop()
 
-		if(active)
+		if(src.flags & THING_IS_ON)
 			SPAWN_DBG(3 SECONDS) loop()
 			return
 
@@ -3567,7 +3566,7 @@ var/list/lag_list = new/list()
 		else
 			playsound(L, 'sound/effects/ghost.ogg', 5, 0)
 		sleep(0.3 SECONDS)
-		active = 1
+		src.flags |= THING_IS_ON
 		walk_towards(src,L,3)
 		src.invisibility = 0
 		flick("apparition",src)
@@ -3575,7 +3574,7 @@ var/list/lag_list = new/list()
 		src.invisibility = 100
 		src.set_loc(startloc)
 		walk(src,0)
-		SPAWN_DBG(10 SECONDS) active = 0
+		SPAWN_DBG(10 SECONDS) src.flags &= ~THING_IS_ON
 
 
 /datum/engibox_mode
@@ -3703,7 +3702,7 @@ var/list/lag_list = new/list()
 	used(atom/user, atom/target)
 		var/obj/machinery/light/small/L = new/obj/machinery/light/small(get_turf(target))
 		L.dir = user:dir
-		L.on = 1
+		L.flags |= THING_IS_ON
 		L.update()
 		return
 

@@ -66,7 +66,7 @@
 //				boutput(world, "[compare_movepath] : [current_movepath]")
 				//if(compare_movepath != current_movepath)
 				//	break
-				if(master.frustration >= 10 || master.stunned || master.idle || !master.on)
+				if(master.frustration >= 10 || master.stunned || master.idle || master.flags & ~THING_IS_ON)
 					master.frustration = 0
 					if(master.task)
 						master.task.task_input("path_blocked")
@@ -98,7 +98,6 @@
 	density = 0
 	anchored = 0
 	req_access = list(access_heads)
-	on = 1
 	var/idle = 0 //Sleeping on the job??
 	var/stunned = 0 //Are we stunned?
 	locked = 1 //Behavior Controls and Tool lock
@@ -296,7 +295,7 @@
 		update_icon()
 			var/emotion_image = null
 
-			if(!src.on)
+			if(src.flags & ~THING_IS_ON)
 				src.icon_state = "Goldbuddy0"
 
 			else if(src.stunned)
@@ -369,7 +368,7 @@
 
 	New()
 		..()
-		if(src.on)
+		if(src.flags & THING_IS_ON)
 			src.warm_boot = 1
 #ifdef HALLOWEEN
 		if (!setup_no_costumes)
@@ -391,7 +390,7 @@
 
 
 		SPAWN_DBG(0.5 SECONDS)
-			if (src.on)
+			if (src.flags & THING_IS_ON)
 				add_simple_light("guardbot", list(src.flashlight_red*255, src.flashlight_green*255, src.flashlight_blue*255, (src.flashlight_lum / 7) * 255))
 			src.botcard = new /obj/item/card/id(src)
 			src.botcard.access = get_access(src.botcard_access)
@@ -439,7 +438,7 @@
 	emag_act(var/mob/user, var/obj/item/card/emag/E)
 		if(!user || !E) return 0
 
-		if (src.idle || !src.on)
+		if (src.idle || src.flags & ~THING_IS_ON)
 			if (!src.emagged)
 				boutput(user, "You wave \the [E] in front of [src]'s blank screen. It responds with a small puff of smoke.")
 			else
@@ -461,7 +460,7 @@
 		src.emagged = 1
 		if (src.obeygunlaw)
 			src.obeygunlaw = 0
-			if (src.idle || !src.on)
+			if (src.idle || src.flags & ~THING_IS_ON)
 				SPAWN_DBG(1 SECOND)
 					boutput(user, "[src] looks confused for a moment.")
 		if (src.budgun)
@@ -526,7 +525,7 @@
 			return
 
 		else if (istype(W, /obj/item/reagent_containers/food/snacks/candy))
-			if (src.idle || !src.on)
+			if (src.idle || src.flags & ~THING_IS_ON)
 				boutput(user, "You try to give [src] [W], but there is no response.")
 				return
 
@@ -573,7 +572,7 @@
 	proc/CheckSafety(var/obj/item/gun/energy/W, var/unsafe = 0, var/user = null)
 		if (!istype(W, /obj/item/gun/energy/egun))
 			return	// Eguns only, please!
-		if (!src.on || src.idle)
+		if (src.flags & ~THING_IS_ON || src.idle)
 			src.slept_through_laser_class = 1	// y'know, whenever you get a chance
 			return
 		var/fluffbud = pick("small", "cute", "handsome", "adorable", "lovable", "lovely")
@@ -633,7 +632,7 @@
 						speak("Right?")
 					if (prob(25))
 						sleep(10 SECONDS)
-						if (src?.on)	// Are they even still alive or something
+						if (src?.flags & THING_IS_ON)	// Are they even still alive or something
 							if(user)
 								speak("Yup. That's me. Definitely [fluffbad1] [fluffbad2] through and through.")
 							else
@@ -645,7 +644,7 @@
 		if (!istype(src.budgun, /obj/item/gun/energy/lawbringer))
 			src.slept_through_becoming_the_law = 0 // If we were going to be the law before, we ain't now.
 			return
-		if (!src.on || src.idle)	// Let's not wake em up just to say some dumb shit
+		if (src.flags & ~THING_IS_ON || src.idle)	// Let's not wake em up just to say some dumb shit
 			src.slept_through_becoming_the_law = 1	// They can do it on their own time
 			return
 		set_emotion("smug")
@@ -756,7 +755,7 @@
 
 	proc/GunSux()
 		var/turf/TdurgSux = get_turf(src)
-		if (!istype(src.budgun, /obj/item/bang_gun) || !src.budgun || !src.on || src.idle)
+		if (!istype(src.budgun, /obj/item/bang_gun) || !src.budgun || src.flags & ~THING_IS_ON || src.idle)
 			return
 		var/actiontext1 = pick(" looks shocked for a moment",\
 													 " laughs nervously",\
@@ -796,7 +795,7 @@
 				boutput(user, "<span class='alert'>The BulletBuddy snakes a metallic tendril up [src]'s arm, tightening itself around their hand!</span>")
 				boutput(user, "<span class='alert'>The tendril extends into the magazine port of [src]'s gun, welding itself in place!</span>")
 			else
-				if(src.on)
+				if(src.flags & THING_IS_ON)
 					speak("Hah, that tickles. Probably.")
 				else
 					src.visible_message("[src] twitches slightly.[pick(" It must be dreaming!", "")]")
@@ -947,7 +946,7 @@
 		switch(type_of_thing)
 			if("gun")
 				if (src.locked) // Are we locked?
-					if(src.on && !src.idle)
+					if(src.flags & THING_IS_ON && !src.idle)
 						if(!DeceptionCheck(null, user, "togglelock")) // Let's try to unlock em
 							speak("Well shoot, I'd love to hold that gun! But... I have a tool module installed, and the combined mass and power draw of both a tool module <I>and</I> a gun would definitely fry my drive train and void my warranty. ")
 							return	// welp
@@ -975,7 +974,7 @@
 						legalweapon = 1
 						break
 				if (obeygunlaw && !legalweapon)
-					if(src.on && !src.idle)
+					if(src.flags & THING_IS_ON && !src.idle)
 						src.visible_message("<span class='alert'>[src] refuses to wield an unauthorized weapon!</span>",\
 																"<span class='alert'>[src] graciously refuses your [Q].</span>")
 						speak("Sorry, but article-[(rand(1,6))] subsection-[rand(1,32764)] of Spacelaw prohibits any [fluffbud] [budfluff] from wielding a Class-[pick("A", "B","C", "D")] weapon.")
@@ -986,7 +985,7 @@
 						boutput(user, "You try to give [src] your [Q], but it just slides out of its hand! Maybe its Spacelaw circuits don't like that gun?")
 						return
 				else if (obeygunlaw && legalweapon)
-					if(src.on && !src.idle)
+					if(src.flags & THING_IS_ON && !src.idle)
 						if (user)
 							src.visible_message("<span class='alert'>[user] gives [src] [his_or_her(user)] [Q]!</span>", \
 																	"<span class='alert'>You give your [Q] to [src]!</span>")
@@ -1001,7 +1000,7 @@
 					else
 						boutput(user, "You slip your [Q] into [src]'s hand, and it reflexively closes around the grip.[prob(23) ? " How adorable." : ""]")
 				else // bot's emagged or ammofabbed. Or both.
-					if(src.on && !src.idle)
+					if(src.flags & THING_IS_ON && !src.idle)
 						if (user)
 							src.visible_message("<span class='alert'>[src] snatches the [Q] from [user], wielding it in its cold, dead weapon mount!</span>",\
 																	"<span class='alert'>[src] snatches the [Q] from your grip and plugs it into its weapon mount!</span>")
@@ -1025,7 +1024,7 @@
 
 			if ("tool")
 				if (src.locked) // It locked, then unlock it
-					if(src.on && !src.idle)
+					if(src.flags & THING_IS_ON && !src.idle)
 						if(!DeceptionCheck(null, user, "togglelock")) // maybe we can ask them nicely?
 							if (src.tool.tool_id != "GUN") // AKA, we have a tool
 								speak("That's a neat tool module you have there! Maybe you could get someone on this station's science team to install it for you!")
@@ -1229,7 +1228,7 @@
 
 	get_desc(dist)
 		..()
-		if (src.on && src.idle)
+		if (src.flags & THING_IS_ON && src.idle)
 			. = "<br><span class='notice'>[src] appears to be sleeping.</span>"
 		if (src.health < initial(health))
 			if (src.health > 10)
@@ -1262,7 +1261,7 @@
 		src.add_dialog(usr)
 		src.add_fingerprint(usr)
 		if ((href_list["power"]) && (!src.locked || (src.allowed(usr) && (issilicon(usr) || get_dist(usr, src) < 2))))
-			if(src.on)
+			if(src.flags & THING_IS_ON)
 				turn_off()
 			else
 				turn_on()
@@ -1272,7 +1271,7 @@
 		return
 
 	receive_signal(datum/signal/signal, receive_method, receive_param)
-		if(!src.on || src.stunned)
+		if(src.flags & ~THING_IS_ON || src.stunned)
 			return
 
 		if(!signal || signal.encryption)
@@ -1371,7 +1370,7 @@
 		return
 
 	emp_act() //Oh no! We have been hit by an EMP grenade!
-		if(!src.on || prob(10))
+		if(src.flags & ~THING_IS_ON || prob(10))
 			return
 
 		src.emagged = 1
@@ -1450,7 +1449,7 @@
 				O.throw_at(edge, 100, 4)
 
 			SPAWN_DBG(0) //Delete the overlay when finished with it.
-				src.on = 0
+				src.flags &= ~THING_IS_ON
 				sleep(1.5 SECONDS)
 				qdel(Ov)
 				qdel(src)
@@ -1486,7 +1485,7 @@
 
 	proc
 		manage_power()
-			if(!on) return 1
+			if(src.flags & ~THING_IS_ON) return 1
 			if(!cell || (cell.charge <= 0) )
 				src.turn_off()
 				return 1
@@ -1509,7 +1508,7 @@
 			return 0
 
 		wakeup() //Get out of idle state and prepare anything that needs preparing I guess
-			if(!src.on) return
+			if(src.flags & ~THING_IS_ON) return
 			src.idle = 0 //Also called after recovery from stunning.
 			src.stunned = 0
 			src.moving = 0
@@ -1547,7 +1546,7 @@
 		turn_on()
 			if(!src.cell || src.cell.charge <= 0)
 				return
-			src.on = 1
+			src.flags |= THING_IS_ON
 			src.idle = 0
 			src.moving = 0
 			src.task = null
@@ -1571,7 +1570,7 @@
 		turn_off()
 			if(!warm_boot) //ugh it's some dude just flicking the switch.
 				return
-			src.on = 0
+			src.flags &= ~THING_IS_ON
 			src.moving = 0
 			src.task = null
 			//src.target = null
@@ -1768,11 +1767,11 @@
 
 			if(src.locked)
 
-				dat += "Status: [src.on ? "On" : "Off"]<br>"
+				dat += "Status: [src.flags & THING_IS_ON ? "On" : "Off"]<br>"
 
 			else
 
-				dat += "Status: <a href='?src=\ref[src];power=1'>[src.on ? "On" : "Off"]</a><br>"
+				dat += "Status: <a href='?src=\ref[src];power=1'>[src.flags & THING_IS_ON ? "On" : "Off"]</a><br>"
 
 			dat += "<br>Network ID: <b>\[[uppertext(src.net_id)]]</b><br>"
 
@@ -1783,7 +1782,7 @@
 		update_icon()
 			var/emotion_image = null
 
-			if(!src.on)
+			if(src.flags & ~THING_IS_ON)
 				src.icon_state = "robuddy0"
 
 			else if(src.stunned)
@@ -1853,7 +1852,7 @@
 		if (icon_needs_update)
 			src.update_icon()
 
-		if(!src.on)
+		if(src.flags & ~THING_IS_ON)
 			return
 		if(src.stunned)
 			src.stunned--
@@ -1884,9 +1883,9 @@
 		if(src.reply_wait)
 			src.reply_wait--
 
-		if(src.on && !src.idle && src.slept_through_becoming_the_law)	// Oh you're awake now?
+		if(src.flags & THING_IS_ON && !src.idle && src.slept_through_becoming_the_law)	// Oh you're awake now?
 			BeTheLaw(src.emagged, 0, src.lawbringer_alwaysbigshot)	// Go be the law, sleepyhead
-		if(src.on && !src.idle && src.slept_through_laser_class)	// Rise and shine, buddy
+		if(src.flags & THING_IS_ON && !src.idle && src.slept_through_laser_class)	// Rise and shine, buddy
 			CheckSafety(src.budgun, src.emagged)	// Look at your gun!
 
 		if(!src.tasks.len && (src.model_task || setup_default_startup_task))
@@ -1916,7 +1915,7 @@
 
 	proc
 		bot_attack(var/atom/target as mob|obj, obj/machinery/bot/guardbot/user, ranged=0, lethal=0)
-			if(!user || !user.on || user.getStatusDuration("stunned") || user.idle)
+			if(!user || user.flags & ~THING_IS_ON || user.getStatusDuration("stunned") || user.idle)
 				return 1
 
 			return 0
@@ -2199,7 +2198,7 @@
 		task_act()
 			if(!master || master.task != src)
 				return 1
-			if(!master.on || master.stunned)
+			if(master.flags & ~THING_IS_ON || master.stunned)
 				return 1
 
 			return 0
@@ -2207,7 +2206,7 @@
 		attack_response(mob/attacker as mob)
 			if(!master || master.task != src)
 				return 1
-			if(!master.on || master.stunned || master.idle)
+			if(master.flags & ~THING_IS_ON || master.stunned || master.idle)
 				return 1
 			if(!istype(attacker))
 				return 1
@@ -2215,7 +2214,7 @@
 			return 0
 
 		task_input(var/input)
-			if(!master || !input || !master.on) return 1
+			if(!master || !input || master.flags & ~THING_IS_ON) return 1
 
 			if(input == "hugged")
 				switch(master.emotion)
@@ -2715,7 +2714,7 @@
 
 											if (!cuffing)
 												return
-											if (!master || !master.on || master.idle || master.stunned)
+											if (!master || master.flags & ~THING_IS_ON || master.idle || master.stunned)
 												src.cuffing = 0
 												return
 											if (arrest_target.hasStatus("handcuffed") || !isturf(arrest_target.loc))
@@ -3009,7 +3008,7 @@
 				master.post_status("!BEACON!", "findbeacon", "patrol")
 				awaiting_beacon = 5
 				SPAWN_DBG(1 SECOND)
-					if(!master || !master.on || master.stunned || master.idle) return
+					if(!master || master.flags & ~THING_IS_ON || master.stunned || master.idle) return
 					if(master.task != src) return
 					awaiting_beacon = 0
 					if(nearest_beacon && !master.moving)
@@ -4537,7 +4536,7 @@
 			return 1
 
 		upload_task(var/datum/computer/file/guardbot_task/task, clear_others=0, new_model=0)
-			if(!current || !current.on || !istype(task))
+			if(!current || current.flags & ~THING_IS_ON || !istype(task))
 				return 0
 
 			if(new_model)
@@ -4694,11 +4693,11 @@
 
 		if(src.locked)
 
-			dat += "Status: [src.on ? "On" : "Off"]<br>"
+			dat += "Status: [src.flags & THING_IS_ON ? "On" : "Off"]<br>"
 
 		else
 
-			dat += "Status: <a href='?src=\ref[src];power=1'>[src.on ? "On" : "Off"]</a><br>"
+			dat += "Status: <a href='?src=\ref[src];power=1'>[src.flags & THING_IS_ON ? "On" : "Off"]</a><br>"
 
 		dat += "<br>Network ID: <b>\[[uppertext(src.net_id)]]</b><br>"
 
@@ -4763,7 +4762,7 @@
 			O.throw_at(edge, 100, 4)
 
 		SPAWN_DBG(0) //Delete the overlay when finished with it.
-			src.on = 0
+			src.flags &= ~THING_IS_ON
 			sleep(1.5 SECONDS)
 			qdel(Ov)
 			qdel(src)

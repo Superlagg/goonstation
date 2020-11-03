@@ -9,17 +9,15 @@ obj/machinery/atmospherics/unary/oxygen_generator
 	dir = SOUTH
 	initialize_directions = SOUTH
 
-	var/on = 0
-//
 	var/oxygen_content = 10
 
 	update_icon()
 		if(node)
-			icon_state = "intact_[on?("on"):("off")]"
+			icon_state = "intact_[src.flags & THING_IS_ON ? ("on"):("off")]"
 		else
 			icon_state = "exposed_off"
 
-			on = 0
+			src.flags &= ~THING_IS_ON
 
 		return
 
@@ -30,7 +28,7 @@ obj/machinery/atmospherics/unary/oxygen_generator
 
 	process()
 		..()
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			return 0
 
 		var/total_moles = TOTAL_MOLES(air_contents)

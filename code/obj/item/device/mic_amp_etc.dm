@@ -6,17 +6,16 @@
 	item_state = "mic"
 	var/max_font = 8
 	var/font_amp = 4
-	var/on = 0
 
 	get_desc()
 		..()
-		. += "It's currently [src.on ? "on" : "off"]."
+		. += "It's currently [src.flags & THING_IS_ON ? "on" : "off"]."
 
 	attack_self(mob/user as mob)
-		src.on = !(src.on)
+		src.flags ^= THING_IS_ON
 		tooltip_rebuild = 1
-		user.show_text("You switch [src] [src.on ? "on" : "off"].")
-		if (src.on && prob(5))
+		user.show_text("You switch [src] [src.flags & THING_IS_ON ? "on" : "off"].")
+		if (src.flags & THING_IS_ON && prob(5))
 			if (locate(/obj/loudspeaker) in range(2, user))
 				for_by_tcl(S, /obj/loudspeaker)
 					if(!IN_RANGE(S, user, 7)) continue
@@ -24,21 +23,21 @@
 					playsound(S.loc, 'sound/items/mic_feedback.ogg', 30, 1)
 
 	attack_hand(mob/user as mob)
-		if (user.find_in_hand(src) && src.on)
+		if (user.find_in_hand(src) && src.flags & THING_IS_ON)
 			playsound(get_turf(user), 'sound/misc/miccheck.ogg', 30, 1)
 			user.visible_message("<span class='emote'>[user] taps [src] with [his_or_her(user)] hand.</span>")
 		else
 			return ..()
 
 	hear_talk(mob/M as mob, msg, real_name, lang_id)
-		if (!src.on)
+		if (src.flags & ~THING_IS_ON)
 			return
 		var/turf/T = get_turf(src)
 		if (M in range(1, T))
 			src.talk_into(M, msg, null, real_name, lang_id)
 
 	talk_into(mob/M as mob, messages, param, real_name, lang_id)
-		if (!src.on)
+		if (src.flags & ~THING_IS_ON)
 			return
 		var/speakers = 0
 		var/turf/T = get_turf(src)
@@ -101,7 +100,7 @@
 			return ..()
 
 	hear_talk(mob/M as mob, msg, real_name)
-		if (!myMic || !myMic.on)
+		if (!myMic || myMic.flags & ~THING_IS_ON)
 			return
 		var/turf/T = get_turf(src)
 		if (M in range(1, T))

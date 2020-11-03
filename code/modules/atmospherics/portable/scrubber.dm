@@ -5,7 +5,6 @@
 	icon_state = "pscrubber:0"
 	density = 1
 
-	var/on = 0
 	var/volume_rate = 800
 	mats = 12
 	deconstruct_flags = DECON_SCREWDRIVER | DECON_WRENCH | DECON_WELDER
@@ -19,7 +18,7 @@
 	var/drain_max = 12
 
 /obj/machinery/portable_atmospherics/scrubber/update_icon()
-	if(on)
+	if(src.flags & THING_IS_ON)
 		icon_state = "pscrubber:1"
 	else
 		icon_state = "pscrubber:0"
@@ -36,7 +35,7 @@
 		environment = loc.return_air()
 
 
-	if(on)
+	if(src.flags & THING_IS_ON)
 
 		//smoke/fluid :
 		var/turf/my_turf = get_turf(src)
@@ -136,7 +135,7 @@ Pressure: [MIXTURE_PRESSURE(air_contents)] KPa<BR>
 Port Status: [(connected_port)?("Connected"):("Disconnected")]
 [holding_text]
 <BR>
-Power Switch: <A href='?src=\ref[src];power=1'>[on?("On"):("Off")]</A><BR>
+Power Switch: <A href='?src=\ref[src];power=1'>[src.flags & THING_IS_ON?("On"):("Off")]</A><BR>
 Target Pressure: <A href='?src=\ref[src];volume_adj=-100'>-</A> <A href='?src=\ref[src];volume_adj=-10'>-</A> <A href='?src=\ref[src];volume_set=1'>[volume_rate]</A> <A href='?src=\ref[src];volume_adj=10'>+</A> <A href='?src=\ref[src];volume_adj=100'>+</A><BR>
 <HR>
 <A href='?action=mach_close&window=scrubber'>Close</A><BR>
@@ -156,7 +155,7 @@ Target Pressure: <A href='?src=\ref[src];volume_adj=-100'>-</A> <A href='?src=\r
 		src.add_dialog(usr)
 
 		if(href_list["power"])
-			on = !on
+			src.flags ^= THING_IS_ON
 
 		if (href_list["remove_tank"])
 			if(holding)

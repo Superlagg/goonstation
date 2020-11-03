@@ -55,7 +55,7 @@
 			deflecting_sword = src.l_hand
 
 		if(deflecting_sword)
-			if(deflecting_sword.active == 0)  // turn the sword on if it's off
+			if(deflecting_sword.flags & ~THING_IS_ON)  // turn the sword on if it's off
 				deflecting_sword.attack_self(src)
 				src.visible_message("<span class='alert'>[src] instinctively switches his [deflecting_sword] on in response to the incoming [P.name]!</span>")
 			var/datum/abilityHolder/cyalume_knight/my_ability_holder = src.get_ability_holder(/datum/abilityHolder/cyalume_knight)

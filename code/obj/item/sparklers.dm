@@ -24,27 +24,27 @@
 		..()
 
 	attack_self(mob/user as mob)
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			var/fluff = pick("snuff", "blow")
 			user.visible_message("<b>[user]</b> [fluff]s out [src].",\
 			"You [fluff] out [src].")
 			src.put_out(user)
 
 	attackby(obj/item/W as obj, mob/user as mob)
-		if (!src.on && sparks)
+		if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN && sparks)
 			if (isweldingtool(W) && W:try_weld(user,0,-1,0,0))
 				src.light(user, "<span class='alert'><b>[user]</b> casually lights [src] with [W], what a badass.</span>")
 
-			else if (istype(W, /obj/item/clothing/head/cakehat) && W:on)
+			else if (istype(W, /obj/item/clothing/head/cakehat) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
 				src.light(user, "<span class='alert'>Did [user] just light \his [src] with [W]? Holy Shit.</span>")
 
 			else if (istype(W, /obj/item/device/igniter))
 				src.light(user, "<span class='alert'><b>[user]</b> fumbles around with [W]; sparks erupt from [src].</span>")
 
-			else if (istype(W, /obj/item/device/light/zippo) && W:on)
+			else if (istype(W, /obj/item/device/light/zippo) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
 				src.light(user, "<span class='alert'>With a single flick of their wrist, [user] smoothly lights [src] with [W]. Damn they're cool.</span>")
 
-			else if ((istype(W, /obj/item/match) || istype(W, /obj/item/device/light/candle)) && W:on)
+			else if ((istype(W, /obj/item/match) || istype(W, /obj/item/device/light/candle)) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
 				src.light(user, "<span class='alert'><b>[user] lights [src] with [W].</span>")
 
 			else if (W.burning)
@@ -58,7 +58,7 @@
 		..()
 
 	process()
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			var/turf/location = src.loc
 			if (ismob(location))
 				var/mob/M = location
@@ -88,9 +88,9 @@
 	proc/light(var/mob/user as mob, var/message as text)
 		if (!src) return
 		if (burnt) return
-		if (!src.on)
+		if (src.flags & ~THING_IS_ON)
 			logTheThing("combat", user, null, "lights the [src] at [log_loc(src)].")
-			src.on = 1
+			src.flags |= THING_IS_ON
 			src.hit_type = DAMAGE_BURN
 			src.force = 3
 			src.icon_state = src.icon_on
@@ -103,8 +103,8 @@
 
 	proc/put_out(var/mob/user as mob)
 		if (!src) return
-		if (src.on)
-			src.on = 0
+		if (src.flags & THING_IS_ON)
+			src.flags &= ~THING_IS_ON
 			src.hit_type = DAMAGE_BLUNT
 			src.force = 0
 			src.icon_state = src.icon_off

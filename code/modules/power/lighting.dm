@@ -82,7 +82,6 @@
 	layer = EFFECTS_LAYER_UNDER_1
 	plane = PLANE_NOSHADOW_ABOVE
 	text = ""
-	var/on = 0 // 1 if on, 0 if off
 	var/brightness = 1.6 // luminosity when on, also used in power calculation
 
 	var/obj/item/light/light_type = /obj/item/light/tube // the type of the inserted light item
@@ -319,7 +318,6 @@
 	desc = "A small light used to illuminate in emergencies."
 	light_type = /obj/item/light/bulb/emergency
 	allowed_type = /obj/item/light/bulb/emergency
-	on = 0
 	removable_bulb = 0
 
 	exitsign
@@ -337,9 +335,12 @@
 	light_type = /obj/item/light/bulb
 	allowed_type = /obj/item/light/bulb
 	plane = PLANE_NOSHADOW_BELOW
-	on = 1
 	wallmounted = 0
 	removable_bulb = 0
+
+	New()
+		. = ..()
+		src.flags |= THING_IS_ON
 
 	delay2
 		icon_state = "runway20"
@@ -380,10 +381,10 @@
 
 			if (!src.anchored)
 				boutput(user, "<span class='alert'>[src] can now be moved.</span>")
-				src.on = 0
+				src.flags &= ~THING_IS_ON
 			else
 				boutput(user, "<span class='alert'>[src] is now secured.</span>")
-				src.on = 1
+				src.flags |= THING_IS_ON
 
 			update()
 
@@ -502,22 +503,22 @@
 /obj/machinery/light/proc/update()
 	if (!inserted_lamp)
 		icon_state = "[base_state]-empty"
-		on = 0
+		src.flags &= ~THING_IS_ON
 	else
 		switch(current_lamp.light_status) // set icon_states
 			if(LIGHT_OK)
-				icon_state = "[base_state][on]"
+				icon_state = "[base_state][src.flags & THING_IS_ON ? 1 : 0]"
 			if(LIGHT_BURNED)
 				icon_state = "[base_state]-burned"
-				on = 0
+				src.flags &= ~THING_IS_ON
 			if(LIGHT_BROKEN)
 				icon_state = "[base_state]-broken"
-				on = 0
+				src.flags &= ~THING_IS_ON
 
 	// if the state changed, inc the switching counter
 	//if(src.light.enabled != on)
 
-	if (on)
+	if (src.flags & THING_IS_ON)
 		light.enable()
 	else
 		light.disable()
@@ -525,15 +526,15 @@
 	SPAWN_DBG(0)
 		// now check to see if the bulb is burned out
 		if(current_lamp.light_status == LIGHT_OK)
-			if(on && current_lamp.rigged)
+			if(src.flags & THING_IS_ON && current_lamp.rigged)
 				if (current_lamp.rigger)
 					message_admins("[key_name(current_lamp.rigger)]'s rigged bulb exploded in [src.loc.loc], [showCoords(src.x, src.y, src.z)].")
 					logTheThing("combat", current_lamp.rigger, null, "'s rigged bulb exploded in [current_lamp.rigger.loc.loc] ([showCoords(src.x, src.y, src.z)])")
 				explode()
-			if(on && prob(current_lamp.breakprob))
+			if(src.flags & THING_IS_ON && prob(current_lamp.breakprob))
 				current_lamp.light_status = LIGHT_BURNED
 				icon_state = "[base_state]-burned"
-				on = 0
+				src.flags &= ~THING_IS_ON
 				light.disable()
 				elecflash(src,radius = 1, power = 2, exclude_center = 0)
 				logTheThing("station", null, null, "Light '[name]' burnt out (breakprob: [current_lamp.breakprob]) at ([showCoords(src.x, src.y, src.z)])")
@@ -542,7 +543,10 @@
 // attempt to set the light's on/off status
 // will not switch on if broken/burned/empty
 /obj/machinery/light/proc/seton(var/s)
-	on = (s && current_lamp.light_status == LIGHT_OK)
+	if (s && current_lamp.light_status == LIGHT_OK)
+		src.flags |= THING_IS_ON 
+	else
+		src.flags &= ~THING_IS_ON
 	update()
 
 // examine verb
@@ -557,7 +561,7 @@
 		return
 	switch(current_lamp.light_status)
 		if(LIGHT_OK)
-			. += "It is turned [on? "on" : "off"]."
+			. += "It is turned [src.flags & THING_IS_ON ? "on" : "off"]."
 		if(LIGHT_BURNED)
 			. += "The [fitting] is burnt out."
 		if(LIGHT_BROKEN)
@@ -586,7 +590,10 @@
 	current_lamp = inserted_lamp
 	current_lamp.set_loc(null)
 	light.set_color(current_lamp.color_r, current_lamp.color_g, current_lamp.color_b)
-	on = has_power()
+	if(has_power())
+		src.flags |= THING_IS_ON
+	else
+		src.flags &= ~THING_IS_ON
 	update()
 
 // attack with item - insert light (if right type), otherwise try to break the light
@@ -697,7 +704,7 @@
 				if(M == user)
 					continue
 				M.show_message("[user.name] smashed the light!", 3, "You hear a tinkle of breaking glass", 2)
-			if(on && (W.flags & CONDUCT))
+			if(src.flags & THING_IS_ON && (W.flags & CONDUCT))
 				if(!user.bioHolder.HasEffect("resist_electric"))
 					src.electrocute(user, 50, null, 20000)
 			broken()
@@ -746,7 +753,7 @@
 		return
 
 	// make it burn hands if not wearing fire-insulated gloves
-	if(on)
+	if(src.flags & THING_IS_ON)
 		var/prot = 0
 		var/mob/living/carbon/human/H = user
 
@@ -780,7 +787,7 @@
 		playsound(src.loc, "sound/impact_sounds/Glass_Hit_1.ogg", 75, 1)
 
 	if(!nospark)
-		if(on)
+		if(src.flags & THING_IS_ON)
 			logTheThing("station", null, null, "Light '[name]' was on and has been broken, spewing sparks everywhere ([showCoords(src.x, src.y, src.z)])")
 			elecflash(src,radius = 1, power = 2, exclude_center = 0)
 	current_lamp.light_status = LIGHT_BROKEN

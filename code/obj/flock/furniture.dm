@@ -187,17 +187,17 @@
 	base_state = "flock"
 	brightness = 1.2
 	power_usage = 0
-	on = 1
 	removable_bulb = 0
 
 /obj/machinery/light/flock/New()
 	..()
+	src.flags |= THING_IS_ON
 	light.set_color(0.45, 0.75, 0.675)
 
 /obj/machinery/light/flock/attack_hand(mob/user)
 	if(isflock(user))
 		add_fingerprint(user)
-		seton(!on)
+		seton(src.flags & THING_IS_ON ? 0 : 1)
 	else
 		..()
 

@@ -12,7 +12,6 @@
 	anchored = 1
 	animate_movement=1
 	soundproofing = 0
-	on = 1
 	locked = 1
 	var/atom/movable/load = null		// the loaded crate (usually)
 
@@ -138,7 +137,7 @@
 			open = !open
 			if(open)
 				src.visible_message("[user] opens the maintenance hatch of [src]", "<span class='notice'>You open [src]'s maintenance hatch.</span>")
-				on = 0
+				src.flags &= ~THING_IS_ON
 				icon_state="mulebot-hatch"
 			else
 				src.visible_message("[user] closes the maintenance hatch of [src]", "<span class='notice'>You close [src]'s maintenance hatch.</span>")
@@ -195,7 +194,7 @@
 		var/dat
 		dat += "<TT><B>Multiple Utility Load Effector Mk. III</B></TT><BR><BR>"
 		dat += "ID: [suffix]<BR>"
-		dat += "Power: [on ? "On" : "Off"]<BR>"
+		dat += "Power: [src.flags & THING_IS_ON ? "On" : "Off"]<BR>"
 
 		if(!open)
 			dat += "Status: "
@@ -290,14 +289,14 @@
 						return
 
 				if("power")
-					on = !on
+					src.flags ^= THING_IS_ON
 					if(!cell || open)
-						on = 0
+						src.flags &= ~THING_IS_ON
 						return
-					boutput(usr, "You switch [on ? "on" : "off"] [src].")
+					boutput(usr, "You switch [src.flags & THING_IS_ON ? "on" : "off"] [src].")
 					for(var/mob/M in AIviewers(src))
 						if(M==usr) continue
-						boutput(M, "[usr] switches [on ? "on" : "off"] [src].")
+						boutput(M, "[usr] switches [src.flags & THING_IS_ON ? "on" : "off"] [src].")
 
 				if("cellremove")
 					if(open && cell && !usr.equipped())
@@ -419,7 +418,7 @@
 		if(user.stat)
 			return
 
-		if (!on || !istype(C)|| C.anchored || get_dist(user, src) > 1 || get_dist(src,C) > 1 )
+		if (src.flags & ~THING_IS_ON || !istype(C)|| C.anchored || get_dist(user, src) > 1 || get_dist(src,C) > 1 )
 			return
 
 		if(load)
@@ -432,7 +431,7 @@
 		if (istype(C, /obj/screen) || C.anchored)
 			return
 
-		if(get_dist(C, src) > 1 || load || !on)
+		if(get_dist(C, src) > 1 || load || src.flags & ~THING_IS_ON)
 			return
 		mode = 1
 
@@ -497,9 +496,9 @@
 		var/time_since_last = TIME - last_process_time
 		last_process_time = TIME
 		if(!has_power())
-			on = 0
+			src.flags &= ~THING_IS_ON
 			return
-		if(on)
+		if(src.flags & THING_IS_ON)
 			SPAWN_DBG(0)
 				var/speed = ((wires & wire_motor1) ? 1:0) + ((wires & wire_motor2) ? 2:0)
 				//boutput(world, "speed: [speed]")
@@ -749,7 +748,7 @@
 
 	receive_signal(datum/signal/signal)
 
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			return
 
 		/*

@@ -7,7 +7,6 @@ obj/machinery/atmospherics/binary/passive_gate
 	name = "Passive gate"
 	desc = "A one-way air valve that does not require power"
 
-	var/on = 0
 	var/target_pressure = ONE_ATMOSPHERE
 	var/datum/pump_ui/ui
 
@@ -17,7 +16,7 @@ obj/machinery/atmospherics/binary/passive_gate
 
 	update_icon()
 		if(node1&&node2)
-			icon_state = "intact_[on?("on"):("off")]"
+			icon_state = "intact_[src.flags & THING_IS_ON ? ("on"):("off")]"
 		else
 			if(node1)
 				icon_state = "exposed_1_off"
@@ -25,13 +24,13 @@ obj/machinery/atmospherics/binary/passive_gate
 				icon_state = "exposed_2_off"
 			else
 				icon_state = "exposed_3_off"
-			on = 0
+			src.flags &= ~THING_IS_ON
 
 		return
 
 	process()
 		..()
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			return 0
 
 		var/output_starting_pressure = MIXTURE_PRESSURE(air2)
@@ -81,11 +80,14 @@ datum/pump_ui/passive_gate_ui/set_value(val)
 	our_gate.target_pressure = val
 
 datum/pump_ui/passive_gate_ui/toggle_power()
-	our_gate.on = !our_gate.on
+	our_gate.flags ^= THING_IS_ON
 	our_gate.update_icon()
 
 datum/pump_ui/passive_gate_ui/is_on()
-	return our_gate.on
+	if (our_gate.flags & THING_IS_ON)
+		return 1
+	else
+		return 0
 
 datum/pump_ui/passive_gate_ui/get_value()
 	return our_gate.target_pressure

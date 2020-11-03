@@ -23,7 +23,6 @@
 	uses_multiple_icon_states = 1
 	inhand_image_icon = 'icons/mob/inhand/hand_cswords.dmi'
 	item_state = "sword0"
-	var/active = 0.0
 	var/open = 0
 	var/use_glowstick = 1
 	var/obj/item/device/light/glowstick/loaded_glowstick = null
@@ -106,7 +105,7 @@
 		BLOCK_SETUP(BLOCK_SWORD)
 
 /obj/item/sword/attack(mob/target, mob/user, def_zone, is_special = 0)
-	if(active)
+	if(src.flags & THING_IS_ON)
 		if (handle_parry(target, user))
 			return 1
 		if (do_stun)
@@ -173,7 +172,7 @@
 		var/obj/item/sword/S = H.find_type_in_hand(/obj/item/sword, "right")
 		if (!S)
 			S = H.find_type_in_hand(/obj/item/sword, "left")
-		if (S && S.active && !(H.lying || isdead(H) || H.hasStatus("stunned", "weakened", "paralysis")))
+		if (S && S.flags & THING_IS_ON && !(H.lying || isdead(H) || H.hasStatus("stunned", "weakened", "paralysis")))
 			var/obj/itemspecialeffect/clash/C = unpool(/obj/itemspecialeffect/clash)
 			if(target.gender == MALE) playsound(get_turf(target), pick('sound/weapons/male_cswordattack1.ogg','sound/weapons/male_cswordattack2.ogg'), 70, 0, 5, max(0.7, min(1.2, 1.0 + (30 - H.bioHolder.age)/60)))
 			else playsound(get_turf(target), pick('sound/weapons/female_cswordattack1.ogg','sound/weapons/female_cswordattack2.ogg'), 70, 0, 5, max(0.7, min(1.4, 1.0 + (30 - H.bioHolder.age)/50)))
@@ -205,7 +204,7 @@
 			playsound(get_turf(user), "sound/items/zippo_close.ogg", 60, 1)
 			return
 
-		if (!loaded_glowstick.on)
+		if (!loaded_glowstick.flags & THING_IS_ON)
 			boutput(user, "<span class='alert'>The sword emits a brief flash of light and turns off! The blade-focus glowstick hasn't been cracked!</span>")
 			playsound(get_turf(user), "sound/items/zippo_close.ogg", 60, 1)
 			return
@@ -215,9 +214,27 @@
 		user.TakeDamage(user.hand == 1 ? "l_arm" : "r_arm", 5, 5)
 		take_bleeding_damage(user, user, 5)
 		JOB_XP(user, "Clown", 1)
-	src.active = !( src.active )
-	tooltip_rebuild = 1
-	if (src.active)
+	if(src.flags & THING_IS_ON)
+		// Is now off, or "not-on"
+		src.flags &= ~THING_IS_ON
+		var/datum/component/holdertargeting/simple_light/light_c = src.GetComponent(/datum/component/holdertargeting/simple_light)
+		SET_BLOCKS(BLOCK_SWORD)
+		light_c.update(0)
+		boutput(user, "<span class='notice'>The sword can now be concealed.</span>")
+		hit_type = DAMAGE_BLUNT
+		stamina_damage = inactive_stamina_dmg
+		if(ishuman(user))
+			var/mob/living/carbon/human/U = user
+			if(U.gender == MALE) playsound(get_turf(U),"sound/weapons/male_cswordturnoff.ogg", 70, 0, 5, max(0.7, min(1.2, 1.0 + (30 - U.bioHolder.age)/60)))
+			else playsound(get_turf(U),"sound/weapons/female_cswordturnoff.ogg", 100, 0, 5, max(0.7, min(1.4, 1.0 + (30 - U.bioHolder.age)/50)))
+		src.force = inactive_force
+		src.stamina_cost = inactive_stamina_cost
+		src.icon_state = "[state_name]0"
+		src.item_state = "[state_name]0"
+		src.w_class = off_w_class
+	else
+		src.flags |= THING_IS_ON
+		// Is now on, or "not-off"
 		SET_BLOCKS(BLOCK_ALL)
 		var/datum/component/holdertargeting/simple_light/light_c = src.GetComponent(/datum/component/holdertargeting/simple_light)
 		light_c.update(1)
@@ -237,22 +254,8 @@
 		src.item_state = "[state_name]1-[src.bladecolor]"
 		src.w_class = 4
 		user.unlock_medal("The Force is strong with this one", 1)
-	else
-		var/datum/component/holdertargeting/simple_light/light_c = src.GetComponent(/datum/component/holdertargeting/simple_light)
-		SET_BLOCKS(BLOCK_SWORD)
-		light_c.update(0)
-		boutput(user, "<span class='notice'>The sword can now be concealed.</span>")
-		hit_type = DAMAGE_BLUNT
-		stamina_damage = inactive_stamina_dmg
-		if(ishuman(user))
-			var/mob/living/carbon/human/U = user
-			if(U.gender == MALE) playsound(get_turf(U),"sound/weapons/male_cswordturnoff.ogg", 70, 0, 5, max(0.7, min(1.2, 1.0 + (30 - U.bioHolder.age)/60)))
-			else playsound(get_turf(U),"sound/weapons/female_cswordturnoff.ogg", 100, 0, 5, max(0.7, min(1.4, 1.0 + (30 - U.bioHolder.age)/50)))
-		src.force = inactive_force
-		src.stamina_cost = inactive_stamina_cost
-		src.icon_state = "[state_name]0"
-		src.item_state = "[state_name]0"
-		src.w_class = off_w_class
+
+	tooltip_rebuild = 1
 	user.update_inhands()
 	src.add_fingerprint(user)
 	..()
@@ -261,7 +264,7 @@
 /obj/item/sword/suicide(var/mob/user as mob)
 	if (!src.user_can_suicide(user))
 		return 0
-	if (!src.active)
+	if (src.flags & ~THING_IS_ON)
 		return 0
 
 	user.visible_message("<span class='alert'><b>[user] stabs [src] through [his_or_her(user)] chest.</b></span>")
@@ -277,7 +280,7 @@
 		return ..()
 
 	if (isscrewingtool(W))
-		if (src.active)
+		if (src.flags & THING_IS_ON)
 			boutput(user, "<span class='alert'>The sword has to be off before you open it!</span>")
 			return
 
@@ -305,7 +308,7 @@
 			return
 
 	if (istype(W, /obj/item/device/light/glowstick) && !loaded_glowstick && open)
-		if (!W:on)
+		if (W.flags & ~THING_IS_ON || W.flags & THING_IS_BROKEN)
 			boutput(user, "<span class='alert'>The glowstick needs to be on to act as a beam focus for the sword!</span>")
 			return
 		else
@@ -414,12 +417,12 @@
 
 	get_desc()
 		..()
-		. += "It is set to [src.active ? "on" : "off"]."
+		. += "It is set to [src.flags & THING_IS_ON ? "on" : "off"]."
 
 /obj/item/sword/discount/attack(mob/target, mob/user, def_zone, is_special = 0)
 	//hhaaaaxxxxxxxx. overriding the disorient for my own effect
 	is_special = 1
-	if (active)
+	if (src.flags & THING_IS_ON)
 		hit_type = DAMAGE_BURN
 	else
 		hit_type = DAMAGE_BLUNT
@@ -428,7 +431,7 @@
 	if (..())
 		return
 
-	if (active)
+	if (src.flags & THING_IS_ON)
 		target.do_disorient(0, weakened = 0, stunned = 0, disorient = 30, remove_stamina_below_zero = 0)
 
 		if (prob(30))
@@ -438,7 +441,7 @@
 				var/mob/living/carbon/human/U = user
 				if(U.gender == MALE) playsound(get_turf(U),"sound/weapons/male_cswordturnoff.ogg", 70, 0, 0, max(0.7, min(1.2, 1.0 + (30 - U.bioHolder.age)/60)))
 				else playsound(get_turf(U),"sound/weapons/female_cswordturnoff.ogg", 100, 0, 0, max(0.7, min(1.4, 1.0 + (30 - U.bioHolder.age)/50)))
-			active = 0
+			src.flags &= ~THING_IS_ON
 			force = inactive_force
 			icon_state = "[state_name]0"
 			item_state = "[state_name]0"
@@ -769,7 +772,6 @@
 	icon_state = "axe0"
 	uses_multiple_icon_states = 1
 	inhand_image_icon = 'icons/mob/inhand/hand_weapons.dmi'
-	var/active = 0.0
 	hit_type = DAMAGE_CUT
 	force = 40.0
 	throwforce = 25.0
@@ -794,18 +796,21 @@
 //	..()
 
 /obj/item/axe/attack_self(mob/user as mob)
-	src.active = !( src.active )
-	if (src.active)
-		boutput(user, "<span class='notice'>The axe is now energised.</span>")
-		src.hit_type = DAMAGE_BURN
-		src.force = 150
-		src.icon_state = "axe1"
-		src.w_class = 5
-	else
+	if(src.flags & THING_IS_ON)
+		// Is now off, or "not-on"
+		src.flags &= ~THING_IS_ON
 		boutput(user, "<span class='notice'>The axe can now be concealed.</span>")
 		src.hit_type = DAMAGE_CUT
 		src.force = 40
 		src.icon_state = "axe0"
+		src.w_class = 5
+	else
+		src.flags |= THING_IS_ON
+		// Is now on, or "not-off"
+		boutput(user, "<span class='notice'>The axe is now energised.</span>")
+		src.hit_type = DAMAGE_BURN
+		src.force = 150
+		src.icon_state = "axe1"
 		src.w_class = 5
 	src.add_fingerprint(user)
 	user.update_inhands()

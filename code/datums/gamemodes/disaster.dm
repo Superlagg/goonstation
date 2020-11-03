@@ -68,7 +68,7 @@
 					if(4)
 						var/obj/item/device/light/glowstick/G = new/obj/item/device/light/glowstick(T)
 						SPAWN_DBG(2 SECONDS)
-							G.on = 1
+							G.flags |= THING_IS_ON
 							G.icon_state = "glowstick-on"
 							G.light.enable()
 

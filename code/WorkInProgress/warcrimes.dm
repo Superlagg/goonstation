@@ -26,7 +26,11 @@ var/fartcount = 0
 
 /obj/item/clothing/mask/cigarette/john
 	name = "John Bill's cigarette"
-	on = 1
+
+	New()
+		. = ..()
+		src.flags |= THING_IS_ON
+
 	put_out(var/mob/user as mob, var/message as text)
 		// how about we do literally nothing instead?
 
@@ -282,7 +286,7 @@ var/fartcount = 0
 					greeted_murray = 1
 					say("[JOHN_PICK("greetings")] Murray! How's it [JOHN_PICK("verbs")]?")
 					SPAWN_DBG(rand(20,40))
-						if (murray && murray.on && !murray.idle)
+						if (murray && murray.flags & THING_IS_ON && !murray.idle)
 							murray.speak("Hi, John! It's [JOHN_PICK("murraycompliment")] to see you here, of all places.")
 
 				else

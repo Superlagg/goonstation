@@ -746,7 +746,7 @@ proc/AddBlobSteps(var/datum/tutorial/blob/T)
 		..()
 		overlays += image('icons/mob/inhand/hand_weapons.dmi', "flamethrower1-R")
 		L.set_loc(src)
-		L.lit = 1
+		L.flags |= THING_IS_ON
 
 	proc/sprayAt(var/turf/T)
 		L.afterattack(T, src, 0)

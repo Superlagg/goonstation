@@ -10,7 +10,6 @@
 	var/obj/machinery/portable_atmospherics/connected_device
 	var/obj/machinery/atmospherics/node
 	var/datum/pipe_network/network
-	var/on = 0
 	level = 0
 	layer = PIPE_LAYER
 
@@ -49,10 +48,10 @@
 
 	process()
 		..()
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			return
 		if(!connected_device)
-			on = 0
+			src.flags &= ~THING_IS_ON
 			return
 		if(network)
 			network.update = 1

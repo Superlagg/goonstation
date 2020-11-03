@@ -222,7 +222,6 @@
 	color_b = 0.9
 	change_iris = 0
 	organ_abilities = list(/datum/targetable/organAbility/meson)
-	var/on = 1
 	var/mob/living/carbon/human/assigned = null
 
 	on_transplant(var/mob/M as mob)
@@ -231,7 +230,7 @@
 			return
 		if (ishuman(M))
 			src.assigned = M
-			if (src.on)
+			if (src.flags & THING_IS_ON)
 				src.assigned.vision.set_scan(1)
 
 	on_removal()
@@ -242,9 +241,9 @@
 			src.assigned.vision.set_scan(0)
 
 	proc/toggle()
-		src.on = !src.on
+		src.flags ^= THING_IS_ON
 		playsound(assigned, "sound/items/mesonactivate.ogg", 30, 1)
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			assigned.vision.set_scan(1)
 		else
 			assigned.vision.set_scan(0)

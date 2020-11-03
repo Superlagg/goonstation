@@ -44,7 +44,6 @@
 	anchored = 0
 	var/icon_state_base // defined in new, this is the base of the icon_state with the suffix removed, i.e. "cleanbot" without the "0", for easier modification of icon_states so long as the convention is followed
 
-	on = 1
 	locked = 1
 	health = 25
 	no_camera = 1
@@ -131,19 +130,19 @@
 			return
 
 		if (force_on == 1)
-			src.on = 1
+			src.flags |= THING_IS_ON
 		else
-			src.on = !src.on
+			src.flags ^= THING_IS_ON
 
 		src.anchored = 0
 		src.target = null
-		src.icon_state = "[icon_state_base][src.on]"
+		src.icon_state = "[icon_state_base][src.flags & THING_IS_ON ? 1 : 0]"
 		src.path = null
 		src.targets_invalid = list() // Turf vs decal when emagged, so we gotta clear it.
 		src.lubed_turfs = list()
 		src.clear_invalid_targets = world.time
 
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			src.add_simple_light("bot", list(255, 255, 255, 255 * 0.4))
 		else
 			src.remove_simple_light("bot")
@@ -156,7 +155,7 @@
 
 		dat += "<tt><b>Automatic Station Cleaner v1.1</b></tt>"
 		dat += "<br><br>"
-		dat += "Status: <A href='?src=\ref[src];start=1'>[src.on ? "On" : "Off"]</A><br>"
+		dat += "Status: <A href='?src=\ref[src];start=1'>[src.flags & THING_IS_ON ? "On" : "Off"]</A><br>"
 
 		if (user.client.tooltipHolder)
 			user.client.tooltipHolder.showClickTip(src, list(
@@ -168,7 +167,7 @@
 		return
 
 	attack_ai(mob/user as mob)
-		if (src.on && src.emagged)
+		if (src.flags & THING_IS_ON && src.emagged)
 			boutput(user, "[src] refuses your authority!", "red")
 			return
 
@@ -209,7 +208,7 @@
 		return
 
 	process()
-		if (!src.on)
+		if (src.flags & ~THING_IS_ON)
 			return
 
 		if (src.cleaning)
@@ -389,7 +388,7 @@
 						T.active_liquid.group.drain(T.active_liquid,1,src)
 
 				src.cleaning = 0
-				src.icon_state = "[icon_state_base][src.on]"
+				src.icon_state = "[icon_state_base][src.flags & THING_IS_ON]"
 				src.anchored = 0
 				src.target = null
 				src.frustration = 0
@@ -422,7 +421,7 @@
 
 		if(src.exploding) return
 		src.exploding = 1
-		src.on = 0
+		src.flags &= ~THING_IS_ON
 		for(var/mob/O in hearers(src, null))
 			O.show_message("<span class='alert'><B>[src] blows apart!</B></span>", 1)
 

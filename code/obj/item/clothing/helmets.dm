@@ -66,7 +66,6 @@
 	c_flags = SPACEWEAR | COVERSEYES | COVERSMOUTH
 	see_face = 0.0
 	item_state = "s_helmet"
-	var/on = 0
 
 	var/datum/component/holdertargeting/medium_directional_light/light_dir
 
@@ -82,9 +81,9 @@
 		return
 
 	proc/flashlight_toggle(var/mob/user, var/force_on = 0)
-		on = !on
-		src.icon_state = "espace[on]"
-		if (on)
+		src.flags ^= THING_IS_ON
+		src.icon_state = "espace[src.flags & THING_IS_ON ? 1 : 0]"
+		if (src.flags & THING_IS_ON)
 			light_dir.update(1)
 		else
 			light_dir.update(0)
@@ -95,9 +94,9 @@
 	icon_state = "espace0-alt"
 
 	flashlight_toggle(var/mob/user, var/force_on = 0)
-		on = !on
-		src.icon_state = "espace[on]-alt"
-		if (on)
+		src.flags ^= THING_IS_ON
+		src.icon_state = "espace[src.flags & THING_IS_ON ? 1 : 0]-alt"
+		if (src.flags & THING_IS_ON)
 			light_dir.update(1)
 		else
 			light_dir.update(0)
@@ -114,9 +113,9 @@
 	icon_state = "diving0"
 
 	flashlight_toggle(var/mob/user, var/force_on = 0)
-		on = !on
-		src.icon_state = "diving[on]"
-		if (on)
+		src.flags ^= THING_IS_ON
+		src.icon_state = "diving[src.flags & THING_IS_ON ? 1 : 0]"
+		if (src.flags & THING_IS_ON)
 			light_dir.update(1)
 		else
 			light_dir.update(0)
@@ -128,9 +127,9 @@
 		icon_state = "diving-sec0"
 
 		flashlight_toggle(var/mob/user, var/force_on = 0)
-			on = !on
-			src.icon_state = "diving-sec[on]"
-			if (on)
+			src.flags ^= THING_IS_ON
+			src.icon_state = "diving-sec[src.flags & THING_IS_ON ? 1 : 0]"
+			if (src.flags & THING_IS_ON)
 				light_dir.update(1)
 			else
 				light_dir.update(0)
@@ -142,9 +141,9 @@
 		icon_state = "diving-civ0"
 
 		flashlight_toggle(var/mob/user, var/force_on = 0)
-			on = !on
-			src.icon_state = "diving-civ[on]"
-			if (on)
+			src.flags ^= THING_IS_ON
+			src.icon_state = "diving-civ[src.flags & THING_IS_ON ? 1 : 0]"
+			if (src.flags & THING_IS_ON)
 				light_dir.update(1)
 			else
 				light_dir.update(0)
@@ -156,9 +155,9 @@
 		icon_state = "diving-com0"
 
 		flashlight_toggle(var/mob/user, var/force_on = 0)
-			on = !on
-			src.icon_state = "diving-com[on]"
-			if (on)
+			src.flags ^= THING_IS_ON
+			src.icon_state = "diving-com[src.flags & THING_IS_ON ? 1 : 0]"
+			if (src.flags & THING_IS_ON)
 				light_dir.update(1)
 			else
 				light_dir.update(0)
@@ -170,9 +169,9 @@
 		icon_state = "diving-eng0"
 
 		flashlight_toggle(var/mob/user, var/force_on = 0)
-			on = !on
-			src.icon_state = "diving-eng[on]"
-			if (on)
+			src.flags ^= THING_IS_ON
+			src.icon_state = "diving-eng[src.flags & THING_IS_ON ? 1 : 0]"
+			if (src.flags & THING_IS_ON)
 				light_dir.update(1)
 			else
 				light_dir.update(0)
@@ -229,18 +228,17 @@
 			see_face = 0.0
 			protective_temperature = 1300
 			abilities = list(/obj/ability_button/nukie_meson_toggle)
-			var/on = 0
 
 			attack_self(mob/user)
 				src.toggle(user)
 
 			proc/toggle(var/mob/toggler)
-				src.on = !src.on
+				src.flags ^= THING_IS_ON
 				playsound(get_turf(src), "sound/items/mesonactivate.ogg", 30, 1)
 				if (ishuman(toggler))
 					var/mob/living/carbon/human/H = toggler
 					if (istype(H.head, /obj/item/clothing/head/helmet/space/syndicate/specialist/engineer)) //handling of the rest is done in life.dm
-						if (src.on)
+						if (src.flags & THING_IS_ON)
 							H.vision.set_scan(1)
 						else
 							H.vision.set_scan(0)
@@ -249,7 +247,7 @@
 				..()
 				if(!isliving(user))
 					return
-				if (slot == SLOT_HEAD && on)
+				if (slot == SLOT_HEAD && src.flags & THING_IS_ON)
 					user.vision.set_scan(1)
 
 			unequipped(var/mob/living/user)
@@ -359,7 +357,6 @@
 	c_flags = SPACEWEAR
 	item_state = "hardhat0"
 	desc = "Protects your head from falling objects, and comes with a flashlight. Safety first!"
-	var/on = 0
 	var/datum/component/holdertargeting/simple_light/light_dir
 
 	setupProperties()
@@ -378,11 +375,11 @@
 		return
 
 	proc/flashlight_toggle(var/mob/user, var/force_on = 0)
-		on = !on
-		src.icon_state = "hardhat[on]"
-		src.item_state = "hardhat[on]"
+		src.flags ^= THING_IS_ON
+		src.icon_state = "hardhat[src.flags & THING_IS_ON ? 1 : 0]"
+		src.item_state = "hardhat[src.flags & THING_IS_ON ? 1 : 0]"
 		user.update_clothing()
-		if (on)
+		if (src.flags & THING_IS_ON)
 			light_dir.update(1)
 		else
 			light_dir.update(0)
@@ -414,9 +411,9 @@
 		setProperty("meleeprot_head", 5)
 
 	flashlight_toggle(var/mob/user, var/force_on = 0)
-		on = !on
+		src.flags ^= THING_IS_ON
 		user.update_clothing()
-		if (on)
+		if (src.flags & THING_IS_ON)
 			light_dir.update(1)
 		else
 			light_dir.update(0)

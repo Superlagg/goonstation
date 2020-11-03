@@ -769,13 +769,14 @@
 /obj/item/attackby(obj/item/W as obj, mob/user as mob, params)
 	if (src.material)
 		src.material.triggerTemp(src ,1500)
-	if (src.burn_possible && src.burn_point <= 1500)
-		if ((isweldingtool(W) && W:try_weld(user,0,-1,0,0)) || (istype(W, /obj/item/clothing/head/cakehat) && W:on) || (istype(W, /obj/item/device/igniter)) || (istype(W, /obj/item/device/light/zippo) && W:on) || (istype(W, /obj/item/match) && (W:on > 0)) || W.burning)
+/* 	if (src.burn_possible && src.burn_point <= 1500)
+		//if ((isweldingtool(W) && W:try_weld(user,0,-1,0,0)) || (istype(W, /obj/item/clothing/head/cakehat) && W:on) || (istype(W, /obj/item/device/igniter)) || (istype(W, /obj/item/device/light/zippo) && W:on) || (istype(W, /obj/item/match) && (W:on > 0)) || W.burning)
+		if(SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OTHER_ITEM, W, user) & )
 			src.combust()
 		else
 			..(W, user)
 	else
-		..(W, user)
+		..(W, user) */
 
 /obj/item/proc/process()
 	if (src.burning)
@@ -980,7 +981,7 @@
 
 	.= 1
 	for (var/obj/item/cloaking_device/I in M)
-		if (I.active)
+		if (I.flags & THING_IS_ON)
 			I.deactivate(M)
 			M.visible_message("<span class='notice'><b>[M]'s cloak is disrupted!</b></span>")
 	if (issmallanimal(M))

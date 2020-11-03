@@ -22,7 +22,7 @@
 	object_flags = 0
 
 	speak(var/message)
-		if((!src.on) || (src.idle) || (!message))
+		if((src.flags & ~THING_IS_ON) || (src.idle) || (!message))
 			return
 
 		var/scramblemode = rand(1,10)

@@ -34,7 +34,6 @@
 	anchored = 0
 	//weight = 1.0E7
 	var/amount = 50
-	on = 1
 	var/repairing = 0
 	var/improvefloors = 0
 	var/eattiles = 0
@@ -74,7 +73,7 @@
 Status: []<BR>
 Tiles left: [src.amount]<BR>
 Behaviour controls are [src.locked ? "locked" : "unlocked"]"},
-text("<A href='?src=\ref[src];operation=start'>[src.on ? "On" : "Off"]</A>"))
+text("<A href='?src=\ref[src];operation=start'>[src.flags & THING_IS_ON ? "On" : "Off"]</A>"))
 	if (!src.locked)
 		dat += text({"<hr>
 Improves floors: []<BR>
@@ -104,8 +103,8 @@ text("<A href='?src=\ref[src];operation=make'>[src.maketiles ? "Yes" : "No"]</A>
 		src.oldtarget = null
 		src.anchored = 0
 		src.emagged = 1
-		src.on = 1
-		src.icon_state = "floorbot[src.on]"
+		src.flags |= THING_IS_ON
+		src.icon_state = "floorbot[src.flags & THING_IS_ON ? 1 : 0]"
 		return 1
 	return 0
 
@@ -126,8 +125,8 @@ text("<A href='?src=\ref[src];operation=make'>[src.maketiles ? "Yes" : "No"]</A>
 		src.oldtarget = null
 		src.anchored = 0
 		src.emagged = 1
-		src.on = 1
-		src.icon_state = "floorbot[src.on]"
+		src.flags |= THING_IS_ON
+		src.icon_state = "floorbot[src.flags & THING_IS_ON ? 1 : 0]"
 	else
 		src.explode()
 	return
@@ -169,7 +168,7 @@ text("<A href='?src=\ref[src];operation=make'>[src.maketiles ? "Yes" : "No"]</A>
 	src.add_fingerprint(usr)
 	switch(href_list["operation"])
 		if ("start")
-			src.on = !src.on
+			src.flags ^= THING_IS_ON
 			src.target = null
 			src.oldtarget = null
 			src.oldloc = null
@@ -187,7 +186,7 @@ text("<A href='?src=\ref[src];operation=make'>[src.maketiles ? "Yes" : "No"]</A>
 			src.updateUsrDialog()
 
 /obj/machinery/bot/floorbot/attack_ai()
-	src.on = !src.on
+	src.flags ^= THING_IS_ON
 	src.target = null
 	src.oldtarget = null
 	src.oldloc = null
@@ -258,7 +257,7 @@ text("<A href='?src=\ref[src];operation=make'>[src.maketiles ? "Yes" : "No"]</A>
 
 /obj/machinery/bot/floorbot/process()
 	// checks to see if robot is on / busy already
-	if (!src.on || src.repairing || !isturf(src.loc))
+	if (src.flags & ~THING_IS_ON || src.repairing || !isturf(src.loc))
 		return
 
 	// Invalid targets may not be unreachable anymore. Clear list periodically.
@@ -454,9 +453,9 @@ text("<A href='?src=\ref[src];operation=make'>[src.maketiles ? "Yes" : "No"]</A>
 
 /obj/machinery/bot/floorbot/proc/updateicon()
 	if (src.amount > 0)
-		src.icon_state = "floorbot[src.on]"
+		src.icon_state = "floorbot[src.flags & THING_IS_ON ? 1 : 0]"
 	else
-		src.icon_state = "floorbot[src.on]e"
+		src.icon_state = "floorbot[src.flags & THING_IS_ON ? 1 : 0]e"
 
 
 /////////////////////////////////////////
@@ -502,7 +501,7 @@ text("<A href='?src=\ref[src];operation=make'>[src.maketiles ? "Yes" : "No"]</A>
 /obj/machinery/bot/floorbot/explode()
 	if(src.exploding) return
 	src.exploding = 1
-	src.on = 0
+	src.flags &= ~THING_IS_ON
 	for (var/mob/O in hearers(src, null))
 		O.show_message("<span class='alert'><B>[src] blows apart!</B></span>", 1)
 	elecflash(src, radius=1, power=3, exclude_center = 0)

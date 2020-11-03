@@ -8,12 +8,11 @@
 	layer = 5.0 //TODO LAYER
 	density = 0
 	anchored = 0
-	on = 1
 	health = 10
 	no_camera = 1
 
 /obj/machinery/bot/goosebot/proc/quack(var/message)
-	if (!src.on || !message || src.muted)
+	if (src.flags & ~THING_IS_ON || !message || src.muted)
 		return
 	src.visible_message("<span class='game say'><span class='name'>[src]</span> blares, \"[message]\"")
 	return
@@ -23,7 +22,7 @@
 		if(isturf(moveto) && !moveto.density) step_towards(src, moveto)
 
 /obj/machinery/bot/goosebot/process()
-	if(prob(50) && src.on == 1)
+	if(prob(50) && src.flags & THING_IS_ON)
 		SPAWN_DBG(0)
 			var/message = pick("HONK", "HOOOOOOONK","WACK WACK","GOWGOW","SCREEEEEE")
 			quack(message)
@@ -71,7 +70,7 @@
 /obj/machinery/bot/goosebot/explode()
 	if(src.exploding) return
 	src.exploding = 1
-	src.on = 0
+	src.flags &= ~THING_IS_ON
 	for(var/mob/O in hearers(src, null))
 		O.show_message("<span class='combat'><B>[src] blows apart!</B></span>", 1)
 	explosion(src, src.loc , 0, 0, 1, 1)

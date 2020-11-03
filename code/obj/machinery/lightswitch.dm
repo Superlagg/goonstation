@@ -10,7 +10,6 @@
 	anchored = 1.0
 	plane = PLANE_NOSHADOW_ABOVE
 	text = ""
-	var/on = 1
 	var/area/area = null
 	var/otherarea = null
 	//	luminosity = 1
@@ -31,13 +30,16 @@
 		if(!name || name == "N light switch" || name == "E light switch" || name == "S light switch" || name == "W light switch")
 			name = "light switch"
 
-		src.on = src.area.lightswitch
+		if(src.area.lightswitch)
+			(src.flags |= THING_IS_ON)
+		else
+			(src.flags &= ~THING_IS_ON)
 		updateicon()
 
 		AddComponent(/datum/component/mechanics_holder)
 		SEND_SIGNAL(src,COMSIG_MECHCOMP_ADD_INPUT,"trigger", "trigger")
 
-		if (on)
+		if (src.flags & THING_IS_ON)
 			light.set_color(0.5, 1, 0.50)
 		else
 			light.set_color(1, 0.50, 0.50)
@@ -62,7 +64,7 @@
 		src.UpdateOverlays(light_ov, "light")
 		if (icon_state == "light-p")
 			light.enable()
-		if(on)
+		if(src.flags & THING_IS_ON)
 			icon_state = "light1"
 			light.set_color(0.5, 1, 0.50)
 		else
@@ -71,23 +73,29 @@
 
 /obj/machinery/light_switch/get_desc(dist, mob/user)
 	if(user && !user.stat)
-		return "A light switch. It is [on? "on" : "off"]."
+		return "A light switch. It is [src.flags & THING_IS_ON? "on" : "off"]."
 
 /obj/machinery/light_switch/attack_hand(mob/user)
 
-	on = !on
+	src.flags ^= THING_IS_ON
 
-	area.lightswitch = on
+	if (src.flags & THING_IS_ON)
+		area.lightswitch = 1
+	else
+		area.lightswitch = 0
 
 	area.power_change()
 
 	interact_particle(user,src)
 
 	for(var/obj/machinery/light_switch/L in area.machines)
-		L.on = on
+		if(src.flags & THING_IS_ON)
+			L.flags |= THING_IS_ON
+		else
+			L.flags &= ~THING_IS_ON
 		L.updateicon()
 
-	SEND_SIGNAL(src,COMSIG_MECHCOMP_TRANSMIT_SIGNAL,"[on ? "lightOn":"lightOff"]")
+	SEND_SIGNAL(src,COMSIG_MECHCOMP_TRANSMIT_SIGNAL,"[src.flags & THING_IS_ON ? "lightOn":"lightOff"]")
 
 	playsound(get_turf(src), "sound/misc/lightswitch.ogg", 50, 1)
 

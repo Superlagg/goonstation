@@ -835,7 +835,6 @@
 	var/power_up_realtime = 30
 	var/const/power_cell_usage = 4
 
-	var/on = 0
 	var/open = 0
 	var/activated_timeofday = 0
 	var/obj/item/cell/cell
@@ -868,7 +867,7 @@
 		..()
 
 	proc/update_icon()
-		icon_state = "stomper[on]"
+		icon_state = "stomper[src.flags & THING_IS_ON ? 1 : 0]"
 
 	attack_hand(var/mob/living/carbon/human/user as mob)
 		src.add_fingerprint(user)
@@ -883,20 +882,20 @@
 		else
 			activate()
 
-			playsound(src.loc, 'sound/machines/engine_alert3.ogg', 50, 1, 0.1, on ? 1 : 0.6)
+			playsound(src.loc, 'sound/machines/engine_alert3.ogg', 50, 1, 0.1, src.flags & THING_IS_ON ? 1 : 0.6)
 			update_icon()
-			user.visible_message("<span class='notice'>[user] switches [on ? "on" : "off"] the [src].</span>","<span class='notice'>You switch [on ? "on" : "off"] the [src].</span>")
+			user.visible_message("<span class='notice'>[user] switches [src.flags & THING_IS_ON ? "on" : "off"] the [src].</span>","<span class='notice'>You switch [src.flags & THING_IS_ON ? "on" : "off"] the [src].</span>")
 
 	proc/activate()
-		on = !on
+		src.flags ^= THING_IS_ON
 		if (set_anchor)
-			anchored = on
+			anchored = src.flags & THING_IS_ON ? 1 : 0
 
-		if (!cell || cell.charge <= 0 && on)
+		if (!cell || cell.charge <= 0 && src.flags & THING_IS_ON)
 			src.visible_message("[src] shuts down. The power cell must be replaced.", "blue")
-			on = 0
+			src.flags &= ~THING_IS_ON
 
-		if (on)
+		if (src.flags & THING_IS_ON)
 			activated_timeofday = world.timeofday
 			SubscribeToProcess()
 
@@ -941,10 +940,10 @@
 
 	process()
 		if(status & BROKEN) return
-		if (!on) return
+		if (src.flags & ~THING_IS_ON) return
 
 		if (!cell || cell.charge <= 0)
-			on = 0
+			src.flags &= ~THING_IS_ON
 			UnsubscribeProcess()
 
 		//nahh this seems a bit tedious
@@ -953,7 +952,7 @@
 		if (world.timeofday < activated_timeofday + power_up_realtime)
 			return
 
-		on = 0
+		src.flags &= ~THING_IS_ON
 		update_icon()
 		flick("stomper2",src)
 
@@ -981,7 +980,7 @@
 		//squash person
 
 		if (set_anchor)
-			anchored = on
+			anchored = src.flags & THING_IS_ON ? 1 : 0
 
 		UnsubscribeProcess()
 

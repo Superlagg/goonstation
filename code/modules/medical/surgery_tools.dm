@@ -1374,10 +1374,10 @@ CONTAINS:
 			M = user // hold the pen the right way, dingus!
 			JOB_XP(user, "Clown", 1)
 
-		if (!src.on || def_zone != "head")
-			M.tri_message("[user] wiggles [src] at [M == user ? "[his_or_her(user)] own" : "[M]'s"] [zone_sel2name[def_zone]].[!src.on ? " \The [src] isn't on, so it doesn't do much." : null]",\
-			user, "You wiggle [src] at [M == user ? "your own" : "[M]'s"] [zone_sel2name[def_zone]].[!src.on ? " \The [src] isn't on, so it doesn't do much." : null]",\
-			M, "[M == user ? "You wiggle" : "<b>[user]</b> wiggles"] [src] at your[M == user ? " own" : null] [zone_sel2name[def_zone]].[!src.on ? " \The [src] isn't on, so it doesn't do much." : null]")
+		if (src.flags & ~THING_IS_ON || def_zone != "head")
+			M.tri_message("[user] wiggles [src] at [M == user ? "[his_or_her(user)] own" : "[M]'s"] [zone_sel2name[def_zone]].[src.flags & ~THING_IS_ON ? " \The [src] isn't on, so it doesn't do much." : null]",\
+			user, "You wiggle [src] at [M == user ? "your own" : "[M]'s"] [zone_sel2name[def_zone]].[src.flags & ~THING_IS_ON ? " \The [src] isn't on, so it doesn't do much." : null]",\
+			M, "[M == user ? "You wiggle" : "<b>[user]</b> wiggles"] [src] at your[M == user ? " own" : null] [zone_sel2name[def_zone]].[src.flags & ~THING_IS_ON ? " \The [src] isn't on, so it doesn't do much." : null]")
 			return
 
 		var/results_msg = "&emsp;Nothing happens." // shown to everyone but the target (you can't see your own eyes!! also we have no mirrors)

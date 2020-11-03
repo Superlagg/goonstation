@@ -11,7 +11,6 @@
 	layer = 5.0 //TODO LAYER
 	density = 0
 	anchored = 0
-	on = 1
 	health = 20
 	var/stunned = 0 //It can be stunned by tasers. Delicate circuits.
 	locked = 1
@@ -39,7 +38,7 @@
 			src.botcard = new /obj/item/card/id(src)
 			src.botcard.access = get_access(src.access_lookup)
 			src.camera = new /obj/item/camera_test(src)
-			src.icon_state = "cambot[src.on]"
+			src.icon_state = "cambot[src.flags & THING_IS_ON ? 1 : 0]"
 
 /obj/machinery/bot/cambot/emag_act(var/mob/user, var/obj/item/card/emag/E)
 	if (!src.emagged)
@@ -105,7 +104,7 @@
 
 	if(src.exploding) return
 	src.exploding = 1
-	src.on = 0
+	src.flags &= ~THING_IS_ON
 	src.visible_message("<span class='alert'><B>[src] blows apart!</B></span>", 1)
 
 	elecflash(src, radius=1, power=3, exclude_center = 0)
@@ -125,18 +124,18 @@
 		return
 
 	if (force_on == 1)
-		src.on = 1
+		src.flags |= THING_IS_ON
 	else
-		src.on = !src.on
+		src.flags ^= THING_IS_ON
 
 	src.anchored = 0
 	src.target = null
-	src.icon_state = "cambot[src.on]"
+	src.icon_state = "cambot[src.flags & THING_IS_ON ? 1 : 0]"
 	src.path = null
 	src.targets_invalid = list() // Anything vs mob when emagged, so we gotta clear it.
 	src.clear_invalid_targets = world.time
 
-	if (src.on)
+	if (src.flags & THING_IS_ON)
 		add_simple_light("cambot", list(255,255,255,255 * (src.emagged ? 0.8 : 0.6)))
 	else
 		remove_simple_light("cambot")
@@ -144,7 +143,7 @@
 	return
 
 /obj/machinery/bot/cambot/process()
-	if (!src.on)
+	if (src.flags & ~THING_IS_ON)
 		return
 
 	if (src.photographing)
@@ -284,7 +283,7 @@
 		sleep(delay)
 
 /obj/machinery/bot/cambot/proc/photograph(var/atom/target)
-	if (!src || !src.on || !target)
+	if (!src || src.flags & ~THING_IS_ON || !target)
 		return
 	var/turf/T = get_turf(target)
 	if (!T || !isturf(T))
@@ -297,7 +296,7 @@
 	src.flash_blink(3, 1)
 
 	SPAWN_DBG(5 SECONDS)
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			if (get_dist(src,target) <= 1)
 				src.flash_blink(1, 5)
 				if (src.camera) // take the picture
@@ -318,7 +317,7 @@
 				src.photographed.Add(target)
 
 		src.photographing = 0
-		src.icon_state = "cambot[src.on]"
+		src.icon_state = "cambot[src.flags & THING_IS_ON ? 1 : 0]"
 		src.anchored = 0
 		src.path = null
 		src.target = null

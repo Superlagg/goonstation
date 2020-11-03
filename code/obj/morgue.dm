@@ -385,7 +385,6 @@
 	anchored = 1.0
 	req_access = list(access_crematorium)
 	object_flags = CAN_REPROGRAM_ACCESS
-	var/on = 0
 	var/area/area = null
 	var/otherarea = null
 	var/id = 1

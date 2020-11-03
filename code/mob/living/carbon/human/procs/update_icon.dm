@@ -625,12 +625,12 @@
 		if (A.flags & NOSHIELD)
 			if (istype(A,/obj/item/device/shield))
 				var/obj/item/device/shield/S = A
-				if (S.active)
+				if (S.flags & THING_IS_ON)
 					shielded = 1
 					break
 			if (istype(A,/obj/item/cloaking_device))
 				var/obj/item/cloaking_device/S = A
-				if (S.active)
+				if (S.flags & THING_IS_ON)
 					shielded = 2
 					break
 

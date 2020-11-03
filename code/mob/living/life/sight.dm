@@ -159,7 +159,7 @@
 
 			else if (istype(human_owner.glasses, /obj/item/clothing/glasses/meson) && (T && !isrestrictedz(T.z)))
 				var/obj/item/clothing/glasses/meson/M = human_owner.glasses
-				if (M.on)
+				if (M.flags & THING_IS_ON)
 					human_owner.sight |= SEE_TURFS
 					human_owner.sight &= ~SEE_BLACKNESS
 					if (human_owner.see_in_dark < initial(human_owner.see_in_dark) + 1)
@@ -168,7 +168,7 @@
 
 			else if (istype(human_owner.head, /obj/item/clothing/head/helmet/space/syndicate/specialist/engineer) && (T && !isrestrictedz(T.z)))
 				var/obj/item/clothing/head/helmet/space/syndicate/specialist/engineer/E = human_owner.head
-				if (E.on)
+				if (E.flags & THING_IS_ON)
 					human_owner.sight |= SEE_TURFS
 					human_owner.sight &= ~SEE_BLACKNESS
 					if (human_owner.see_in_dark < initial(human_owner.see_in_dark) + 1)
@@ -180,10 +180,10 @@
 					var/eye_on
 					if (human_owner.organ_istype("left_eye", /obj/item/organ/eye/cyber/meson))
 						var/obj/item/organ/eye/cyber/meson/meson_eye = human_owner.organHolder.left_eye
-						if (meson_eye.on) eye_on = 1
+						if (meson_eye.flags & THING_IS_ON) eye_on = 1
 					if (human_owner.organ_istype("right_eye", /obj/item/organ/eye/cyber/meson))
 						var/obj/item/organ/eye/cyber/meson/meson_eye = human_owner.organHolder.right_eye
-						if (meson_eye.on) eye_on = 1
+						if (meson_eye.flags & THING_IS_ON) eye_on = 1
 					if (eye_on)
 						human_owner.sight |= SEE_TURFS
 						human_owner.sight &= ~SEE_BLACKNESS

@@ -784,7 +784,7 @@ var/list/special_parrot_species = list("ikea" = /datum/species_info/parrot/kea/i
 	anchored = 1
 	density = 1
 	mats = 9
-	var/on = 1
+	var/src.flags |= THING_IS_ON
 	var/plays = 0
 	var/working = 0
 	var/current_bet = 10

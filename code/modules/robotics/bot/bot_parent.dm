@@ -9,7 +9,6 @@
 	var/obj/item/card/id/botcard // ID card that the bot "holds".
 	var/access_lookup = "Captain" // For the get_access() proc. Defaults to all-access.
 	var/locked = null
-	var/on = 1
 	var/health = 25
 	var/exploding = 0 //So we don't die like five times at once.
 	var/muted = 0 // shut up omg shut up.
@@ -32,6 +31,7 @@
 	New()
 		..()
 		RegisterSignal(src, COMSIG_ATOM_HITBY_PROJ, .proc/hitbyproj)
+		src.flags |= THING_IS_ON
 		if(!no_camera)
 			src.cam = new /obj/machinery/camera(src)
 			src.cam.c_tag = src.name
@@ -76,7 +76,7 @@
 		return
 
 	proc/speak(var/message)
-		if (!src.on || !message || src.muted)
+		if (src.flags & ~THING_IS_ON || !message || src.muted)
 			return
 		src.audible_message("<span class='game say'><span class='name'>[src]</span> beeps, \"[message]\"")
 		if (src.text2speech)

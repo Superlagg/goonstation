@@ -1,7 +1,6 @@
 // Note: Hard hat and engineering space helmet can be found in helments.dm, the cake hat in hats.dm.
 
 /obj/item/device/light
-	var/on = 0
 	var/icon_on = "flight1"
 	var/icon_off = "flight0"
 	var/col_r = 0.5
@@ -94,9 +93,12 @@
 			name = "broken flashlight"
 			return
 
-		src.on = !src.on
-		playsound(get_turf(src), "sound/items/penclick.ogg", 30, 1)
-		if (src.on)
+		if(src.flags & THING_IS_ON)
+			src.flags &= ~THING_IS_ON
+			set_icon_state(src.icon_off)
+			light_dir.update(0)
+		else
+			src.flags |= THING_IS_ON
 			set_icon_state(src.icon_on)
 			if (src.emagged) // Burn them all!
 				user.apply_flash(60, 2, 0, 0, rand(2, 8), rand(1, 15), 0, 25, 100, stamina_damage = 70, disorient_time = 10)
@@ -107,16 +109,14 @@
 							target.apply_flash(60, 8, 0, 0, rand(2, 8), rand(1, 15), 0, 30, 100, stamina_damage = 190, disorient_time = 50)
 							logTheThing("combat", user, target, "flashes [constructTarget(target,"combat")] with an emagged flashlight.")
 				user.visible_message("<span class='alert'>The [src] in [user]'s hand bursts with a blinding flash!</span>", "<span class='alert'>The bulb in your hand explodes with a blinding flash!</span>")
-				on = 0
+				src.flags &= ~THING_IS_ON
 				light_dir.update(0)
 				icon_state = "flightbroken"
 				name = "broken flashlight"
 				src.broken = 1
 			else
 				light_dir.update(1)
-		else
-			set_icon_state(src.icon_off)
-			light_dir.update(0)
+
 
 /obj/item/device/light/flashlight/abilities = list(/obj/ability_button/flashlight_toggle)
 
@@ -150,13 +150,13 @@
 		qdel(src)
 
 	proc/turnon()
-		on = 1
-		icon_state = "[base_state][on]"
+		src.flags |= THING_IS_ON
+		icon_state = "[base_state][src.flags & THING_IS_ON ? 1 : 0]"
 		light_c.update(1)
 
 	//Can be heated. Has chance to explode when heated. After heating, can explode when thrown or fussed with!
 	attackby(obj/item/W as obj, mob/user as mob)
-		if ((isweldingtool(W) && W:try_weld(user,0,-1,0,0)) || istype(W, /obj/item/device/igniter) || ((istype(W, /obj/item/device/light/zippo) || istype(W, /obj/item/match) || istype(W, /obj/item/device/light/candle) || istype(W, /obj/item/clothing/mask/cigarette)) && W:on) || W.burning)
+		if ((isweldingtool(W) && W:try_weld(user,0,-1,0,0)) || istype(W, /obj/item/device/igniter) || ((istype(W, /obj/item/device/light/zippo) || istype(W, /obj/item/match) || istype(W, /obj/item/device/light/candle) || istype(W, /obj/item/clothing/mask/cigarette)) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN) || W.burning)
 			user.visible_message("<span class='alert'><b>[user]</b> heats [src] with [W].</span>")
 			src.heated += 1
 			if (src.heated >= 3 || prob(5 + (heated * 20)))
@@ -167,7 +167,7 @@
 		else
 			return ..()
 	temperature_expose(datum/gas_mixture/air, temperature, volume)
-		if((temperature > T0C+400) && on)
+		if((temperature > T0C+400) && src.flags & THING_IS_ON)
 			if(iscarbon(src.loc))
 				if (src.loc.reagents)
 					src.loc.reagents.add_reagent("radium", 5, null, T0C + heated * 200)
@@ -176,7 +176,7 @@
 
 	throw_impact(atom/A, datum/thrown_thing/thr)
 		..()
-		if (heated > 0 && on && prob(30 + (heated * 20)))
+		if (heated > 0 && src.flags & THING_IS_ON && prob(30 + (heated * 20)))
 			if(iscarbon(A))
 				if (A.reagents)
 					A.reagents.add_reagent("radium", 5, null, T0C + heated * 200)
@@ -184,7 +184,7 @@
 			burst()
 
 	attack_self(mob/user as mob)
-		if (!on)
+		if (src.flags & ~THING_IS_ON)
 			boutput(user, "<span class='notice'>You crack [src].</span>")
 			playsound(user.loc, "sound/impact_sounds/Generic_Snap_1.ogg", 50, 1)
 			src.turnon()
@@ -301,27 +301,27 @@
 	col_b = 0.0
 
 	attack_self(mob/user as mob)
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			var/fluff = pick("snuff", "blow")
 			user.visible_message("<b>[user]</b> [fluff]s out [src].",\
 			"You [fluff] out [src].")
 			src.put_out(user)
 
 	attackby(obj/item/W as obj, mob/user as mob)
-		if (!src.on)
+		if (src.flags & ~THING_IS_ON)
 			if (isweldingtool(W) && W:try_weld(user,0,-1,0,0))
 				src.light(user, "<span class='alert'><b>[user]</b> casually lights [src] with [W], what a badass.</span>")
 
-			else if (istype(W, /obj/item/clothing/head/cakehat) && W:on)
+			else if (istype(W, /obj/item/clothing/head/cakehat) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
 				src.light(user, "<span class='alert'>Did [user] just light \his [src] with [W]? Holy Shit.</span>")
 
 			else if (istype(W, /obj/item/device/igniter))
 				src.light(user, "<span class='alert'><b>[user]</b> fumbles around with [W]; a small flame erupts from [src].</span>")
 
-			else if (istype(W, /obj/item/device/light/zippo) && W:on)
+			else if (istype(W, /obj/item/device/light/zippo) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
 				src.light(user, "<span class='alert'>With a single flick of their wrist, [user] smoothly lights [src] with [W]. Damn they're cool.</span>")
 
-			else if ((istype(W, /obj/item/match) || istype(W, /obj/item/device/light/candle)) && W:on)
+			else if ((istype(W, /obj/item/match) || istype(W, /obj/item/device/light/candle)) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
 				src.light(user, "<span class='alert'><b>[user] lights [src] with [W].</span>")
 
 			else if (W.burning)
@@ -330,7 +330,7 @@
 			return ..()
 
 	process()
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			var/turf/location = src.loc
 			if (ismob(location))
 				var/mob/M = location
@@ -342,8 +342,8 @@
 
 	proc/light(var/mob/user as mob, var/message as text)
 		if (!src) return
-		if (!src.on)
-			src.on = 1
+		if (src.flags & ~THING_IS_ON)
+			src.flags |= THING_IS_ON
 			src.hit_type = DAMAGE_BURN
 			src.force = 3
 			src.icon_state = src.icon_on
@@ -353,8 +353,8 @@
 
 	proc/put_out(var/mob/user as mob)
 		if (!src) return
-		if (src.on)
-			src.on = 0
+		if (src.flags & THING_IS_ON)
+			src.flags &= ~THING_IS_ON
 			src.hit_type = DAMAGE_BLUNT
 			src.force = 0
 			src.icon_state = src.icon_off
@@ -403,7 +403,7 @@
 
 	light(var/mob/user as mob, var/message as text)
 		..()
-		if(src.on && !src.did_thing)
+		if(src.flags & THING_IS_ON && !src.did_thing)
 			src.did_thing = 1
 			//what should it do, other than this sound?? i tried a particle system but it didn't work :{
 			playsound(get_turf(src), pick('sound/ambience/station/Station_SpookyAtmosphere1.ogg','sound/ambience/station/Station_SpookyAtmosphere2.ogg'), 65, 0)
@@ -435,11 +435,15 @@
 
 	attack_self(mob/user as mob)
 		playsound(get_turf(src), "sound/items/penclick.ogg", 30, 1)
-		src.on = !src.on
-		user.visible_message("<b>[user]</b> flicks [src.on ? "on" : "off"] the [src].")
-		if (src.on)
-			set_icon_state(src.icon_on)
-			src.light.enable()
-		else
+		if(src.flags & THING_IS_ON)
+			// Is now off, or "not-on"
+			src.flags &= ~THING_IS_ON
 			set_icon_state(src.icon_off)
 			src.light.disable()
+		else
+			src.flags |= THING_IS_ON
+			// Is now on, or "not-off"
+			set_icon_state(src.icon_on)
+			src.light.enable()
+
+		user.visible_message("<b>[user]</b> flicks [src.flags & THING_IS_ON ? "on" : "off"] the [src].")

@@ -47,8 +47,11 @@
 	var/obj/beam/focused_laser/first = null
 	var/b_number = 0
 	var/energy = 0
-	var/on = 1
 	density = 0
+
+	New()
+		. = ..()
+		src.flags |= THING_IS_ON
 
 /obj/machinery/computer/laser_computer
 	name = "laser computer"

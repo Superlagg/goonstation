@@ -12,7 +12,6 @@
 	var/grilltemp_target = 250 + T0C // lets get it warm enough to cook
 	var/grilltemp = 35 + T0C
 	var/max_wclass = 3
-	var/on = 0
 	var/datum/light/light
 	var/datum/particleSystem/barrelSmoke/particles
 
@@ -53,7 +52,7 @@
 				W.dropped()
 				src.cooktime = 0
 				src.grillitem = W
-				src.on = 1
+				src.flags |= THING_IS_ON
 				src.icon_state = "shittygrill_bake"
 				light.enable()
 				SubscribeToProcess()
@@ -114,7 +113,7 @@
 		W.dropped()
 		src.cooktime = 0
 		src.grillitem = W
-		src.on = 1
+		src.flags |= THING_IS_ON
 		src.icon_state = "shittygrill_bake"
 		light.enable()
 		SubscribeToProcess()
@@ -138,10 +137,10 @@
 			return
 
 		if (!src.grillitem)
-			on = !on
+			src.flags ^= THING_IS_ON
 			cooktime = 0
-			boutput(user, "<span class='alert'>You [on ? "light" : "turn off"] the [src] .</span>")
-			if (on)
+			boutput(user, "<span class='alert'>You [src.flags & THING_IS_ON ? "light" : "turn off"] the [src] .</span>")
+			if (src.flags & THING_IS_ON)
 				icon_state = "shittygrill_on"
 				light.enable()
 				SubscribeToProcess()
@@ -168,7 +167,7 @@
 		if (!src.reagents.has_reagent("charcoal"))
 			src.reagents.add_reagent("charcoal", 5)
 
-		if(src.grillitem || src.on)
+		if(src.grillitem || src.flags & THING_IS_ON)
 			if (src.grilltemp <= src.grilltemp_target)
 				src.grilltemp += 5
 		else

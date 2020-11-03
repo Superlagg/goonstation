@@ -3,7 +3,6 @@
 	icon = 'icons/obj/items/device.dmi'
 	icon_state = "shield0"
 	uses_multiple_icon_states = 1
-	var/active = 0.0
 	flags = FPRINT | TABLEPASS| CONDUCT | NOSHIELD
 	item_state = "electronic"
 	throwforce = 5.0
@@ -20,7 +19,7 @@
 
 	attack_self(mob/user as mob)
 		src.add_fingerprint(user)
-		if (src.active)
+		if (src.flags & THING_IS_ON)
 			user.show_text("The [src.name] is now inactive.", "blue")
 			src.deactivate(user)
 		else
@@ -35,12 +34,12 @@
 		// Multiple active devices can lead to weird effects, okay (Convair880).
 		var/list/number_of_devices = list()
 		for (var/obj/item/cloaking_device/C in user)
-			if (C.active)
+			if (C.flags & THING_IS_ON)
 				number_of_devices += C
 		if (number_of_devices.len > 0)
 			return 0
 
-		src.active = 1
+		src.flags |= THING_IS_ON
 		src.icon_state = "shield1"
 		if (user && ismob(user))
 			user.update_inhands()
@@ -48,7 +47,7 @@
 		return 1
 
 	proc/deactivate(mob/user as mob)
-		src.active = 0
+		src.flags &= ~THING_IS_ON
 		src.icon_state = "shield0"
 		if (user && ismob(user))
 			user.update_inhands()

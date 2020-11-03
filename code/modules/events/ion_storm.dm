@@ -210,6 +210,6 @@
 					foundLight.light.set_color(rand(1,100) / 100, rand(1,100) / 100, rand(1,100) / 100)
 					foundLight.brightness = rand(4,32) / 10
 				if(3)
-					foundLight.on = 0
+					foundLight.flags &= ~THING_IS_ON
 
 			foundLight.update()

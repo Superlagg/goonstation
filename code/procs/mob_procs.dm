@@ -309,11 +309,11 @@
 
 	if (prob(max(0, min(uncloak_prob, 100))))
 		for (var/obj/item/cloaking_device/C in src)
-			if (C.active)
+			if (C.flags & THING_IS_ON)
 				C.deactivate(src)
 				src.visible_message("<span class='notice'><b>[src]'s cloak is disrupted!</b></span>")
 		for (var/obj/item/device/disguiser/D in src)
-			if (D.on)
+			if (D.flags & THING_IS_ON)
 				D.disrupt(src)
 				src.visible_message("<span class='notice'><b>[src]'s disguiser is disrupted!</b></span>")
 

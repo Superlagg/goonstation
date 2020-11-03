@@ -11,7 +11,6 @@
 	anchored = 1
 	density = 1
 	deconstruct_flags = DECON_WELDER | DECON_WRENCH
-	var/on = 0
 	var/open = 0
 	var/cycle = PRE
 	var/cycle_time = 10
@@ -38,8 +37,8 @@
 			src.icon_state = "laundry-d0"
 			src.UpdateOverlays(null, "light")
 		else
-			src.icon_state = "laundry-[src.cycle][src.on]"
-			if (src.on)
+			src.icon_state = "laundry-[src.cycle][src.flags & THING_IS_ON ? 1 : 0]"
+			if (src.flags & THING_IS_ON)
 				ENSURE_IMAGE(src.image_light, src.icon, "laundry-[src.cycle]light")
 				src.UpdateOverlays(src.image_light, "light")
 			else
@@ -49,11 +48,11 @@
 		src.UpdateOverlays(null, "light")
 
 /obj/submachine/laundry_machine/proc/process()
-	if (!src.contents.len || !src.on) // somehow there's nothing in the machine or it's turned off somehow, whoops!
+	if (!src.contents.len || !src.flags & THING_IS_ON) // somehow there's nothing in the machine or it's turned off somehow, whoops!
 		processing_items.Remove(src)
 		src.visible_message("[src] lets out a grumpy buzz!")
 		playsound(get_turf(src), "sound/machines/buzz-two.ogg", 50, 1)
-		src.on = 0
+		src.flags &= ~THING_IS_ON
 		src.update_icon()
 		src.generate_html()
 		return
@@ -143,7 +142,7 @@
 
 /obj/submachine/laundry_machine/proc/generate_html()
 	src.HTML = "<center><big><b>WashMan 550</b></big></center><hr><br>"
-	if (src.on && src.cycle != POST)
+	if (src.flags & THING_IS_ON && src.cycle != POST)
 		src.HTML += "<b>STATUS: [src.cycle == DRY ? "Drying" : "Washing"]</b><br>Please wait, machine is currently running."
 		return
 	else
@@ -151,7 +150,7 @@
 			src.HTML += "<b>STATUS: Cycle Complete</b><br>"
 		else
 			src.HTML += "<b>STATUS: Idle</b><br>"
-		src.HTML += "CYCLE: <a href='byond://?src=\ref[src];cycle=1'>[src.on ? "Stop" : "Start"]</a><br>"
+		src.HTML += "CYCLE: <a href='byond://?src=\ref[src];cycle=1'>[src.flags & THING_IS_ON ? "Stop" : "Start"]</a><br>"
 		src.HTML += "DOOR: <a href='byond://?src=\ref[src];door=1'>[src.open ? "Close" : "Open"]</a><br>"
 
 /obj/submachine/laundry_machine/proc/show_window(mob/user)
@@ -165,7 +164,7 @@
 	var/mob/user = usr
 	if (!user || !over_object || get_dist(user, src) > 1 || get_dist(user, over_object) > 1 || user.stat || user.getStatusDuration("paralysis") || user.getStatusDuration("stunned") || user.getStatusDuration("weakened") || (issilicon(user) && get_dist(src,user) > 1))
 		return
-	if (src.on)
+	if (src.flags & THING_IS_ON)
 		src.visible_message("[user] tries to open [src]'s door, but [src] is running and the door is locked!")
 		return
 	var/turf/T = get_turf(over_object)
@@ -188,15 +187,15 @@
 		return 1
 	src.add_fingerprint(usr)
 	if (href_list["cycle"])
-		src.on = !src.on
-		src.visible_message("[usr] switches [src] [src.on ? "on" : "off"].")
-		if (src.on)
+		src.flags ^= THING_IS_ON
+		src.visible_message("[usr] switches [src] [src.flags & THING_IS_ON ? "on" : "off"].")
+		if (src.flags & THING_IS_ON)
 			src.open = 0
 			if (!processing_items.Find(src))
 				processing_items.Add(src)
 
 	else if (href_list["door"])
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			src.visible_message("[usr] tries to open [src]'s door, but [src] is running and the door is locked!")
 			return
 		else

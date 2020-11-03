@@ -117,7 +117,7 @@
 	src.icon_state = "floor-on"
 	src.name = "weird glowing floor"
 	src.desc = "Looks like disco's not dead after all."
-	on = 1
+	src.flags |= THING_IS_ON
 	playsound(src.loc, "sound/machines/ArtifactFea3.ogg", 25, 1)
 	src.light.enable()
 

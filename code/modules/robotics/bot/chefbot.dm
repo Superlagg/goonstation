@@ -6,7 +6,6 @@
 	layer = 5.0 //TODO LAYER
 	density = 0
 	anchored = 0
-	on = 1 // ACTION
 	health = 5
 	var/raging = 0
 	var/list/calledout = list()
@@ -19,7 +18,7 @@
 /obj/machinery/bot/chefbot/process()
 	if (raging)
 		return
-	if(prob(60) && src.on == 1)
+	if(prob(60) && src.flags & THING_IS_ON)
 		SPAWN_DBG(0)
 			do_step()
 			if(prob(src.emagged * 20))
@@ -187,7 +186,7 @@
 /obj/machinery/bot/chefbot/explode()
 	if(src.exploding) return
 	src.exploding = 1
-	src.on = 0
+	src.flags &= ~THING_IS_ON
 	for(var/mob/O in hearers(src, null))
 		O.show_message("<span class='alert'><B>[src] blows apart!</B></span>", 1)
 	var/turf/Tsec = get_turf(src)

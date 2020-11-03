@@ -516,7 +516,7 @@
 
 				if (src.invisibility > 0 && get_dist(src, target) > 0) // dont want to check for a cloaker every click if we're not invisible
 					for (var/obj/item/cloaking_device/I in src)
-						if (I.active)
+						if (I.flags & THING_IS_ON)
 							I.deactivate(src)
 							src.visible_message("<span class='notice'><b>[src]'s cloak is disrupted!</b></span>")
 

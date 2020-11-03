@@ -400,7 +400,9 @@ obj/machinery/embedded_controller
 	density = 0
 	anchored = 1
 
-	var/on = 1
+	New()
+		. = ..()
+		src.flags |= THING_IS_ON
 
 	attack_hand(mob/user)
 		user.Browse(return_text(), "window=computer")
@@ -497,7 +499,7 @@ obj/machinery/embedded_controller/radio/access_controller
 		program = new_prog
 
 	update_icon()
-		if(on && program)
+		if(src.flags & THING_IS_ON && program)
 			if(program.memory["processing"])
 				icon_state = "access_control_process"
 			else
@@ -569,7 +571,7 @@ obj/machinery/embedded_controller/radio/airlock_controller
 		program = new_prog
 
 	update_icon()
-		if(on && program)
+		if(src.flags & THING_IS_ON && program)
 			if(program.memory["processing"])
 				icon_state = "airlock_control_process"
 			else

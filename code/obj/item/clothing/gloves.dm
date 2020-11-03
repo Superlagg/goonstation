@@ -484,7 +484,7 @@ var/list/glove_IDs = new/list() //Global list of all gloves. Identical to Cogwer
 			playsound(user, "sound/effects/elec_bigzap.ogg", 40, 1)
 
 			for (var/obj/item/cloaking_device/I in user)
-				if (I.active)
+				if (I.flags & THING_IS_ON)
 					I.deactivate(user)
 					user.visible_message("<span class='notice'><b>[user]'s cloak is disrupted!</b></span>")
 

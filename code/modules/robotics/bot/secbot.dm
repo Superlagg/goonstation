@@ -39,7 +39,7 @@
 	var/contraband_access = access_contrabandpermit
 	var/obj/item/baton/secbot/our_baton // Our baton
 
-	on = 1
+
 	locked = 1 //Behavior Controls lock
 	var/mob/living/carbon/target
 	var/oldtarget_name
@@ -187,7 +187,7 @@
 /obj/machinery/bot/secbot
 	New()
 		..()
-		src.icon_state = "secbot[src.on]"
+		src.icon_state = "secbot[src.flags & THING_IS_ON ? 1 : 0]"
 		if (!src.our_baton || !istype(src.our_baton))
 			src.our_baton = new our_baton_type(src)
 		#if ASS_JAM
@@ -216,7 +216,7 @@
 
 		dat += {"
 <TT><B>Automatic Security Unit v2.0</B></TT><BR><BR>
-Status: <A href='?src=\ref[src];power=1'>[src.on ? "On" : "Off"]</A><BR>
+Status: <A href='?src=\ref[src];power=1'>[src.flags & THING_IS_ON ? "On" : "Off"]</A><BR>
 Behaviour controls are [src.locked ? "locked" : "unlocked"]"}
 
 		if(!src.locked)
@@ -242,8 +242,8 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 		src.add_dialog(usr)
 		src.add_fingerprint(usr)
 		if ((href_list["power"]) && (!src.locked || src.allowed(usr)))
-			src.on = !src.on
-			if (src.on)
+			src.flags ^= THING_IS_ON
+			if (src.flags & THING_IS_ON)
 				add_simple_light("secbot", list(255, 255, 255, 0.4 * 255))
 			else
 				remove_simple_light("secbot")
@@ -252,7 +252,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 			src.anchored = 0
 			src.mode = SECBOT_IDLE
 			walk_to(src,0)
-			src.icon_state = "secbot[src.on][(src.on && src.emagged >= 2) ? "-wild" : null]"
+			src.icon_state = "secbot[src.flags & THING_IS_ON ? 1 : 0][(src.flags & THING_IS_ON && src.emagged >= 2) ? "-wild" : null]"
 			src.updateUsrDialog()
 
 		switch(href_list["operation"])
@@ -274,15 +274,15 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 				updateUsrDialog()
 
 	attack_ai(mob/user as mob)
-		if (src.on && src.emagged)
+		if (src.flags & THING_IS_ON && src.emagged)
 			boutput(user, "<span class='alert'>[src] refuses your authority!</span>")
 			return
-		src.on = !src.on
+		src.flags ^= THING_IS_ON
 		src.target = null
 		src.oldtarget_name = null
 		mode = SECBOT_IDLE
 		src.anchored = 0
-		src.icon_state = "secbot[src.on][(src.on && src.emagged >= 2) ? "-wild" : null]"
+		src.icon_state = "secbot[src.flags & THING_IS_ON ? 1 : 0][(src.flags & THING_IS_ON && src.emagged >= 2) ? "-wild" : null]"
 		walk_to(src,0)
 
 	emag_act(var/mob/user, var/obj/item/card/emag/E)
@@ -299,8 +299,8 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 
 			src.anchored = 0
 			src.emagged++
-			src.on = 1
-			src.icon_state = "secbot[src.on][(src.on && src.emagged >= 2) ? "-wild" : null]"
+			src.flags |= THING_IS_ON
+			src.icon_state = "secbot[src.flags & THING_IS_ON ? 1 : 0][(src.flags & THING_IS_ON && src.emagged >= 2) ? "-wild" : null]"
 			mode = SECBOT_IDLE
 			src.target = null
 
@@ -338,7 +338,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 		if(!src.emagged && prob(75))
 			src.emagged = 1
 			src.visible_message("<span class='alert'><B>[src] buzzes oddly!</B></span>")
-			src.on = 1
+			src.flags |= THING_IS_ON
 		else
 			src.explode()
 		return
@@ -442,7 +442,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 		while (stuncount > 0 && src.target)
 			// they moved while we were sleeping, abort
 			if(!IN_RANGE(src, src.target, 1))
-				src.icon_state = "secbot[src.on][(src.on && src.emagged >= 2) ? "-wild" : null]"
+				src.icon_state = "secbot[src.flags & THING_IS_ON ? 1 : 0][(src.flags & THING_IS_ON && src.emagged >= 2) ? "-wild" : null]"
 				return
 
 			stuncount--
@@ -453,7 +453,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 				sleep(BATON_DELAY_PER_STUN)
 
 		SPAWN_DBG(0.2 SECONDS)
-			src.icon_state = "secbot[src.on][(src.on && src.emagged >= 2) ? "-wild" : null]"
+			src.icon_state = "secbot[src.flags & THING_IS_ON ? 1 : 0][(src.flags & THING_IS_ON && src.emagged >= 2) ? "-wild" : null]"
 		if (src.target.getStatusDuration("weakened"))
 			mode = SECBOT_PREP_ARREST
 			src.anchored = 1
@@ -477,7 +477,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 						src.baton_attack(src.target)
 
 	process()
-		if (!src.on)
+		if (src.flags & ~THING_IS_ON)
 			return
 
 		switch(mode)
@@ -644,7 +644,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 
 	receive_signal(datum/signal/signal)
 
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			return
 		var/recv = signal.data["command"]
 		// process all-bot input
@@ -1046,7 +1046,7 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 
 			while(master && master.path && master.path.len && target_turf)
 				if(compare_movepath != current_movepath) break
-				if(!master.on)
+				if(master.flags & ~THING_IS_ON)
 					master.frustration = 0
 					break
 

@@ -11,11 +11,10 @@ obj/machinery/airlock_sensor
 
 	var/datum/radio_frequency/radio_connection
 
-	var/on = 1
 	var/alert = 0
 
 	proc/update_icon()
-		if(on)
+		if(src.flags & THING_IS_ON)
 			if(alert)
 				icon_state = "airlock_sensor_alert"
 			else
@@ -33,7 +32,7 @@ obj/machinery/airlock_sensor
 		flick("airlock_sensor_cycle", src)
 
 	process()
-		if(on)
+		if(src.flags & THING_IS_ON)
 			var/datum/signal/signal = get_free_signal()
 			signal.transmission_method = 1 //radio signal
 			signal.data["tag"] = id_tag

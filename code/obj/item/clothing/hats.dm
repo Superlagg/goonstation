@@ -132,12 +132,10 @@
 	desc = "It is a cakehat"
 	icon_state = "cakehat0"
 	uses_multiple_icon_states = 1
-	var/status = 0
 	var/processing = 0
 	c_flags = SPACEWEAR | COVERSEYES
 	var/fire_resist = T0C+1300	//this is the max temp it can stand before you start to cook. although it might not burn away, you take damage
 	var/datum/light/light
-	var/on = 0
 
 	New()
 		..()
@@ -162,17 +160,14 @@
 		return
 
 	proc/flashlight_toggle(var/mob/user, var/force_on = 0)
-		if (!src || !user || !ismob(user)) return
-
-		if (status > 1)
-			return
+		if (!src || !user || !ismob(user) || src.flags & THING_IS_BROKEN) return
 
 		if (force_on)
-			src.on = 1
+			src.flags |= THING_IS_ON
 		else
-			src.on = !src.on
+			src.flags ^= THING_IS_ON
 
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			src.force = 10
 			src.hit_type = DAMAGE_BURN
 			src.icon_state = "cakehat1"
@@ -189,7 +184,7 @@
 		return
 
 	process()
-		if (!src.on)
+		if (src.flags & ~THING_IS_ON)
 			processing_items.Remove(src)
 			return
 
@@ -204,7 +199,7 @@
 		return
 
 	afterattack(atom/target, mob/user as mob)
-		if (src.on && !ismob(target) && target.reagents)
+		if (src.flags & THING_IS_ON && !ismob(target) && target.reagents)
 			boutput(usr, "<span class='notice'>You heat \the [target.name]</span>")
 			target.reagents.temperature_reagents(2500,10)
 		return
@@ -697,7 +692,6 @@
 	uses_multiple_icon_states = 1
 	item_state = "that"
 	hitsound = "sound/impact_sounds/Generic_Hit_1.ogg"
-	var/active = 0
 	throw_return = 1
 	throw_speed = 1
 	var/turf/throw_source = null
@@ -711,22 +705,25 @@
 		return
 
 	proc/toggle_active(mob/user)
-		src.active = !( src.active )
-		if (src.active)
-			if (user)
-				user.visible_message("<span class='combat'><b>Blades extend from the brim of [user]'s hat!</b></span>")
-			src.hit_type = DAMAGE_CUT
-			src.hitsound = "sound/impact_sounds/Flesh_Cut_1.ogg"
-			src.force = 10
-			src.icon_state = "oddjob"
-			src.throw_source = null
-		else
+		if(src.flags & THING_IS_ON)
+			// Is now off, or "not-on"
+			src.flags &= ~THING_IS_ON
 			if (user)
 				user.visible_message("<span class='notice'><b>[user]'s hat's blades retract.</b></span>")
 			src.hit_type = DAMAGE_BLUNT
 			src.hitsound = "sound/impact_sounds/Generic_Hit_1.ogg"
 			src.force = 1
 			src.icon_state = "mime_bowler"
+			src.throw_source = null
+		else
+			src.flags |= THING_IS_ON
+			// Is now on, or "not-off"
+			if (user)
+				user.visible_message("<span class='combat'><b>Blades extend from the brim of [user]'s hat!</b></span>")
+			src.hit_type = DAMAGE_CUT
+			src.hitsound = "sound/impact_sounds/Flesh_Cut_1.ogg"
+			src.force = 10
+			src.icon_state = "oddjob"
 			src.throw_source = null
 		return
 
@@ -735,7 +732,7 @@
 		..()
 
 	throw_impact(atom/hit_atom, datum/thrown_thing/thr)
-		if (src.active && ismob(hit_atom))
+		if (src.flags & THING_IS_ON && ismob(hit_atom))
 			var/mob/M = hit_atom
 			playsound(get_turf(src), src.hitsound, 60, 1)
 			M.changeStatus("weakened", 2 SECONDS)

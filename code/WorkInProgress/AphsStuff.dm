@@ -71,7 +71,7 @@
 
 	attack_hand(mob/user as mob)
 		if(!ai) return
-		if(!ai.on) return
+		if(ai.flags & ~THING_IS_ON) return
 		if(!ai.ready_for_tapes) return
 		if(src.loaded)
 			src.visible_message("[user] ejects the tape from the databank.",1)
@@ -89,7 +89,7 @@
 				boutput(user, "<span class='alert'>There's already a tape inside!</span>")
 				return
 
-			if(!ai.on)
+			if(ai.flags & ~THING_IS_ON)
 				src.visible_message("[user] prods the databank's tape slot with [W]. Nothing happens.",1)
 				return
 
@@ -125,13 +125,13 @@
 	pixel_x = -32
 	pixel_y = -32
 	var/datum/light/light
-	var/on = 1
 	var/ready_for_tapes = 1
 	var/teaser_enabled = 0
 	var/image/face = null
 	var/tapes_loaded = 0
 	New()
 		..()
+		src.flags |= THING_IS_ON
 		light = new /datum/light/point
 		light.attach(src)
 		light.set_color(0.1, 0.5, 0.1)
@@ -140,7 +140,7 @@
 		return
 
 	proc/speak(var/message, var/dectalk = 1) // borrowed from bots .dm because i'm a lazy fuck
-		if (!src.on || !message)
+		if (src.flags & ~THING_IS_ON || !message)
 			return
 		if(dectalk)
 			var/list/audio = dectalk("\[_<500,1>\][message]")
@@ -156,7 +156,7 @@
 
 			if(src.teaser_enabled) return
 
-			if((src.ready_for_tapes) && (src.on))
+			if((src.ready_for_tapes) && (src.flags & THING_IS_ON))
 				src.teaser_enabled = 1
 				src.visible_message("[user] loads the punchcard into Bradbury II.",1)
 				qdel(W)
@@ -167,7 +167,7 @@
 		return
 
 	hear_talk(var/mob/living/carbon/speaker, messages, real_name, lang_id)
-		if (!src.on)
+		if (src.flags & ~THING_IS_ON)
 			return
 
 		if(prob(5))
@@ -176,16 +176,16 @@
 		return
 
 	power_change()
-		if(powered(EQUIP) && !on)
+		if(powered(EQUIP) && src.flags & ~THING_IS_ON)
 			status &= ~NOPOWER
 			src.turn_on()
-		if(!powered(EQUIP) && on)
+		if(!powered(EQUIP) && src.flags & THING_IS_ON)
 			status |= NOPOWER
 			src.turn_off()
 		return
 
 	process()
-		if(on)
+		if(src.flags & THING_IS_ON)
 			if (status & NOPOWER)
 				src.turn_off()
 				return
@@ -216,7 +216,7 @@
 		src.change_face("static")
 		elecflash(src,power=6)
 		for(var/obj/machinery/light/L in get_area(src))
-			L.on = 1
+			L.flags |= THING_IS_ON
 			L.broken()
 		sleep(0.1 SECONDS)
 		src.change_face("face_terror")
@@ -238,12 +238,12 @@
 		src.teaser_enabled = 0
 
 	proc/turn_on()
-		src.on = 1
+		src.flags |= THING_IS_ON
 		playsound(src.loc, 'sound/machines/computerboot_pc.ogg', 80, 1)
 		src.change_face("blink")
 		light.enable()
 		sleep(5 SECONDS)
-		if(!on) return
+		if(src.flags & ~THING_IS_ON) return
 		if(src.teaser_enabled == 1)
 			do_teaser()
 		else
@@ -251,13 +251,13 @@
 			for(var/mob/O in hearers(src, null))
 				O << csound("sound/misc/satanellite_bootsignal.ogg")
 			sleep(17 SECONDS)
-			if(!on) return
+			if(src.flags & ~THING_IS_ON) return
 			src.ready_for_tapes = 1
 			src.change_face("dot")
 		return
 
 	proc/turn_off()
-		src.on = 0
+		src.flags &= ~THING_IS_ON
 		src.ready_for_tapes = 0
 		src.overlays = null
 		light.disable()
@@ -281,7 +281,7 @@
 
 	proc/load_tape(tapeno)
 		src.ready_for_tapes = 0
-		if(!on) return
+		if(src.flags & ~THING_IS_ON) return
 		playsound(get_turf(src), 'sound/machines/modem.ogg', 80,1)
 		sleep(7 SECONDS)
 		switch(tapeno)

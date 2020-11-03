@@ -22,7 +22,6 @@ GETLINEEEEEEEEEEEEEEEEEEEEE
 	var/processing = 0
 	var/operating = 0
 	var/throw_amount = 100
-	var/lit = 0	//on or off
 	var/base_temperature = 700
 	var/temp_loss_per_tile = 35
 	var/obj/item/tank/gastank = null
@@ -109,10 +108,11 @@ GETLINEEEEEEEEEEEEEEEEEEEEE
 			reagents.move_trigger(M, kindof)
 
 	toggle()
-		src.on = !( src.on )
-		if(src.on)
+		if(src.flags & THING_IS_ON)
+			src.flags &= ~THING_IS_ON
 			boutput(usr, "<span class='notice'>The fuelpack's integrated jetpack is now on</span>")
 		else
+			src.flags |= THING_IS_ON
 			boutput(usr, "<span class='notice'>The fuelpack's integrated jetpack is now off</span>")
 		return
 
@@ -378,7 +378,7 @@ GETLINEEEEEEEEEEEEEEEEEEEEE
 		return
 
 /obj/item/flamethrower/process()
-	if(!lit)
+	if(src.flags & ~THING_IS_ON)
 		processing_items.Remove(src)
 		return null
 
@@ -401,7 +401,7 @@ GETLINEEEEEEEEEEEEEEEEEEEEE
 		src.gastank = W
 		W.set_loc(src)
 		user.u_equip(W)
-		lit = 0
+		src.flags &= ~THING_IS_ON
 		force = 3
 		hit_type = DAMAGE_BLUNT
 		var/fuel = "_no_fuel"
@@ -416,7 +416,7 @@ GETLINEEEEEEEEEEEEEEEEEEEEE
 		src.fueltank = W
 		W.set_loc(src)
 		user.u_equip(W)
-		lit = 0
+		src.flags &= ~THING_IS_ON
 		force = 3
 		hit_type = DAMAGE_BLUNT
 		var/oxy = "_no_oxy"
@@ -474,17 +474,18 @@ GETLINEEEEEEEEEEEEEEEEEEEEE
 	src.add_dialog(usr)
 	if (href_list["light"])
 		if(!src.gastank || !src.fueltank)	return
-		lit = !(lit)
-		if(lit)
+		if(src.flags & THING_IS_ON)
+			src.flags &= ~THING_IS_ON
+			icon_state = "flamethrower_oxy_fuel"
+			force = 3
+			hit_type = DAMAGE_BLUNT
+		else
+			src.flags |= THING_IS_ON
 			icon_state = "flamethrower_ignite_on"
 			item_state = "flamethrower1"
 			force = 10
 			hit_type = DAMAGE_BURN
 			processing_items |= src
-		else
-			icon_state = "flamethrower_oxy_fuel"
-			force = 3
-			hit_type = DAMAGE_BLUNT
 		tooltip_rebuild = 1
 	if (href_list["removeair"])
 		if(!src.gastank)	return
@@ -492,7 +493,7 @@ GETLINEEEEEEEEEEEEEEEEEEEEE
 		A.set_loc(get_turf(src))
 		A.layer = initial(A.layer)
 		src.gastank = null
-		lit = 0
+		src.flags &= ~THING_IS_ON
 		force = 3
 		hit_type = DAMAGE_BLUNT
 		var/fuel = "_no_fuel"
@@ -508,7 +509,7 @@ GETLINEEEEEEEEEEEEEEEEEEEEE
 		A.set_loc(get_turf(src))
 		A.layer = initial(A.layer)
 		src.fueltank = null
-		lit = 0
+		src.flags &= ~THING_IS_ON
 		force = 3
 		hit_type = DAMAGE_BLUNT
 		var/oxy = "_no_oxy"
@@ -531,7 +532,7 @@ GETLINEEEEEEEEEEEEEEEEEEEEE
 	src.add_dialog(user)
 	var/dat = text("<TT><B>Flamethrower")
 	if(src.gastank && src.fueltank)
-		dat += text("(<A HREF='?src=\ref[src];light=1'>[lit ? "<font color='red'>Lit</font>" : "Unlit"]</a>)</B><BR>")
+		dat += text("(<A HREF='?src=\ref[src];light=1'>[src.flags & THING_IS_ON ? "<font color='red'>Lit</font>" : "Unlit"]</a>)</B><BR>")
 	else
 		dat += text("</B><BR>")
 	if (src.gastank)
@@ -561,17 +562,18 @@ GETLINEEEEEEEEEEEEEEEEEEEEE
 	return
 
 /obj/item/flamethrower/backtank/attack_self(mob/user as mob)
-	lit = !(lit)
-	boutput(user, "<span class='notice'>The [src] is now [lit?"lit":"unlit"]</span>")
-	if(lit)
+	if(src.flags & THING_IS_ON)
+		src.flags &= ~THING_IS_ON
+		force = 6
+		hit_type = DAMAGE_BLUNT
+	else
+		src.flags |= THING_IS_ON
 		force = 12
 		hit_type = DAMAGE_BURN
 		processing_items |= src
-	else
-		force = 6
-		hit_type = DAMAGE_BLUNT
-	icon_state = "syndthrower_[lit]"
-	item_state = "syndthrower_[lit]"
+	boutput(user, "<span class='notice'>The [src] is now [src.flags & THING_IS_ON?"lit":"unlit"]</span>")
+	icon_state = "syndthrower_[src.flags & THING_IS_ON ? 1 : 0]"
+	item_state = "syndthrower_[src.flags & THING_IS_ON ? 1 : 0]"
 	user.update_inhands()
 	tooltip_rebuild = 1
 
@@ -670,7 +672,7 @@ GETLINEEEEEEEEEEEEEEEEEEEEE
 		reagentlefttotransfer -= reagentperturf
 		spray_turf(currentturf,reagentperturf, reagsource)
 		reagentperturf += increment
-		if(lit)
+		if(src.flags & THING_IS_ON)
 			currentturf?.reagents?.set_reagent_temp(spray_temperature, TRUE)
 			spray_temperature = max(0,min(spray_temperature - temp_loss_per_tile, 700))
 

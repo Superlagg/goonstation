@@ -15,7 +15,6 @@ Contains:
 	name = "T-ray scanner"
 	desc = "A terahertz-ray emitter and scanner used to detect underfloor objects such as cables and pipes."
 	icon_state = "t-ray0"
-	var/on = 0
 	flags = FPRINT|ONBELT|TABLEPASS
 	w_class = 2
 	item_state = "electronic"
@@ -25,17 +24,17 @@ Contains:
 	module_research_type = /obj/item/device/t_scanner
 
 	attack_self(mob/user)
-		on = !on
-		set_icon_state("t-ray[on]")
-		boutput(user, "You switch [src] [on ? "on" : "off"].")
+		src.flags ^= THING_IS_ON
+		set_icon_state("t-ray[src.flags & THING_IS_ON ? 1 : 0]")
+		boutput(user, "You switch [src] [src.flags & THING_IS_ON ? "on" : "off"].")
 
-		if(on) processing_items |= src
+		if(src.flags & THING_IS_ON) processing_items |= src
 
 	afterattack(atom/A as mob|obj|turf|area, mob/user as mob)
 		if (istype(A, /turf))
 			if (get_dist(A,user) > 1) // Scanning for COOL LORE SECRETS over the camera network is fun, but so is drinking and driving.
 				return
-			if(A.interesting && src.on)
+			if(A.interesting && src.flags & THING_IS_ON)
 				animate_scanning(A, "#7693d3")
 				user.visible_message("<span class='alert'><b>[user]</b> has scanned the [A].</span>")
 				boutput(user, "<br><i>Historical analysis:</i><br><span class='notice'>[A.interesting]</span>")
@@ -46,7 +45,7 @@ Contains:
 			boutput(user, "<br><i>Analysis failed:</i><br><span class='notice'>Unable to determine signature</span>")
 
 	process()
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			processing_items.Remove(src)
 			return null
 
@@ -96,7 +95,7 @@ Contains:
 //	var/trange = 2 //depending how sluggish this is, could go up to 3 with a toggle perhaps?
 
 	process()
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			processing_items.Remove(src)
 			return null
 
@@ -138,7 +137,6 @@ that cannot be itched
 	flags = FPRINT | TABLEPASS | ONBELT | CONDUCT | SUPPRESSATTACK
 	mats = 3
 	hide_attack = 2
-	var/active = 0
 	var/target = null
 
 	attack_self(mob/user as mob)
@@ -175,7 +173,7 @@ that cannot be itched
 		boutput(user, scan_forensic(A, visible = 1)) // Moved to scanprocs.dm to cut down on code duplication (Convair880).
 		src.add_fingerprint(user)
 
-		if(!active && istype(A, /obj/decal/cleanable/blood))
+		if(src.flags & ~THING_IS_ON && istype(A, /obj/decal/cleanable/blood))
 			var/obj/decal/cleanable/blood/B = A
 			if(B.dry > 0) //Fresh blood is -1
 				boutput(user, "<span class='alert'>Targeted blood is too dry to be useful!</span>")
@@ -184,21 +182,21 @@ that cannot be itched
 				if(B.blood_DNA == H.bioHolder.Uid)
 					target = H
 					break
-			active = 1
+			src.flags |= THING_IS_ON
 			work()
 
 	proc/work(var/turf/T)
-		if(!active) return
+		if(src.flags & ~THING_IS_ON) return
 		if(!T)
 			T = get_turf(src)
 		if(get_turf(src) != T)
 			icon_state = "fs"
-			active = 0
+			src.flags &= ~THING_IS_ON
 			boutput(usr, "<span class='alert'>[src] shuts down because you moved!</span>")
 			return
 		if(!target)
 			icon_state = "fs"
-			active = 0
+			src.flags &= ~THING_IS_ON
 			return
 		src.dir = get_dir(src,target)
 		switch(get_dist(src,target))

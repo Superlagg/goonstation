@@ -7,7 +7,6 @@
 	name = "Air Injector"
 	desc = "Has a valve and pump attached to it"
 
-	var/on = 0
 	var/injecting = 0
 
 	var/volume_rate = 50
@@ -20,13 +19,13 @@
 
 	update_icon()
 		if(node)
-			if(on)
+			if(src.flags & THING_IS_ON)
 				icon_state = "[level == 1 && istype(loc, /turf/simulated) ? "h" : "" ]on"
 			else
 				icon_state = "[level == 1 && istype(loc, /turf/simulated) ? "h" : "" ]off"
 		else
 			icon_state = "exposed"
-			on = 0
+			src.flags &= ~THING_IS_ON
 
 		return
 
@@ -34,7 +33,7 @@
 		..()
 		injecting = 0
 
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			return 0
 
 		if(air_contents.temperature > 0)
@@ -50,7 +49,7 @@
 		return 1
 
 	proc/inject()
-		if(on || injecting)
+		if(src.flags & THING_IS_ON || injecting)
 			return 0
 
 		injecting = 1
@@ -84,7 +83,7 @@
 
 			signal.data["tag"] = id
 			signal.data["device"] = "AO"
-			signal.data["power"] = on
+			signal.data["power"] = src.flags & THING_IS_ON ? 1 : 0
 			signal.data["volume_rate"] = volume_rate
 
 			radio_connection.post_signal(src, signal)
@@ -106,13 +105,13 @@
 
 		switch(signal.data["command"])
 			if("power_on")
-				on = 1
+				src.flags |= THING_IS_ON
 
 			if("power_off")
-				on = 0
+				src.flags &= ~THING_IS_ON
 
 			if("power_toggle")
-				on = !on
+				src.flags ^= THING_IS_ON
 
 			if("inject")
 				SPAWN_DBG(0) inject()
@@ -129,11 +128,11 @@
 
 	hide(var/i) //to make the little pipe section invisible, the icon changes.
 		if(node)
-			if(on)
+			if(src.flags & THING_IS_ON)
 				icon_state = "[i == 1 && istype(loc, /turf/simulated) ? "h" : "" ]on"
 			else
 				icon_state = "[i == 1 && istype(loc, /turf/simulated) ? "h" : "" ]off"
 		else
 			icon_state = "[i == 1 && istype(loc, /turf/simulated) ? "h" : "" ]exposed"
-			on = 0
+			src.flags &= ~THING_IS_ON
 		return

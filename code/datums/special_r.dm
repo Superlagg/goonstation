@@ -353,7 +353,7 @@ EndNote
 			for(var/obj/machinery/light_area_manager/LAM in machines_list)
 				for(var/obj/machinery/light/lights in LAM.lights)
 					if(prob(70))
-						lights.on = 0
+						lights.flags &= ~THING_IS_ON
 						lights.status = LIGHT_BROKEN
 						lights.update()
 	for(var/obj/machinery/power/apc/apcs in machine_registry[MACHINES_POWER])

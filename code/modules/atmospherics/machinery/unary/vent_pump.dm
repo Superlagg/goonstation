@@ -5,7 +5,6 @@
 	desc = "Has a valve and pump attached to it"
 	level = 1
 	plane = PLANE_FLOOR
-	var/on = 1
 	var/pump_direction = 1 //0 = siphoning, 1 = releasing
 	var/external_pressure_bound = ONE_ATMOSPHERE + 20
 	var/internal_pressure_bound = 0
@@ -84,20 +83,20 @@
 			air_contents.volume = 1000
 
 	update_icon()
-		if(on&&node)
+		if(src.flags & THING_IS_ON && node)
 			if(pump_direction)
 				icon_state = "[level == 1 && istype(loc, /turf/simulated) ? "h" : "" ]out"
 			else
 				icon_state = "[level == 1 && istype(loc, /turf/simulated) ? "h" : "" ]in"
 		else
 			icon_state = "[level == 1 && istype(loc, /turf/simulated) ? "h" : "" ]off"
-			on = 0
+			src.flags &= ~THING_IS_ON
 
 		return
 
 	process()
 		..()
-		if(!loc || !on)
+		if(!loc || src.flags & ~THING_IS_ON)
 			return 0
 
 		var/datum/gas_mixture/environment = loc.return_air()
@@ -162,7 +161,7 @@
 
 			signal.data["tag"] = id
 			signal.data["device"] = "AVP"
-			signal.data["power"] = on?("on"):("off")
+			signal.data["power"] = src.flags & THING_IS_ON ? ("on"):("off")
 			signal.data["direction"] = pump_direction?("release"):("siphon")
 			signal.data["checks"] = pressure_checks
 			signal.data["internal"] = internal_pressure_bound
@@ -192,13 +191,13 @@
 
 		switch(signal.data["command"])
 			if("power_on")
-				on = 1
+				src.flags |= THING_IS_ON
 
 			if("power_off")
-				on = 0
+				src.flags &= ~THING_IS_ON
 
 			if("power_toggle")
-				on = !on
+				src.flags ^= THING_IS_ON
 
 			if("set_direction")
 				var/number = text2num(signal.data["parameter"])
@@ -240,12 +239,12 @@
 
 
 	hide(var/i) //to make the little pipe section invisible, the icon changes.
-		if(on&&node)
+		if(src.flags & THING_IS_ON && node)
 			if(pump_direction)
 				icon_state = "[i == 1 && istype(loc, /turf/simulated) ? "h" : "" ]out"
 			else
 				icon_state = "[i == 1 && istype(loc, /turf/simulated) ? "h" : "" ]in"
 		else
 			icon_state = "[i == 1 && istype(loc, /turf/simulated) ? "h" : "" ]off"
-			on = 0
+			src.flags &= ~THING_IS_ON
 		return

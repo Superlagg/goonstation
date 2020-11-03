@@ -5,8 +5,6 @@
 	icon_state = "fogmachine0"
 
 
-	var/on = 0
-
 	New()
 		..()
 		src.create_reagents(3000)
@@ -16,9 +14,9 @@
 			src.reagents.clear_reagents()
 			src.visible_message("<span class='alert'>The <B>[src]</B> makes an odd sound, and releases a puff of green steam.</span>")
 
-		if(on == 1)
+		if(src.flags & THING_IS_ON)
 			if(reagents.reagent_list.len < 1 || reagents.total_volume < 1)
-				on = 0
+				src.flags &= ~THING_IS_ON
 				icon_state = "fogmachine0"
 
 				src.visible_message("<span class='alert'>The <B>[src]</B> splutters to a halt.</span>")
@@ -78,13 +76,13 @@
 
 
 	attack_hand(mob/user as mob)
-		if(on == 0)
-			on = 1
+		if(src.flags & ~THING_IS_ON)
+			src.flags |= THING_IS_ON
 			boutput(user, "<span class='notice'>You flip the switch on the FogMachine-3000 to the On position.</span>")
 			playsound(src, 'sound/machines/click.ogg', 50, 1)
 			return
-		if(on == 1)
-			on = 0
+		if(src.flags & THING_IS_ON)
+			src.flags &= ~THING_IS_ON
 			playsound(src, 'sound/machines/click.ogg', 50, 1)
 			boutput(user, "<span class='notice'>You flip the switch on the FogMachine-3000 to the Off position.</span>")
 			return

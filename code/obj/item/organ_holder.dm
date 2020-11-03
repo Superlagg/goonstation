@@ -1387,7 +1387,7 @@
 		var/obj/item/organ/eye/cyber/meson/M = linked_organ
 		if (istype(M))
 			M.toggle()
-			src.is_on = M.on
+			src.is_on = M.flags & THING_IS_ON
 		if(is_on)
 			src.icon_state = initial(src.icon_state)
 		else

@@ -11,15 +11,13 @@
 	var/obj/item/reagent_containers/glass/petridish/target = null
 	var/obj/item/reagent_containers/glass/beaker/beaker = null
 
-	var/on = 0
-
 	var/datum/pathogen/process_pathogen
 	var/obj/item/bloodslide/process_source
 	var/counter = 15
 
 	attack_hand(mob/user as mob)
 		var/output_text = "<B>Centrifuge</B><BR><BR>"
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			output_text = "The centrifuge is currently working.<br><a href='?src=\ref[src];shutdown=1'>Emergency shutdown</a>"
 		else
 
@@ -64,7 +62,7 @@
 		if (..())
 			return
 		if (href_list["ejectsrc"])
-			if (src.source && !src.on)
+			if (src.source && src.flags & ~THING_IS_ON)
 				src.source.master = null
 				src.source.set_loc(src.loc)
 				src.contents -= src.target
@@ -72,15 +70,15 @@
 				src.source = null
 				src.isolated = null
 		else if (href_list["ejectdish"])
-			if (src.target && !src.on)
+			if (src.target && src.flags & ~THING_IS_ON)
 				src.target.master = null
 				src.target.set_loc(src.loc)
 				src.contents -= src.target
 				src.target.layer = initial(src.target.layer)
 				src.target = null
 		else if (href_list["shutdown"])
-			if (src.on && alert("Are you sure you want to shut down the process?",,"Yes","No") == "Yes")
-				src.on = 0
+			if (src.flags & THING_IS_ON && alert("Are you sure you want to shut down the process?",,"Yes","No") == "Yes")
+				src.flags &= ~THING_IS_ON
 				src.icon_state = "centrifuge0"
 				src.visible_message("<span class='alert'>The centrifuge grinds to a sudden halt. The blood slide flies off the supports and shatters somewhere inside the machine.</span>", "<span class='alert'>You hear a grinding noise, followed by something shattering.</span>")
 				qdel(src.source)
@@ -89,14 +87,14 @@
 				counter = 15
 				processing_items.Remove(src)
 		else if (href_list["isolate"])
-			if (!src.on)
+			if (src.flags & ~THING_IS_ON)
 				if (href_list["isolate"] == "All")
 					src.isolated = null
 				else
 					src.isolated = locate(href_list["isolate"])
 		else if (href_list["begin"])
 			var/maybegin = 1
-			if (!src.on)
+			if (src.flags & ~THING_IS_ON)
 				if (!src.source)
 					boutput(usr, "<span class='alert'>You cannot begin isolation without a source container.</span>")
 					maybegin = 0
@@ -113,7 +111,7 @@
 						maybegin = 0
 				if (maybegin)
 					src.visible_message("<span class='notice'>The centrifuge powers up and begins the isolation process.</span>", "<span class='notice'>You hear a machine powering up.</span>")
-					src.on = 1
+					src.flags |= THING_IS_ON
 					src.icon_state = "centrifuge1"
 					var/obj/item/bloodslide/S = src.source
 					var/datum/reagent/blood/pathogen/P = new
@@ -165,7 +163,7 @@
 				boutput(user, "You insert the petri dish into the machine.")
 
 	process()
-		if (!src.on)
+		if (src.flags & ~THING_IS_ON)
 			return
 		counter--
 		if (counter <= 0)
@@ -188,7 +186,7 @@
 			del(src.source)
 			src.source = null
 			src.isolated = null
-			src.on = 0
+			src.flags &= ~THING_IS_ON
 			src.icon_state = "centrifuge0"
 
 /obj/machinery/microscope

@@ -1359,7 +1359,7 @@ var/zapLimiter = 0
 			for(var/obj/machinery/light/L in area)
 				if (L.type == /obj/machinery/light/emergency && omit_emergency_lights)
 					continue
-				L.on = 1
+				L.flags &= ~THING_IS_ON
 				L.broken()
 				sleep(0.1 SECONDS)
 

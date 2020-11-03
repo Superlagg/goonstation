@@ -6,7 +6,6 @@
 	anchored = 1.0
 	layer = EFFECTS_LAYER_BASE//MOB_EFFECT_LAYER
 	flags = NOSPLASH
-	var/on = 0
 	var/datum/light/light
 	var/ARCHIVED(temperature)
 	var/obj/overlay/O1 = null
@@ -58,7 +57,7 @@
 		..()
 		if(!node)
 			return
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			src.updateUsrDialog()
 			return
 
@@ -147,7 +146,7 @@
 		var/dat = "<B>Cryo cell control system</B><BR>"
 		dat += "<B>Current cell temperature:</B> [temp_text]&deg;C<BR>"
 		dat += "<B>Eject Occupant:</B> [src.occupant ? "<A href='?src=\ref[src];eject_occupant=1'>Eject</A>" : "Eject"]<BR>"
-		dat += "<B>Cryo status:</B> [src.on ? "<A href='?src=\ref[src];start=1'>Off</A> <B>On</B>" : "<B>Off</B> <A href='?src=\ref[src];start=1'>On</A>"]<BR>"
+		dat += "<B>Cryo status:</B> [src.flags & THING_IS_ON ? "<A href='?src=\ref[src];start=1'>Off</A> <B>On</B>" : "<B>Off</B> <A href='?src=\ref[src];start=1'>On</A>"]<BR>"
 		dat += "[draw_beaker_text()]<BR>"
 		dat += "--------------------------------<BR>"
 		dat += "[draw_beaker_reagent_scan()]<BR>"
@@ -188,7 +187,7 @@
 	Topic(href, href_list)
 		if (( usr.using_dialog_of(src) && ((get_dist(src, usr) <= 1) && istype(src.loc, /turf))) || (isAI(usr)))
 			if(href_list["start"])
-				src.on = !src.on
+				src.flags ^= THING_IS_ON
 				build_icon()
 			if(href_list["eject"])
 				beaker:set_loc(src.loc)
@@ -298,7 +297,7 @@
 		src.overlays = list(O1)
 
 	proc/build_icon()
-		if(on)
+		if(src.flags & THING_IS_ON)
 			light.enable()
 			if(src.occupant)
 				icon_state = "celltop_1"
@@ -310,7 +309,7 @@
 		O1 = new /obj/overlay(  )
 		O1.icon = 'icons/obj/Cryogenic2.dmi'
 		if(src.node)
-			O1.icon_state = "cryo_bottom_[src.on]"
+			O1.icon_state = "cryo_bottom_[src.flags & THING_IS_ON ? 1 : 0]"
 		else
 			O1.icon_state = "cryo_bottom"
 		O1.pixel_y = -32.0

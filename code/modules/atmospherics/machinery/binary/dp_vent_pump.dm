@@ -19,7 +19,6 @@
 			air1.volume = 1000
 			air2.volume = 1000
 
-	var/on = 0
 	var/pump_direction = 1 //0 = siphoning, 1 = releasing
 
 	var/external_pressure_bound = ONE_ATMOSPHERE
@@ -32,32 +31,32 @@
 	//4: Do not pass output_pressure_max
 
 	update_icon()
-		if(on)
+		if(src.flags & THING_IS_ON)
 			if(pump_direction)
 				icon_state = "[level == 1 && istype(loc, /turf/simulated) ? "h" : "" ]out"
 			else
 				icon_state = "[level == 1 && istype(loc, /turf/simulated) ? "h" : "" ]in"
 		else
 			icon_state = "[level == 1 && istype(loc, /turf/simulated) ? "h" : "" ]off"
-			on = 0
+			src.flags &= ~THING_IS_ON
 
 		return
 
 	hide(var/i) //to make the little pipe section invisible, the icon changes.
-		if(on)
+		if(src.flags & THING_IS_ON)
 			if(pump_direction)
 				icon_state = "[i == 1 && istype(loc, /turf/simulated) ? "h" : "" ]out"
 			else
 				icon_state = "[i == 1 && istype(loc, /turf/simulated) ? "h" : "" ]in"
 		else
 			icon_state = "[i == 1 && istype(loc, /turf/simulated) ? "h" : "" ]off"
-			on = 0
+			src.flags &= ~THING_IS_ON
 		return
 
 	process()
 		..()
 
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			return 0
 
 		var/datum/gas_mixture/environment = loc.return_air()
@@ -122,7 +121,7 @@
 
 			signal.data["tag"] = id
 			signal.data["device"] = "ADVP"
-			signal.data["power"] = on?("on"):("off")
+			signal.data["power"] = src.flags & THING_IS_ON?("on"):("off")
 			signal.data["direction"] = pump_direction?("release"):("siphon")
 			signal.data["checks"] = pressure_checks
 			signal.data["input"] = input_pressure_min
@@ -152,13 +151,13 @@
 
 		switch(signal.data["command"])
 			if("power_on")
-				on = 1
+				src.flags |= THING_IS_ON
 
 			if("power_off")
-				on = 0
+				src.flags &= ~THING_IS_ON
 
 			if("power_toggle")
-				on = !on
+				src.flags ^= THING_IS_ON
 
 			if("set_direction")
 				var/number = text2num(signal.data["parameter"])

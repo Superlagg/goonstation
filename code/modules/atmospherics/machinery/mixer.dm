@@ -18,7 +18,6 @@ obj/machinery/atmospherics/mixer
 
 	var/id_tag
 	var/master_id
-	var/on = 0
 
 	var/datum/gas_mixture/air_in1
 	var/datum/gas_mixture/air_in2
@@ -41,7 +40,7 @@ obj/machinery/atmospherics/mixer
 
 	update_icon()
 		if(node_in1&&node_in2&&node_out)
-			icon_state = "intact[flipped?"_flipped":""]_[on?"on":"off"]"
+			icon_state = "intact[flipped?"_flipped":""]_[src.flags & THING_IS_ON?"on":"off"]"
 		else
 			var/node_in1_direction = get_dir(src, node_in1)
 			var/node_in2_direction = get_dir(src, node_in2)
@@ -50,7 +49,7 @@ obj/machinery/atmospherics/mixer
 
 			icon_state = "exposed_[node_in1_direction|node_in2_direction]_[node_out_bit]_off"
 
-			on = 0
+			src.flags &= ~THING_IS_ON
 
 		return
 
@@ -157,7 +156,7 @@ obj/machinery/atmospherics/mixer
 			signal.data["tag"] = id_tag
 			signal.data["timestamp"] = air_master.current_cycle
 			signal.data["target_pressure"] = src.target_pressure
-			if (src.on == 0)
+			if (src.flags & ~THING_IS_ON)
 				signal.data["pump_status"] = "Offline"
 			else
 				signal.data["pump_status"] = "Online"
@@ -222,7 +221,7 @@ obj/machinery/atmospherics/mixer
 
 		src.report_status()
 
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			return 0
 
 		var/output_starting_pressure = MIXTURE_PRESSURE(air_out)
@@ -287,9 +286,9 @@ obj/machinery/atmospherics/mixer
 		switch (signal.data["command"])
 			if ("toggle_pump")
 				if (signal.data["parameter"] == "power_on")
-					src.on = 1
+					src.flags |= THING_IS_ON
 				else if (signal.data["parameter"] == "power_off")
-					src.on = 0
+					src.flags &= ~THING_IS_ON
 
 			if ("set_ratio")
 				var/number = text2num(signal.data["parameter"])

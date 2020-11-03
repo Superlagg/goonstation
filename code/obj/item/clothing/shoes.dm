@@ -446,21 +446,21 @@
 	module_research = list("efficiency" = 20)
 	step_sound = "step_plating"
 	step_priority = STEP_PRIORITY_LOW
-	var/on = 1
 	var/obj/item/tank/tank = null
 	tooltip_flags = REBUILD_ALWAYS
 
 	New()
 		..()
 		src.tank = new /obj/item/tank/emergency_oxygen(src)
+		src.flags |= THING_IS_ON
 
 	setupProperties()
 		..()
 		setProperty("movespeed", 0.9)
 
 	proc/toggle()
-		src.on = !(src.on)
-		boutput(usr, "<span class='notice'>The jet boots are now [src.on ? "on" : "off"].</span>")
+		src.flags ^= THING_IS_ON
+		boutput(usr, "<span class='notice'>The jet boots are now [src.flags & THING_IS_ON ? "on" : "off"].</span>")
 		return
 
 
@@ -493,8 +493,7 @@
 
 		switch (action)
 			if ("Toggle")
-				src.on = !(src.on)
-				boutput(usr, "<span class='notice'>The jet boots are now [src.on ? "on" : "off"].</span>")
+				toggle()
 				return
 			if ("Remove Tank")
 				boutput(usr, "<span class='notice'>You eject [src.tank] from [src].</span>")
@@ -504,7 +503,7 @@
 		..()
 
 	proc/allow_thrust(num, mob/user as mob) // blatantly c/p from jetpacks
-		if (!src.on || !istype(src.tank))
+		if (src.flags & ~THING_IS_ON || !istype(src.tank))
 			return 0
 		if (!isnum(num) || num < 0.01 || TOTAL_MOLES(src.tank.air_contents) < num)
 			return 0
@@ -527,7 +526,7 @@
 
 	get_desc(dist)
 		if (dist <= 1)
-			. += "<br>They're currently [src.on ? "on" : "off"].<br>[src.tank ? "The tank's current air pressure reads [MIXTURE_PRESSURE(src.tank.air_contents)]." : "<span class='alert'>They have no tank attached!</span>"]"
+			. += "<br>They're currently [src.flags & THING_IS_ON ? "on" : "off"].<br>[src.tank ? "The tank's current air pressure reads [MIXTURE_PRESSURE(src.tank.air_contents)]." : "<span class='alert'>They have no tank attached!</span>"]"
 
 /obj/item/clothing/shoes/jetpack/abilities = list(/obj/ability_button/jetboot_toggle)
 

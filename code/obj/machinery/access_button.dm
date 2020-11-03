@@ -14,10 +14,8 @@ obj/machinery/access_button
 
 	var/datum/radio_frequency/radio_connection
 
-	var/on = 1
-
 	proc/update_icon()
-		if(on)
+		if(src.flags & THING_IS_ON)
 			icon_state = "access_button_standby"
 		else
 			icon_state = "access_button_off"

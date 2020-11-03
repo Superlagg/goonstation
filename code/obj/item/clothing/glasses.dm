@@ -60,7 +60,6 @@
 	color_r = 0.92
 	color_g = 1
 	color_b = 0.92
-	var/on = 1
 
 	setupProperties()
 		..()
@@ -71,15 +70,15 @@
 		src.toggle(user)
 
 	proc/toggle(var/mob/toggler)
-		src.on = !src.on
-		src.item_state = "[src.base_state][src.on ? null : "-off"]"
+		src.flags ^= THING_IS_ON
+		src.item_state = "[src.base_state][src.flags & THING_IS_ON ? null : "-off"]"
 		toggler.set_clothing_icon_dirty()
-		set_icon_state("[src.base_state][src.on ? null : "-off"]")
+		set_icon_state("[src.base_state][src.flags & THING_IS_ON ? null : "-off"]")
 		playsound(get_turf(src), "sound/items/mesonactivate.ogg", 30, 1)
 		if (ishuman(toggler))
 			var/mob/living/carbon/human/H = toggler
 			if (istype(H.glasses, /obj/item/clothing/glasses/meson)) //hamdling of the rest is done in life.dm
-				if (src.on)
+				if (src.flags & THING_IS_ON)
 					H.vision.set_scan(1)
 				else
 					H.vision.set_scan(0)
@@ -88,7 +87,7 @@
 		..()
 		if(!isliving(user))
 			return
-		if (slot == SLOT_GLASSES && on)
+		if (slot == SLOT_GLASSES && src.flags & THING_IS_ON)
 			user.vision.set_scan(1)
 
 	unequipped(var/mob/living/user)

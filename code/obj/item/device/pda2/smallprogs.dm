@@ -364,7 +364,7 @@ Code:
 				if (cb.z != cl.z)
 					continue
 
-				ldat += "Cleanbot - <b>\[[cb.x],[cb.y] ([get_area(cb)])\]</b> - [B.on ? "Online" : "Offline"]<br>"
+				ldat += "Cleanbot - <b>\[[cb.x],[cb.y] ([get_area(cb)])\]</b> - [B.flags & THING_IS_ON ? "Online" : "Offline"]<br>"
 
 			if (!ldat)
 				dat += "None"

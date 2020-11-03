@@ -12,7 +12,6 @@
 	is_syndicate = 1
 	mats = 8
 	var/anti_spam = 1 // In relation to world time.
-	var/on = 0
 
 	var/customization_first_color = 0
 	var/customization_second_color = 0
@@ -40,7 +39,7 @@
 			return
 
 	attack_self(mob/user)
-		if (!src.on && (src.anti_spam && world.time < src.anti_spam + 100))
+		if (src.flags & ~THING_IS_ON && (src.anti_spam && world.time < src.anti_spam + 100))
 			user.show_text("[src] is recharging!", "red")
 			return
 		if (ishuman(user))
@@ -110,9 +109,9 @@
 	proc/disrupt(mob/living/carbon/human/user)
 		if (!src)
 			return
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			src.icon_state = "enshield0"
-			src.on = 0
+			src.flags &= ~THING_IS_ON
 
 			if (!user || !ishuman(user))
 				return
@@ -133,9 +132,9 @@
 		if (!AH || !istype(AH, /datum/appearanceHolder))
 			return
 
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			src.icon_state = "enshield0"
-			src.on = 0
+			src.flags &= ~THING_IS_ON
 
 			elecflash(src)
 
@@ -154,13 +153,13 @@
 			// Multiple active devices can lead to weird effects, okay (Convair880).
 			var/list/number_of_devices = list()
 			for (var/obj/item/device/disguiser/D in user)
-				if (D.on)
+				if (D.flags & THING_IS_ON)
 					number_of_devices += D
 			if (number_of_devices.len > 0)
 				user.show_text("You can't have more than one active [src.name] on your person.", "red")
 				return
 
-			src.on = 1
+			src.flags |= THING_IS_ON
 			src.icon_state = "enshield1"
 
 			user.show_text("You active the [src.name]", "blue")

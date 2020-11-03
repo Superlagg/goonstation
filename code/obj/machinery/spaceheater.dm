@@ -7,7 +7,6 @@
 	desc = "Made by Space Amish using traditional space techniques, this space heater is guaranteed not to set the station on fire."
 	var/emagged = 0
 	var/obj/item/cell/cell
-	var/on = 0
 	var/heating = 0
 	var/open = 0
 	var/set_temperature = 50		// in celcius, add T0C for kelvin
@@ -27,7 +26,7 @@
 		return
 
 	proc/update_icon()
-		if (on)
+		if (src.flags & THING_IS_ON)
 			if(heating)
 				icon_state = "sheaterH"
 			else
@@ -67,7 +66,7 @@
 
 	examine()
 		. = ..()
-		. += "The HVAC is [on ? "on" : "off"], [heating ? "heating" : "cooling"] and the hatch is [open ? "open" : "closed"]."
+		. += "The HVAC is [src.flags & THING_IS_ON ? "on" : "off"], [heating ? "heating" : "cooling"] and the hatch is [open ? "open" : "closed"]."
 		if(open)
 			. += "The power cell is [cell ? "installed" : "missing"]."
 		else
@@ -138,16 +137,16 @@
 
 
 		else
-			if (on && src.emagged)
+			if (src.flags & THING_IS_ON && src.emagged)
 				user.show_text("The button seems to be stuck!", "red")
 			else
-				on = !on
-				user.visible_message("<span class='notice'>[user] switches [on ? "on" : "off"] the [src].</span>","<span class='notice'>You switch [on ? "on" : "off"] the [src].</span>")
+				src.flags ^= THING_IS_ON
+				user.visible_message("<span class='notice'>[user] switches [src.flags & THING_IS_ON ? "on" : "off"] the [src].</span>","<span class='notice'>You switch [src.flags & THING_IS_ON ? "on" : "off"] the [src].</span>")
 				update_icon()
 
 
 
-			if (on)
+			if (src.flags & THING_IS_ON)
 				playsound(src.loc, "sound/machines/heater_on.ogg", 50, 1)
 			else
 				playsound(src.loc, "sound/machines/heater_off.ogg", 50, 1)
@@ -206,7 +205,7 @@
 
 
 	process()
-		if(on)
+		if(src.flags & THING_IS_ON)
 			if(cell && cell.charge > 0)
 
 				var/turf/simulated/L = loc
@@ -245,7 +244,7 @@
 
 
 			else
-				on = 0
+				src.flags &= ~THING_IS_ON
 				update_icon()
 
 
@@ -259,7 +258,6 @@
 	name = "space saunastove"
 	desc = "Made by Space Finnish using traditional space techniques, this space saunastove is guaranteed not to set the station on fire."
 	var/obj/item/cell/cell
-	var/on = 0
 	var/heating = 0
 	var/open = 0
 	var/set_temperature = 50		// in celcius, add T0C for kelvin
@@ -279,7 +277,7 @@
 		return
 
 	proc/update_icon()
-		if (on)
+		if (src.flags & THING_IS_ON)
 			if(heating)
 				icon_state = "saunaH"
 			else
@@ -293,7 +291,7 @@
 	examine()
 		. = ..()
 
-		. += "The stove is [on ? "on" : "off"], [heating ? "heating" : "cooling"] and the hatch is [open ? "open" : "closed"]."
+		. += "The stove is [src.flags & THING_IS_ON ? "on" : "off"], [heating ? "heating" : "cooling"] and the hatch is [open ? "open" : "closed"]."
 		if(open)
 			. += "The power cell is [cell ? "installed" : "missing"]."
 		else
@@ -358,11 +356,11 @@
 
 
 		else
-			on = !on
-			user.visible_message("<span class='notice'>[user] switches [on ? "on" : "off"] the [src].</span>","<span class='notice'>You switch [on ? "on" : "off"] the [src].</span>")
+			src.flags ^= THING_IS_ON
+			user.visible_message("<span class='notice'>[user] switches [src.flags & THING_IS_ON ? "on" : "off"] the [src].</span>","<span class='notice'>You switch [src.flags & THING_IS_ON ? "on" : "off"] the [src].</span>")
 			update_icon()
 
-			if (on)
+			if (src.flags & THING_IS_ON)
 				playsound(src.loc, "sound/machines/heater_on.ogg", 50, 1)
 			else
 				playsound(src.loc, "sound/machines/heater_off.ogg", 50, 1)
@@ -412,7 +410,7 @@
 
 
 	process()
-		if(on)
+		if(src.flags & THING_IS_ON)
 			if(cell && cell.charge > 0)
 
 				var/turf/simulated/L = loc
@@ -448,7 +446,7 @@
 
 
 			else
-				on = 0
+				src.flags &= ~THING_IS_ON
 				update_icon()
 
 

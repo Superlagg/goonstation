@@ -1052,7 +1052,7 @@
 		else
 			if (src.client.check_key(KEY_THROW) || src.in_throw_mode)
 				for (var/obj/item/cloaking_device/I in src)
-					if (I.active)
+					if (I.flags & THING_IS_ON)
 						I.deactivate(src)
 						src.visible_message("<span class='notice'><b>[src]'s cloak is disrupted!</b></span>")
 				src.throw_item(target, params)
@@ -3009,7 +3009,7 @@
 				cutOffButt = 1
 			if (istype(src.chest_item, /obj/item/sword/))
 				var/obj/item/sword/c_saber = src.chest_item
-				if(c_saber.active)
+				if(c_saber.flags & THING_IS_ON)
 					cutOffButt = 1
 			if (cutOffButt)
 				src.TakeDamage("chest", 15, 0, 0, src.chest_item.hit_type)

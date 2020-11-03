@@ -8,24 +8,22 @@
 	name = "Heat Reservoir"
 	desc = "Heats gas when connected to pipe network"
 
-	var/on = 0
-//
 	var/current_temperature = T20C
 	var/current_heat_capacity = 50000 //totally random
 
 	update_icon()
 		if(node)
-			icon_state = "intact_[on?("on"):("off")]"
+			icon_state = "intact_[src.flags & THING_IS_ON ? ("on"):("off")]"
 		else
 			icon_state = "exposed"
 
-			on = 0
+			src.flags &= ~THING_IS_ON
 
 		return
 
 	process()
 		..()
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			return 0
 		var/air_heat_capacity = HEAT_CAPACITY(air_contents)
 		var/combined_heat_capacity = current_heat_capacity + air_heat_capacity

@@ -8,13 +8,12 @@
 	layer = 5.0 //TODO LAYER
 	density = 0
 	anchored = 0
-	on = 1 // ACTION
 	health = 5
 	var/eggs = 0
 	no_camera = 1
 
 /obj/machinery/bot/duckbot/proc/quack(var/message)
-	if(!src.on || !message || src.muted)
+	if(src.flags & ~THING_IS_ON || !message || src.muted)
 		return
 	src.visible_message("<span class='game say'><span class='name'>[src]</span> honks, \"[message]\"</span>")
 	return
@@ -24,7 +23,7 @@
 		if(isturf(moveto) && !moveto.density) step_towards(src, moveto)
 
 /obj/machinery/bot/duckbot/process()
-	if(prob(10) && src.on == 1)
+	if(prob(10) && src.flags & THING_IS_ON)
 		SPAWN_DBG(0)
 			var/message = pick("wacka", "quack","quacky","gaggle")
 			quack(message)
@@ -53,14 +52,14 @@
 	if (!(usr in range(1)))
 		return
 	if (href_list["on"])
-		on = !on
+		src.flags ^= THING_IS_ON
 	attack_hand(usr)
 
 /obj/machinery/bot/duckbot/attack_hand(mob/user as mob)
 	var/dat
 	dat += "<TT><B>AMUSING DUCK</B></TT><BR>"
 	dat += "<B>toy series with strong sense for playing</B><BR><BR>"
-	dat += "LAY EGG IS: <A href='?src=\ref[src];on=1'>[src.on ? "TRUE!!!" : "NOT TRUE!!!"]</A><BR><BR>"
+	dat += "LAY EGG IS: <A href='?src=\ref[src];on=1'>[src.flags & THING_IS_ON ? "TRUE!!!" : "NOT TRUE!!!"]</A><BR><BR>"
 	dat += "AS THE DUCK ADVANCING,FLICKING THE PLUMAGE AND YAWNING THE MOUTH GO WITH MUSIC & LIGHT.<BR>"
 	dat += "THE DUCK STOP,IT SWAYING TAIL THEN THE DUCK LAY AN EGG AS OPEN IT'S BUTTOCKS,<BR>GO WITH THE DUCK'S CALL"
 
@@ -103,7 +102,7 @@
 /obj/machinery/bot/duckbot/explode()
 	if(src.exploding) return
 	src.exploding = 1
-	src.on = 0
+	src.flags &= ~THING_IS_ON
 	for(var/mob/O in hearers(src, null))
 		O.show_message("<span class='alert'><B>[src] blows apart!</B></span>", 1)
 	elecflash(src, radius=1, power=3, exclude_center = 0)

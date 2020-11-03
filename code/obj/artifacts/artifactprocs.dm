@@ -216,7 +216,7 @@
 
 	if (istype(W,/obj/item/device/light/zippo))
 		var/obj/item/device/light/zippo/ZIP = W
-		if (ZIP.on)
+		if (ZIP.flags & THING_IS_ON)
 			src.ArtifactStimulus("heat", 400)
 			src.visible_message("<span class='alert'>[user.name] burns the artifact with [ZIP]!</span>")
 			return 0

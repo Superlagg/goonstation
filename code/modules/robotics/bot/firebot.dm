@@ -11,7 +11,6 @@
 	density = 0
 	anchored = 0
 	req_access = list(access_engineering_atmos)
-	on = 1
 	health = 20
 	var/stunned = 0 //It can be stunned by tasers. Delicate circuits.
 	locked = 1
@@ -52,7 +51,7 @@
 			// Firebots are used in multiple department, so I guess they get all-access instead of only engineering.
 			src.botcard = new /obj/item/card/id(src)
 			src.botcard.access = get_access(src.access_lookup)
-			src.icon_state = "firebot[src.on]"
+			src.icon_state = "firebot[src.flags & THING_IS_ON]"
 
 //		if(radio_connection)
 //			radio_controller.add_object(src, "[beacon_freq]")
@@ -61,7 +60,7 @@
 /obj/machinery/bot/firebot/attack_ai(mob/user as mob, params)
 	var/dat
 	dat += "<TT><B>Automatic Fire-Fighting Unit v1.0</B></TT><BR><BR>"
-	dat += "Status: <A href='?src=\ref[src];power=1'>[src.on ? "On" : "Off"]</A><BR>"
+	dat += "Status: <A href='?src=\ref[src];power=1'>[src.flags & THING_IS_ON ? "On" : "Off"]</A><BR>"
 
 //	dat += "<br>Behaviour controls are [src.locked ? "locked" : "unlocked"]<hr>"
 //	if(!src.locked)
@@ -77,7 +76,7 @@
 /obj/machinery/bot/firebot/attack_hand(mob/user as mob, params)
 	var/dat
 	dat += "<TT><B>Automatic Fire-Fighting Unit v1.0</B></TT><BR><BR>"
-	dat += "Status: <A href='?src=\ref[src];power=1'>[src.on ? "On" : "Off"]</A><BR>"
+	dat += "Status: <A href='?src=\ref[src];power=1'>[src.flags & THING_IS_ON ? "On" : "Off"]</A><BR>"
 
 //	dat += "<br>Behaviour controls are [src.locked ? "locked" : "unlocked"]<hr>"
 //	if(!src.locked)
@@ -116,8 +115,8 @@
 		src.last_found = world.time
 		src.anchored = 0
 		src.emagged = 1
-		src.on = 1
-		src.icon_state = "firebot[src.on]"
+		src.flags |= THING_IS_ON
+		src.icon_state = "firebot[src.flags & THING_IS_ON]"
 		logTheThing("station", user, null, "emagged a [src] at [log_loc(src)].")
 		return 1
 	return 0
@@ -140,8 +139,8 @@
 		src.last_found = world.time
 		src.anchored = 0
 		src.emagged = 1
-		src.on = 1
-		src.icon_state = "firebot[src.on]"
+		src.flags |= THING_IS_ON
+		src.icon_state = "firebot[src.flags & THING_IS_ON]"
 	else
 		src.explode()
 	return
@@ -178,7 +177,7 @@
 		..()
 
 /obj/machinery/bot/firebot/process()
-	if(!src.on)
+	if(src.flags & ~THING_IS_ON)
 		src.stunned = 0
 		return
 
@@ -190,7 +189,7 @@
 		src.target = null
 
 		if(src.stunned <= 0)
-			src.icon_state = "firebot[src.on]"
+			src.icon_state = "firebot[src.flags & THING_IS_ON ? 1 : 0]"
 			src.stunned = 0
 		return
 
@@ -275,7 +274,7 @@
 
 //Oh no we're emagged!! Nobody better try to cross us!
 /obj/machinery/bot/firebot/HasProximity(atom/movable/AM as mob|obj)
-	if(!on || !emagged || stunned)
+	if(src.flags & ~THING_IS_ON || !emagged || stunned)
 		return
 
 	if (iscarbon(AM) && prob(40))
@@ -284,7 +283,7 @@
 	return
 
 /obj/machinery/bot/firebot/proc/spray_at(atom/target)
-	if(!target || !src.on || src.stunned)
+	if(!target || src.flags & ~THING_IS_ON || src.stunned)
 		return
 
 	src.last_spray = world.time
@@ -354,7 +353,7 @@
 /obj/machinery/bot/firebot/explode()
 	if(src.exploding) return
 	src.exploding = 1
-	src.on = 0
+	src.flags &= ~THING_IS_ON
 	for(var/mob/O in hearers(src, null))
 		O.show_message("<span class='alert'><B>[src] blows apart!</B></span>", 1)
 	var/turf/Tsec = get_turf(src)
@@ -375,14 +374,14 @@
 	return
 
 /obj/machinery/bot/firebot/proc/toggle_power()
-	src.on = !src.on
+	src.flags ^= THING_IS_ON
 	src.target = null
 	src.oldtarget = null
 	src.oldloc = null
 	src.path = null
 	src.last_found = 0
 	src.last_spray = 0
-	src.icon_state = "firebot[src.on]"
+	src.icon_state = "firebot[src.flags & THING_IS_ON ? 1 : 0]"
 	src.updateUsrDialog()
 	return
 

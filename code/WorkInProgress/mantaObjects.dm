@@ -58,7 +58,6 @@ var/obj/manta_speed_lever/mantaLever = null
 	icon_state = "lever1"
 	density = 1
 	anchored = 2
-	var/on = 1
 	var/lastuse = 0
 	var/locked = 1 //Starts off locked.
 	req_access = list(access_heads)
@@ -89,26 +88,26 @@ var/obj/manta_speed_lever/mantaLever = null
 			user.show_text("<span class='alert'><b>You must first unlock the lever console with an ID to be able to use it.</b></span>")
 			return
 
-		if(mantaIsBroken() && !on)
+		if(mantaIsBroken() && src.flags & ~THING_IS_ON)
 			user.show_text("<span class='alert'><b>Too many propellers are damaged; you can not move NSS Manta.</b></span>")
 			return
 
 		if(diff > 3000)
 			lastuse = world.timeofday
-			if(on)
+			if(src.flags & THING_IS_ON)
 				user.show_text("<span class='notice'><b>You turn off the propellers.</b></span>")
-				on = 0
+				src.flags &= ~THING_IS_ON
 				updateIcon()
 				command_alert("Attention, NSS Manta is slowing down to a halt. Shutting down propellers.", "NSS Manta Movement Computer")
-				mantaSetMove(on)
+				mantaSetMove(src.flags & THING_IS_ON ? 1 : 0)
 			else
 				user.show_text("<span class='notice'><b>You turn on the propellers.</b></span>")
-				on = 1
+				src.flags |= THING_IS_ON
 				world << 'sound/effects/mantamoving.ogg'
 				sleep(7 SECONDS)
 				updateIcon()
 				command_alert("Attention, firing up propellers.  NSS Manta will be on the move shortly.", "NSS Manta Movement Computer")
-				mantaSetMove(on)
+				mantaSetMove(src.flags & THING_IS_ON ? 1 : 0)
 			return
 		else
 			user.show_text("<span class='alert'><b>The engine is still busy.</b></span>")
@@ -133,13 +132,13 @@ var/obj/manta_speed_lever/mantaLever = null
 		return
 
 	proc/updateIcon()
-		if (locked == 1 && on == 1)
+		if (locked == 1 && src.flags & THING_IS_ON)
 			icon_state = "lever1-locked"
-		if (locked == 1 && on == 0)
+		if (locked == 1 && src.flags & ~THING_IS_ON)
 			icon_state = "lever0-locked"
-		if (locked == 0 && on == 1)
+		if (locked == 0 && src.flags & THING_IS_ON)
 			icon_state = "lever1"
-		if (locked == 0 && on == 0)
+		if (locked == 0 && src.flags & ~THING_IS_ON)
 			icon_state = "lever0"
 
 /proc/mantaIsBroken()
@@ -185,7 +184,6 @@ var/obj/manta_speed_lever/mantaLever = null
 	var/stateOn = ""
 	var/stateOff = ""
 	var/stateDamaged = ""
-	var/on = 1
 	anchored = 2
 	density = 1
 	var/health = 100
@@ -199,7 +197,7 @@ var/obj/manta_speed_lever/mantaLever = null
 		stateOff = "sea_propulsion_off"
 		stateOn = "sea_propulsion"
 		icon_state = stateOn
-		on = 1
+		src.flags |= THING_IS_ON
 		START_TRACKING
 
 	disposing()
@@ -327,7 +325,7 @@ var/obj/manta_speed_lever/mantaLever = null
 			if(mantaIsBroken() && mantaMoving)
 				mantaSetMove(0)
 				if(mantaLever)
-					mantaLever.on = 0
+					mantaLever.flags &= ~THING_IS_ON
 					mantaLever.icon_state = "lever0"
 		return
 
@@ -335,18 +333,18 @@ var/obj/manta_speed_lever/mantaLever = null
 		if(health)
 			if(newOn)
 				icon_state = stateOn
-				on = newOn
+				src.flags |= THING_IS_ON
 			else
 				icon_state = stateOff
-				on = newOn
+				src.flags &= ~THING_IS_ON
 		else
 			icon_state = stateDamaged //ADD YOUR BROKEN ICON STATE HERE THANK YOU
-			on = 0
+			src.flags &= ~THING_IS_ON
 		return
 
 	proc/Breakdown()
 		health = 0
-		on = 0
+		src.flags &= ~THING_IS_ON
 		icon_state = "bigsea_propulsion_broken"
 		change_health()
 
@@ -367,7 +365,7 @@ var/obj/manta_speed_lever/mantaLever = null
 		stateOn = "bigsea_propulsion"
 		stateDamaged = "bigsea_propulsion_broken"
 		icon_state = stateOn
-		on = 1
+		src.flags |= THING_IS_ON
 		return .
 
 /obj/machinery/power/seaheater
@@ -917,7 +915,6 @@ var/obj/manta_speed_lever/mantaLever = null
 /turf/space/fluid/manta
 	var/stateOn = ""
 	var/stateOff = ""
-	var/on = 1
 	var/list/L = list()
 
 	New()
@@ -926,7 +923,7 @@ var/obj/manta_speed_lever/mantaLever = null
 		stateOff = "manta_sand"
 		stateOn = "[stateOff]_scroll"
 		icon_state = stateOn
-		on = 1
+		flags |= THING_IS_ON
 		return .
 
 	Del()
@@ -939,10 +936,10 @@ var/obj/manta_speed_lever/mantaLever = null
 	proc/setScroll(var/newOn=0)
 		if(newOn)
 			icon_state = stateOn
-			on = newOn
+			src.flags |= THING_IS_ON
 		else
 			icon_state = stateOff
-			on = newOn
+			src.flags &= ~THING_IS_ON
 		return
 
 	Entered(atom/movable/Obj,atom/OldLoc)
@@ -1096,10 +1093,10 @@ var/obj/manta_speed_lever/mantaLever = null
 			playsound(get_turf(propeller), "sound/items/Deconstruct.ogg", 80, 1)
 			propeller.health = 100
 		if (mantaMoving == 1)
-			propeller.on = 1
+			propeller.flags |= THING_IS_ON
 			propeller.icon_state = "bigsea_propulsion"
 		else
-			propeller.on = 0
+			propeller.flags &= ~THING_IS_ON
 			propeller.icon_state = "bigsea_propulsion_off"
 
 

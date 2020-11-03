@@ -11,7 +11,6 @@
 	var/frequency = "1439"
 	var/datum/radio_frequency/radio_connection
 
-	var/on = 1
 	var/scrubbing = 1 //0 = siphoning, 1 = scrubbing
 	#define _DEF_SCRUBBER_VAR(GAS, ...) var/scrub_##GAS = 1;
 	APPLY_TO_GASES(_DEF_SCRUBBER_VAR)
@@ -36,20 +35,20 @@
 			radio_connection = radio_controller.add_object(src, "[frequency]")
 
 	update_icon()
-		if(on&&node)
+		if(src.flags & THING_IS_ON && node)
 			if(scrubbing)
 				icon_state = "[level == 1 && istype(loc, /turf/simulated) ? "h" : "" ]on"
 			else
 				icon_state = "[level == 1 && istype(loc, /turf/simulated) ? "h" : "" ]in"
 		else
 			icon_state = "[level == 1 && istype(loc, /turf/simulated) ? "h" : "" ]off"
-			on = 0
+			src.flags &= ~THING_IS_ON
 
 		return
 
 	process()
 		..()
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			return 0
 
 		var/datum/gas_mixture/environment = loc.return_air()
@@ -106,14 +105,14 @@
 		return 1
 
 	hide(var/i) //to make the little pipe section invisible, the icon changes.
-		if(on&&node)
+		if(src.flags & THING_IS_ON && node)
 			if(scrubbing)
 				icon_state = "[i == 1 && istype(loc, /turf/simulated) ? "h" : "" ]on"
 			else
 				icon_state = "[i == 1 && istype(loc, /turf/simulated) ? "h" : "" ]in"
 		else
 			icon_state = "[i == 1 && istype(loc, /turf/simulated) ? "h" : "" ]off"
-			on = 0
+			src.flags &= ~THING_IS_ON
 		return
 
 	receive_signal(datum/signal/signal)
@@ -122,13 +121,13 @@
 
 		switch(signal.data["command"])
 			if("power_on")
-				on = 1
+				src.flags |= THING_IS_ON
 
 			if("power_off")
-				on = 0
+				src.flags &= ~THING_IS_ON
 
 			if("power_toggle")
-				on = !on
+				src.flags ^= THING_IS_ON
 
 			if("set_siphon")
 				scrubbing = 0

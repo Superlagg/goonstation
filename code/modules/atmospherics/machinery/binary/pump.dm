@@ -21,7 +21,6 @@ obj/machinery/atmospherics/binary/pump
 	layer = PIPE_MACHINE_LAYER
 	plane = PLANE_NOSHADOW_BELOW
 
-	var/on = 0
 	var/target_pressure = ONE_ATMOSPHERE
 
 	var/datum/pump_ui/ui
@@ -32,7 +31,7 @@ obj/machinery/atmospherics/binary/pump
 
 	update_icon()
 		if(node1&&node2)
-			icon_state = "intact_[on?("on"):("off")]"
+			icon_state = "intact_[src.flags & THING_IS_ON ? ("on"):("off")]"
 		else
 			if(node1)
 				icon_state = "exposed_1_off"
@@ -40,13 +39,13 @@ obj/machinery/atmospherics/binary/pump
 				icon_state = "exposed_2_off"
 			else
 				icon_state = "exposed_3_off"
-			on = 0
+			src.flags &= ~THING_IS_ON
 
 		return
 
 	process()
 		..()
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			return 0
 
 		var/output_starting_pressure = MIXTURE_PRESSURE(air2)
@@ -93,7 +92,7 @@ obj/machinery/atmospherics/binary/pump
 
 			signal.data["tag"] = id
 			signal.data["device"] = "AGP"
-			signal.data["power"] = on ? "on" : "off"
+			signal.data["power"] = src.flags & THING_IS_ON ? "on" : "off"
 			signal.data["target_output"] = target_pressure
 
 			radio_connection.post_signal(src, signal)
@@ -123,13 +122,13 @@ obj/machinery/atmospherics/binary/pump
 				SPAWN_DBG(0.5 SECONDS) broadcast_status()
 
 			if("power_on")
-				on = 1
+				src.flags |= THING_IS_ON
 
 			if("power_off")
-				on = 0
+				src.flags &= ~THING_IS_ON
 
 			if("power_toggle")
-				on = !on
+				src.flags ^= THING_IS_ON
 
 			if("set_output_pressure")
 				var/number = text2num(signal.data["parameter"])
@@ -165,11 +164,14 @@ datum/pump_ui/basic_pump_ui/set_value(val_to_set)
 	our_pump.update_icon()
 
 datum/pump_ui/basic_pump_ui/toggle_power()
-	our_pump.on = !our_pump.on
+	our_pump.flags ^= THING_IS_ON
 	our_pump.update_icon()
 
 datum/pump_ui/basic_pump_ui/is_on()
-	return our_pump.on
+	if (our_pump.flags & THING_IS_ON)
+		return 1
+	else
+		return 0
 
 datum/pump_ui/basic_pump_ui/get_value()
 	return our_pump.target_pressure

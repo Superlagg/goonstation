@@ -94,7 +94,6 @@
 	desc = "A flashlight module for a PDA."
 	icon_state = "pdamod_light"
 	setup_use_menu_badge = 1
-	var/on = 0 //Are we currently on?
 	var/lumlevel = 0.2 //How bright are we?
 	var/datum/light/light
 	abilities = list(/obj/ability_button/pda_flashlight_toggle)
@@ -116,7 +115,7 @@
 		..()
 		if (!use_simple_light && !use_medium_light)
 			light.attach(user)
-		else if (on)
+		else if (src.flags & THING_IS_ON)
 			if (src.host)
 				src.host.remove_sm_light("pda\ref[src]")
 			user.add_sm_light("pda\ref[src]", list(255,255,255,lumlevel * 255), use_medium_light)
@@ -129,34 +128,34 @@
 				if (src.host.loc != user)
 					if (!use_simple_light && !use_medium_light)
 						light.attach(src.host.loc)
-					else if (on)
+					else if (src.flags & THING_IS_ON)
 						user.remove_sm_light("pda\ref[src]")
 						src.host.add_sm_light("pda\ref[src]", list(255,255,255,lumlevel * 255), use_medium_light)
 				else
 					if (!use_simple_light && !use_medium_light)
 						light.detach()
-					else if (on)
+					else if (src.flags & THING_IS_ON)
 						user.remove_sm_light("pda\ref[src]")
 
 
 	return_menu_badge()
-		var/text = "<a href='byond://?src=\ref[src];toggle=1'>[src.on ? "Disable" : "Enable"] Flashlight</a>"
+		var/text = "<a href='byond://?src=\ref[src];toggle=1'>[src.flags & THING_IS_ON ? "Disable" : "Enable"] Flashlight</a>"
 		return text
 
 	install(var/obj/item/device/pda2/pda)
 		..()
 		if (!use_simple_light && !use_medium_light)
 			light.attach(pda)
-		else if (on)
+		else if (src.flags & THING_IS_ON)
 			pda.add_sm_light("pda\ref[src]", list(255,255,255,lumlevel * 255), use_medium_light)
 
 	uninstall()
 		if (!use_simple_light && !use_medium_light)
 			light.disable()
-		else if (on)
+		else if (src.flags & THING_IS_ON)
 			src.host.remove_sm_light("pda\ref[src]")
 			src.host.loc.remove_sm_light("pda\ref[src]") // user
-		src.on = 0
+		src.flags &= ~THING_IS_ON
 		src.host.underlays -= src.lensflare
 		..()
 
@@ -168,12 +167,12 @@
 		return
 
 	proc/toggle_light()
-		src.on = !src.on
+		src.flags ^= THING_IS_ON
 		if (!use_simple_light && !use_medium_light)
 			if (ismob(src.host.loc))
 				light.attach(src.host.loc)
 
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			src.host.underlays += src.lensflare
 			if (!use_simple_light && !use_medium_light)
 				light.enable()
@@ -197,7 +196,7 @@
 
 		if (islist(src.ability_buttons))
 			for (var/obj/ability_button/pda_flashlight_toggle/B in src.ability_buttons)
-				B.icon_state = "pda[src.on]"
+				B.icon_state = "pda[src.flags & THING_IS_ON ? 1 : 0]"
 		if (src.host)
 			src.host.updateSelfDialog()
 
@@ -233,11 +232,10 @@
 	desc = "A terahertz-ray emitter and scanner built into a handy PDA module."
 	icon_state = "pdamod_tscanner"
 	setup_use_menu_badge = 1
-	var/on = 0
 	abilities = list(/obj/ability_button/pda_tray_toggle)
 
 	return_menu_badge()
-		var/text = "<a href='byond://?src=\ref[src];toggle=1'>[src.on ? "Disable" : "Enable"] T-Scanner</a>"
+		var/text = "<a href='byond://?src=\ref[src];toggle=1'>[src.flags & THING_IS_ON ? "Disable" : "Enable"] T-Scanner</a>"
 		return text
 
 	Topic(href, href_list)
@@ -248,20 +246,20 @@
 		return
 
 	proc/toggle_scan()
-		src.on = !src.on
-		if(src.on) processing_items |= src
+		src.flags ^= THING_IS_ON
+		if(src.flags & THING_IS_ON) processing_items |= src
 		for (var/obj/ability_button/pda_tray_toggle/B in src.ability_buttons)
-			B.icon_state = "pda[src.on]"
+			B.icon_state = "pda[src.flags & THING_IS_ON ? 1 : 0]"
 		if (src.host)
 			src.host.updateSelfDialog()
 
 	uninstall()
 		..()
-		src.on = 0
+		src.flags &= ~THING_IS_ON
 		return
 
 	process()
-		if(!src.on || !src.host)
+		if(src.flags & ~THING_IS_ON || !src.host)
 			processing_items.Remove(src)
 			return
 		var/loc_to_check = src.host.loc

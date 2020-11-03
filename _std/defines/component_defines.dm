@@ -85,6 +85,8 @@
 #define COMSIG_ITEM_ATTACK_PRE "itm_atk_pre"
 /// When an item is used in-hand
 #define COMSIG_ITEM_ATTACK_SELF "itm_atk_self"
+/// When an item is used to attack another item
+#define COMSIG_ITEM_ATTACK_OTHER_ITEM "itm_atk_other_item"
 
 // ---- implant signals ----
 /// When implanted

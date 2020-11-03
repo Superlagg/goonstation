@@ -51,6 +51,6 @@
 	var/g = rand(100) / 100
 	var/b = rand(100) / 100
 	for (var/obj/machinery/light/L in lights)
-		if (L.on)
+		if (L.flags & THING_IS_ON)
 			L.light.set_color(r, g, b)
 	src.timing = duration

@@ -37,7 +37,7 @@
 
 		if (M.invisibility > 0)
 			for (var/obj/item/cloaking_device/I in M)
-				if (I.active)
+				if (I.flags & THING_IS_ON)
 					I.deactivate(M)
 					M.visible_message("<span class='notice'><b>[M]'s cloak is disrupted!</b></span>")
 

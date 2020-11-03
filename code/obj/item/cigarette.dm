@@ -15,7 +15,6 @@
 	throw_speed = 0.5
 	c_flags = EQUIPPED_WHILE_HELD
 	w_class = 1
-	var/on = 0
 	var/exploding = 0 //Does it blow up when it goes out?
 	var/flavor = null
 	var/nic_free = 0
@@ -40,8 +39,8 @@
 		..()
 		src.create_reagents(60)
 
-		if (src.on) //if we spawned lit, do something about it!
-			src.on = 0
+		if (src.flags & THING_IS_ON) //if we spawned lit, do something about it!
+			src.flags &= ~THING_IS_ON
 			src.light()
 
 		if (src.exploding)
@@ -68,16 +67,16 @@
 				src.reagents.trans_to(target, 5)
 
 			qdel (src)
-		else if (istype(target, /obj/item/match) && src.on)
+		else if (istype(target, /obj/item/match) && src.flags & THING_IS_ON)
 			target:light(user, "<span class='alert'><b>[user]</b> lights [target] with [src].</span>")
-		else if (src.on == 0 && isitem(target) && target:burning)
+		else if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN && isitem(target) && target:burning)
 			src.light(user, "<span class='alert'><b>[user]</b> lights [src] with [target]. Goddamn.</span>")
 			return
 		else
 			return ..()
 
 	attack_self(mob/user)
-		if (user.find_in_hand(src) && src.on > 0)
+		if (user.find_in_hand(src) && src.flags & THING_IS_ON)
 			src.put_out(user, "<b>[user]</b> calmly drops and treads on the lit [src.name], putting it out instantly.")
 			user.u_equip(src)
 			src.set_loc(user.loc)
@@ -86,8 +85,8 @@
 			return ..()
 
 	proc/light(var/mob/user as mob, var/message as text)
-		if (src.on == 0)
-			src.on = 1
+		if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
+			src.flags |= THING_IS_ON
 			src.hit_type = DAMAGE_BURN
 			src.force = 3
 			src.icon_state = litstate
@@ -104,8 +103,9 @@
 			hit_type = DAMAGE_BURN
 
 	proc/put_out(var/mob/user as mob, var/message as text)
-		if (src.on == 1)
-			src.on = -1
+		if (src.flags & THING_IS_ON)
+			src.flags &= ~THING_IS_ON
+			src.flags |= THING_IS_BROKEN
 			src.hit_type = DAMAGE_BLUNT
 			src.force = 0
 			src.icon_state = buttstate
@@ -124,18 +124,18 @@
 			playsound(get_turf(src), "sound/impact_sounds/burn_sizzle.ogg", 50, 1)
 
 	temperature_expose(datum/gas_mixture/air, temperature, volume)
-		if (src.on == 0)
+		if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
 			if (temperature > T0C+200)
 				src.visible_message("<span class='alert'>The [src] ignites!</span>", group = "cig_ignite")
 				src.light()
 
 	ex_act(severity)
-		if (src.on == 0)
+		if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
 			src.visible_message("<span class='alert'>The [src] ignites!</span>", group = "cig_ignite")
 			src.light()
 
 	attackby(obj/item/W as obj, mob/user as mob)
-		if (src.on == 0)
+		if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
 			if (isweldingtool(W) && W:try_weld(user,0,-1,0,0))
 				src.light(user, "<span class='alert'><b>[user]</b> casually lights [src] with [W], what a badass.</span>")
 				return
@@ -169,15 +169,15 @@
 			if (ishuman(M))
 				var/mob/living/carbon/human/H = M
 				if (H.bleeding || (H.butt_op_stage == 4 && user.zone_sel.selecting == "chest"))
-					if (src.cautery_surgery(H, user, 5, src.on))
+					if (src.cautery_surgery(H, user, 5, src.flags & THING_IS_ON ? 1 : 0))
 						return
-			if (M.getStatusDuration("burning") && src.on == 0)
+			if (M.getStatusDuration("burning") && src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
 				if (M == user)
 					src.light(user, "<span class='alert'><b>[user]</b> lights [his_or_her(user)] [src.name] with [his_or_her(user)] OWN flaming body. That's dedication! Or crippling addiction.</span>")
 				else
 					src.light(user, "<span class='alert'><b>[user]</b> lights [his_or_her(user)] [src.name] with [M]'s flaming body. That's cold, man. That's real cold.</span>")
 				return
-			else if (src.on == 1)
+			else if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
 				src.put_out(user, "<span class='alert'><b>[user]</b> puts [src] out on [target].</span>")
 				if (ishuman(target))
 					var/mob/living/carbon/human/chump = target
@@ -191,7 +191,7 @@
 
 	attack_hand(mob/user as mob)
 		if (!user) return
-		var/can_blow_smoke = (user.wear_mask == src && src.on && src.reagents.total_volume > 0 && src.puff_ready)
+		var/can_blow_smoke = (user.wear_mask == src && src.flags & THING_IS_ON && src.reagents.total_volume > 0 && src.puff_ready)
 		var/success = ( ..() )
 		if (!(can_blow_smoke && success)) return
 
@@ -278,7 +278,7 @@
 
 		if (!src.reagents || src.reagents.total_volume <= 0) //ZeWaka: fix for null.total_volume (syndie cigs)
 			if (src.exploding)
-				src.on = 0 //Let's not keep looping while we're busy blowing up, ok?
+				src.flags &= ~THING_IS_ON //Let's not keep looping while we're busy blowing up, ok?
 				processing_items.Remove(src)
 				SPAWN_DBG((20)+(rand(1,10)))
 					trick_explode()
@@ -297,7 +297,7 @@
 	dropped(mob/user as mob)
 		if (!isturf(src.loc))
 			return
-		if (src.on == 1 && !src.exploding && src.reagents.total_volume <= 20)
+		if (src.flags & THING_IS_ON && !src.exploding && src.reagents.total_volume <= 20)
 			src.put_out(user, "<span class='alert'><b>[user]</b> calmly drops and treads on the lit [src.name], putting it out instantly.</span>")
 			return ..()
 		else
@@ -841,9 +841,6 @@
 	burn_possible = 1
 	health = 10
 
-	/// 0 = unlit, 1 = lit, -1 is burnt out/broken or otherwise unable to be lit
-	var/on = 0
-
 	var/light_mob = 0
 	var/life_timer = 0
 	rand_pos = 1
@@ -863,7 +860,7 @@
 
 	dropped(mob/user)
 		..()
-		if (isturf(src.loc) && src.on > 0)
+		if (isturf(src.loc) && src.flags & THING_IS_ON)
 			user.visible_message("<span class='alert'><b>[user]</b> calmly drops and treads on the lit [src.name], putting it out instantly.</span>")
 			src.put_out(user)
 			return
@@ -872,7 +869,7 @@
 				light.attach(src)
 
 	process()
-		if (src.on > 0)
+		if (src.flags & THING_IS_ON)
 			if (src.life_timer >= 0)
 				life_timer--
 			var/location = src.loc
@@ -893,7 +890,7 @@
 			//sleep(1 SECOND)
 
 	proc/light(var/mob/user as mob)
-		src.on = 1
+		src.flags |= THING_IS_ON
 		src.icon_state = "match-lit"
 
 		playsound(get_turf(user), "sound/items/matchstick_light.ogg", 50, 1)
@@ -902,7 +899,8 @@
 		processing_items |= src
 
 	proc/put_out(var/mob/user as mob, var/break_it = 0)
-		src.on = -1
+		src.flags &= ~THING_IS_ON
+		src.flags |= THING_IS_BROKEN
 		src.life_timer = 0
 		if (break_it)
 			src.icon_state = "match-broken"
@@ -919,32 +917,32 @@
 		processing_items.Remove(src)
 
 	temperature_expose(datum/gas_mixture/air, temperature, volume)
-		if (src.on == 0)
+		if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
 			if (temperature > T0C+200)
 				src.visible_message("<span class='alert'>The [src] ignites!</span>")
 				src.light()
 
 	ex_act(severity)
-		if (src.on == 0)
+		if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
 			src.visible_message("<span class='alert'>The [src] ignites!</span>")
 			src.light()
 
 	afterattack(atom/target, mob/user as mob)
-		if (src.on > 0)
+		if (src.flags & THING_IS_ON)
 			if (!ismob(target) && target.reagents)
 				user.show_text("You heat [target].", "blue")
 				target.reagents.temperature_reagents(1000,10)
 				return
-		else if (src.on == -1)
+		else if (src.flags & ~THING_IS_ON && src.flags & THING_IS_BROKEN)
 			user.show_text("You [pick("fumble", "fuss", "mess", "faff")] around with [src] and try to get it to light, but it's no use.", "red")
 			return
-		else if (src.on == 0)
-			if (istype(target, /obj/item/match) && target:on > 0)
+		else if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
+			if (istype(target, /obj/item/match) && target.flags & THING_IS_ON)
 				user.visible_message("<b>[user]</b> lights [src] with the flame from [target].",\
 				"You light [src] with the flame from [target].")
 				src.light(user)
 				return
-			else if (istype(target, /obj/item/clothing/mask/cigarette) && target:on > 0)
+			else if (istype(target, /obj/item/clothing/mask/cigarette) && target.flags & THING_IS_ON)
 				user.visible_message("<b>[user]</b> lights [src] with [target].",\
 				"You light [src] with [target].")
 				src.light(user)
@@ -991,7 +989,7 @@
 
 	attack(mob/M as mob, mob/user as mob)
 		if (ishuman(M))
-			if (src.on > 0)
+			if (src.flags & THING_IS_ON)
 				var/mob/living/carbon/human/fella = M
 				if (fella.wear_mask && istype(fella.wear_mask, /obj/item/clothing/mask/cigarette))
 					var/obj/item/clothing/mask/cigarette/smoke = fella.wear_mask // aaaaaaa
@@ -999,7 +997,7 @@
 					fella.set_clothing_icon_dirty()
 					return
 				else if (fella.bleeding || (fella.butt_op_stage == 4 && user.zone_sel.selecting == "chest"))
-					src.cautery_surgery(fella, user, 5, src.on)
+					src.cautery_surgery(fella, user, 5, src.flags & THING_IS_ON ? 1 : 0)
 					return ..()
 				else
 					user.visible_message("<span class='alert'><b>[user]</b> puts out [src] on [fella]!</span>",\
@@ -1014,7 +1012,7 @@
 
 	attack_self(mob/user)
 		if (user.find_in_hand(src))
-			if (src.on > 0)
+			if (src.flags & THING_IS_ON)
 				user.visible_message("<b>[user]</b> [pick("licks [his_or_her(user)] finger and snuffs out [src].", "waves [src] around until it goes out.")]")
 				src.put_out(user)
 		else
@@ -1052,13 +1050,13 @@
 
 	attack_self(mob/user)
 		if (user.find_in_hand(src))
-			if (!src.on)
+			if (src.flags & ~THING_IS_ON)
 				if (!reagents)
 					return
 				if (!reagents.get_reagent_amount("fuel"))
 					user.show_text("Out of fuel.", "red")
 					return
-				src.on = 1
+				src.flags |= THING_IS_ON
 				set_icon_state(src.icon_on)
 				src.item_state = "zippoon"
 				user.visible_message("<span class='alert'>Without even breaking stride, [user] flips open and lights [src] in one smooth movement.</span>")
@@ -1067,7 +1065,7 @@
 
 				processing_items |= src
 			else
-				src.on = 0
+				src.flags &= ~THING_IS_ON
 				set_icon_state(src.icon_off)
 				src.item_state = "zippo"
 				user.visible_message("<span class='alert'>You hear a quiet click, as [user] shuts off [src] without even looking what they're doing. Wow.</span>")
@@ -1084,7 +1082,7 @@
 		if (ishuman(target))
 			var/mob/living/carbon/human/fella = target
 
-			if (src.on)
+			if (src.flags & THING_IS_ON)
 				if (user.zone_sel.selecting == "l_arm")
 					if (fella.limbs.l_arm_bleed > 1)
 						fella.TakeDamage("chest",0,10)
@@ -1112,14 +1110,14 @@
 					return
 
 			if (fella.bleeding || (fella.butt_op_stage == 4 && user.zone_sel.selecting == "chest"))
-				if (src.cautery_surgery(target, user, 10, src.on))
+				if (src.cautery_surgery(target, user, 10, src.flags & THING_IS_ON ? 1 : 0))
 					return
 
-		user.visible_message("<span class='alert'><b>[user]</b> waves [src] around in front of [target]'s face! OoOo, are ya scared?![src.on ? "" : " No, probably not, since [src] is closed."]</span>")
+		user.visible_message("<span class='alert'><b>[user]</b> waves [src] around in front of [target]'s face! OoOo, are ya scared?![src.flags & THING_IS_ON ? "" : " No, probably not, since [src] is closed."]</span>")
 		return
 
 	afterattack(atom/O, mob/user as mob)
-		if (!on && (istype(O, /obj/reagent_dispensers/fueltank) || istype(O, /obj/item/reagent_containers/food/drinks/fueltank)))
+		if (src.flags & ~THING_IS_ON && (istype(O, /obj/reagent_dispensers/fueltank) || istype(O, /obj/item/reagent_containers/food/drinks/fueltank)))
 			if (!reagents)
 				return
 
@@ -1139,14 +1137,14 @@
 				user.show_text("[O] is empty.", "red")
 			return
 
-		else if (!ismob(O) && src.on && O.reagents)
+		else if (!ismob(O) && src.flags & THING_IS_ON && O.reagents)
 			user.show_text("You heat [O].", "blue")
 			O.reagents.temperature_reagents(1500,10)
 		else
 			return ..()
 
 	process()
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			if (!reagents)
 				return
 			if (!infinite_fuel && reagents.get_reagent_amount("fuel"))
@@ -1160,7 +1158,7 @@
 			if (T)
 				T.hotspot_expose(700,5)
 			if (!reagents.get_reagent_amount("fuel"))
-				src.on = 0
+				src.flags &= ~THING_IS_ON
 				set_icon_state(src.icon_off)
 				src.item_state = "zippo"
 				light.disable()
@@ -1179,7 +1177,7 @@
 		if (!src.user_can_suicide(user))
 			user.suiciding = 0
 			return 0
-		if (!src.on) // don't need to do more than just show the message since the lighter is deleted in a moment anyway
+		if (src.flags & ~THING_IS_ON) // don't need to do more than just show the message since the lighter is deleted in a moment anyway
 			user.visible_message("<span class='alert'>Without even breaking stride, [user] flips open and lights [src] in one smooth movement.</span>")
 		user.visible_message("<span class='alert'><b>[user] swallows the on [src.name]!</b></span>")
 		user.take_oxygen_deprivation(75)

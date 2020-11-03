@@ -363,8 +363,8 @@ CONTENTS:
 		if(!chair1) chair1 = locate(/obj/stool/chair/e_chair, get_step(src, WEST))
 		if(!chair2) chair2 = locate(/obj/stool/chair/e_chair, get_step(src, EAST))
 
-		if(chair1 && !chair1.on) chair1.toggle_active()
-		if(chair2 && !chair2.on) chair2.toggle_active()
+		if(chair1 && !chair1.flags & THING_IS_ON) chair1.toggle_active()
+		if(chair2 && !chair2.flags & THING_IS_ON) chair2.toggle_active()
 		update_icons()
 
 	proc/can_operate()

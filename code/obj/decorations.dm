@@ -454,7 +454,6 @@
 	icon_state = "light1"
 	anchored = 1
 	density = 0
-	var/on = 0
 	var/id = null
 	var/list/myBlinds = list()
 
@@ -479,12 +478,12 @@
 					blind.mySwitch = src
 
 	proc/toggle()
-		src.on = !(src.on)
-		src.icon_state = "light[!(src.on)]"
+		src.flags ^= THING_IS_ON
+		src.icon_state = "light[src.flags & THING_IS_ON ? 0 : 1]"
 		if (!islist(myBlinds) || !myBlinds.len)
 			return
 		for (var/obj/window_blinds/blind in myBlinds)
-			blind.toggle(src.on)
+			blind.toggle(src.flags & THING_IS_ON ? 1 : 0)
 
 	attack_hand(mob/user as mob)
 		src.toggle()
@@ -546,7 +545,6 @@
 	anchored = 1
 	density = 0
 	layer = 6
-	var/on = 0
 	var/datum/light/point/light
 
 	New()
@@ -561,15 +559,18 @@
 		src.toggle_on()
 
 	proc/toggle_on()
-		src.on = !src.on
-		src.icon_state = "disco[src.on]"
-		if (src.on)
+		if(src.flags & THING_IS_ON)
+			// Is now off, or "not-on"
+			src.flags &= ~THING_IS_ON
+			light.disable()
+			particleMaster.RemoveSystem(/datum/particleSystem/sparkles_disco, src)
+		else
+			src.flags |= THING_IS_ON
+			// Is now on, or "not-off"
 			light.enable()
 			if (!particleMaster.CheckSystemExists(/datum/particleSystem/sparkles_disco, src))
 				particleMaster.SpawnSystem(new /datum/particleSystem/sparkles_disco(src))
-		else
-			light.disable()
-			particleMaster.RemoveSystem(/datum/particleSystem/sparkles_disco, src)
+		src.icon_state = "disco[src.flags & THING_IS_ON ? 1 : 0]"
 
 /obj/admin_plaque
 	name = "Admin's Office"
@@ -724,7 +725,6 @@ obj/decoration/ceilingfan
 	var/col_r = 0.5
 	var/col_g = 0.3
 	var/col_b = 0.0
-	var/lit = 0
 	var/datum/light/light
 
 	New()
@@ -735,51 +735,51 @@ obj/decoration/ceilingfan
 		light.attach(src)
 
 	proc/update_icon()
-		if (src.lit == 1)
+		if (src.flags & THING_IS_ON)
 			src.icon_state = src.icon_on
 			light.enable()
 
 		else
-			src.lit = 0
+			src.flags &= ~THING_IS_ON
 			src.icon_state = src.icon_off
 			light.disable()
 
 	attackby(obj/item/W as obj, mob/user as mob)
-		if (!src.lit)
+		if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
 			if (isweldingtool(W) && W:try_weld(user,0,-1,0,0))
 				boutput(user, "<span class='alert'><b>[user]</b> casually lights [src] with [W], what a badass.</span>")
-				src.lit = 1
+				src.flags |= THING_IS_ON
 				update_icon()
 
-			if (istype(W, /obj/item/clothing/head/cakehat) && W:on)
+			if (istype(W, /obj/item/clothing/head/cakehat) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
 				boutput(user, "<span class='alert'>Did [user] just light \his [src] with [W]? Holy Shit.</span>")
-				src.lit = 1
+				src.flags |= THING_IS_ON
 				update_icon()
 
 			if (istype(W, /obj/item/device/igniter))
 				boutput(user, "<span class='alert'><b>[user]</b> fumbles around with [W]; a small flame erupts from [src].</span>")
-				src.lit = 1
+				src.flags |= THING_IS_ON
 				update_icon()
 
-			if (istype(W, /obj/item/device/light/zippo) && W:on)
+			if (istype(W, /obj/item/device/light/zippo) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
 				boutput(user, "<span class='alert'>With a single flick of their wrist, [user] smoothly lights [src] with [W]. Damn they're cool.</span>")
-				src.lit = 1
+				src.flags |= THING_IS_ON
 				update_icon()
 
-			if ((istype(W, /obj/item/match) || istype(W, /obj/item/device/light/candle)) && W:on)
+			if ((istype(W, /obj/item/match) || istype(W, /obj/item/device/light/candle)) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
 				boutput(user, "<span class='alert'><b>[user] lights [src] with [W].</span>")
-				src.lit = 1
+				src.flags |= THING_IS_ON
 				update_icon()
 
 			if (W.burning)
 				boutput(user, "<span class='alert'><b>[user]</b> lights [src] with [W]. Goddamn.</span>")
-				src.lit = 1
+				src.flags |= THING_IS_ON
 				update_icon ()
 
 	attack_hand(mob/user as mob)
-		if (src.lit)
+		if (src.flags & THING_IS_ON)
 			var/fluff = pick("snuff", "blow")
-			src.lit = 0
+			src.flags &= ~THING_IS_ON
 			update_icon()
 			user.visible_message("<b>[user]</b> [fluff]s out the [src].",\
 			"You [fluff] out the [src].")

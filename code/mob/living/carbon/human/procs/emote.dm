@@ -1370,7 +1370,7 @@
 								l_glowstick = l_hand
 							if (right_glowstick)
 								r_glowstick = r_hand
-							if ((left_glowstick && l_glowstick.on) || (right_glowstick && r_glowstick.on))
+							if ((left_glowstick && l_glowstick.flags & THING_IS_ON) || (right_glowstick && r_glowstick.flags & THING_IS_ON))
 								if (left_glowstick)
 									particleMaster.SpawnSystem(new /datum/particleSystem/glow_stick_dance(src.loc))
 								if (right_glowstick)

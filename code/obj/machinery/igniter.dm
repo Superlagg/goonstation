@@ -4,7 +4,6 @@
 	icon_state = "igniter1"
 	machine_registry_idx = MACHINES_SPARKERS
 	var/id = null
-	var/on = 1.0
 	anchored = 1.0
 	desc = "A device that ignites in order to start fires remotely."
 
@@ -17,12 +16,12 @@
 	add_fingerprint(user)
 
 	use_power(50)
-	src.on = !( src.on )
-	src.icon_state = text("igniter[]", src.on)
+	src.flags ^= THING_IS_ON
+	src.icon_state = text("igniter[]", src.flags & THING_IS_ON ? 1 : 0)
 	return
 
 /obj/machinery/igniter/process()
-	if (src.on && !(status & NOPOWER) )
+	if (src.flags & THING_IS_ON && !(status & NOPOWER) )
 		var/turf/location = src.loc
 		if (isturf(location))
 			location.hotspot_expose(1000,500,1)
@@ -30,11 +29,11 @@
 
 /obj/machinery/igniter/New()
 	..()
-	icon_state = "igniter[on]"
+	icon_state = "igniter[src.flags & THING_IS_ON ? 1 : 0]"
 
 /obj/machinery/igniter/power_change()
 	if(!( status & NOPOWER) )
-		icon_state = "igniter[src.on]"
+		icon_state = "igniter[src.flags & THING_IS_ON ? 1 : 0]"
 	else
 		icon_state = "igniter0"
 
@@ -138,8 +137,8 @@
 	for(var/obj/machinery/igniter/M in machine_registry[MACHINES_SPARKERS])
 		if(M.id == src.id)
 			use_power(50)
-			M.on = !( M.on )
-			M.icon_state = text("igniter[]", M.on)
+			M.flags ^= THING_IS_ON
+			M.icon_state = text("igniter[]", M.flags & THING_IS_ON ? 1 : 0)
 		LAGCHECK(LAG_MED)
 
 	sleep(5 SECONDS)

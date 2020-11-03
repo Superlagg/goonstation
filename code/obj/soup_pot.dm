@@ -61,7 +61,6 @@
 	mats = 18
 	deconstruct_flags = DECON_WRENCH | DECON_CROWBAR | DECON_WELDER
 	var/obj/item/soup_pot/pot
-	var/on = 0
 	flags = NOSPLASH
 
 	attackby(obj/item/W as obj, mob/user as mob)
@@ -74,13 +73,13 @@
 				user.u_equip(W)
 				W.set_loc(src)
 
-		if (!src.on && src.pot)
+		if (src.flags & ~THING_IS_ON && src.pot)
 
 			if (isweldingtool(W) && W:try_weld(user,0,-1,0,0))
 				src.light(user, "<span class='alert'><b>[user] casually lights [src] with [W], what a badass.</b></span>")
 				return
 
-			else if (istype(W, /obj/item/clothing/head/cakehat) && W:on)
+			else if (istype(W, /obj/item/clothing/head/cakehat) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
 				src.light(user, "<span class='alert'><b>Did [user] just light \his [src] with [W]? Holy Shit.</b></span>")
 				return
 
@@ -88,23 +87,21 @@
 				src.light(user, "<span class='alert'>[user] fumbles around with [W]; a small flame erupts from [src].</span>")
 				return
 
-			else if (istype(W, /obj/item/device/light/zippo) && W:on)
+			else if (istype(W, /obj/item/device/light/zippo) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
 				src.light(user, "<span class='alert'><b>With a single flick of their wrist, [user] smoothly lights [src] with [W]. Damn they're cool.</b></span>")
 				return
 
 			else if (istype(W, /obj/item/match))
-				var/obj/item/match/match = W
-				switch (match.on)
-					if (-1) // broken
-						user.visible_message("[user] stares at [match] for a while. Seeming confused, they just chuck it into [src].", "\The [match] confuses you, so you just chuck it into [src].")
-					if (0) // unlit
-						src.light(user, "<span class='alert'><b>With a swift motion, [user] strikes [match] on [src] and lights both ablaze. Damn, they're slick.</b></span>")
-						return
-					if (1) // lit
-						src.light(user, "<span class='alert'>[user] lights [src] with [match].</span>")
-						return
+				if (W.flags & ~THING_IS_ON && W.flags & THING_IS_BROKEN) // broken
+					user.visible_message("[user] stares at [W] for a while. Seeming confused, they just chuck it into [src].", "\The [W] confuses you, so you just chuck it into [src].")
+				else if (W.flags & ~THING_IS_ON && W.flags & ~THING_IS_BROKEN) // unlit
+					src.light(user, "<span class='alert'><b>With a swift motion, [user] strikes [W] on [src] and lights both ablaze. Damn, they're slick.</b></span>")
+					return
+				else if (W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN) // lit
+					src.light(user, "<span class='alert'>[user] lights [src] with [W].</span>")
+					return
 
-			else if (istype(W, /obj/item/device/light/candle) && W:on)
+			else if (istype(W, /obj/item/device/light/candle) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
 				src.light(user, "<span class='alert'>[user] lights [src] with [W].</span>")
 				return
 
@@ -118,7 +115,7 @@
 					W.afterattack(pot,user) // ????
 
 	attack_hand(mob/user as mob)
-		if(src.on)
+		if(src.flags & THING_IS_ON)
 			boutput(user,"<span class='alert'><b>Cooking soup takes time, be patient!</b></span>")
 			return
 		if(src.pot)
@@ -138,10 +135,10 @@
 			boutput(user,"<span class='alert'><b>You can't have a soup with no broth, dummy!</b></span>")
 			return
 		user.visible_message(message)
-		src.on = 1
+		src.flags |= THING_IS_ON
 		src.icon_state = "stove2"
 		spawn(pot.total_wclass SECONDS)
-			src.on = 0
+			src.flags &= ~THING_IS_ON
 			src.icon_state = "stove1"
 			src.generate_soup()
 

@@ -2106,12 +2106,11 @@
 	name = "Toggle Component"
 	desc = ""
 	icon_state = "comp_toggle"
-	var/on = 0
 	var/signal_on = "1"
 	var/signal_off = "0"
 
 	get_desc()
-		. += {"<br><span class='notice'>Currently [on ? "ON":"OFF"].<br>
+		. += {"<br><span class='notice'>Currently [src.flags & THING_IS_ON ? "ON":"OFF"].<br>
 		Current ON Signal: [signal_on]<br>
 		Current OFF Signal: [signal_off]</span>"}
 
@@ -2154,7 +2153,7 @@
 	proc/activate(var/datum/mechanicsMessage/input)
 		if(level == 2) return
 		LIGHT_UP_HOUSING
-		on = 1
+		src.flags |= THING_IS_ON
 		tooltip_rebuild = 1
 		return
 
@@ -2167,7 +2166,7 @@
 	proc/deactivate(var/datum/mechanicsMessage/input)
 		if(level == 2) return
 		LIGHT_UP_HOUSING
-		on = 0
+		src.flags &= ~THING_IS_ON
 		tooltip_rebuild = 1
 		return
 
@@ -2180,7 +2179,7 @@
 	proc/toggle(var/datum/mechanicsMessage/input)
 		if(level == 2) return
 		LIGHT_UP_HOUSING
-		on = !on
+		src.flags ^= THING_IS_ON
 		tooltip_rebuild = 1
 		return
 
@@ -2193,13 +2192,13 @@
 	proc/send(var/datum/mechanicsMessage/input)
 		if(level == 2) return
 		LIGHT_UP_HOUSING
-		input.signal = (on ? signal_on : signal_off)
+		input.signal = (src.flags & THING_IS_ON ? signal_on : signal_off)
 		SPAWN_DBG(0)
 			SEND_SIGNAL(src,COMSIG_MECHCOMP_TRANSMIT_MSG,input)
 		return
 
 	updateIcon()
-		icon_state = "[under_floor ? "u":""]comp_toggle[on ? "1":""]"
+		icon_state = "[under_floor ? "u":""]comp_toggle[src.flags & THING_IS_ON ? "1":""]"
 		return
 
 /obj/item/mechanics/telecomp

@@ -19,7 +19,6 @@ obj/machinery/atmospherics/binary/volume_pump
 	name = "Gas pump"
 	desc = "A pump"
 
-	var/on = 0
 	var/transfer_rate = 200
 
 	var/frequency = 0
@@ -30,7 +29,7 @@ obj/machinery/atmospherics/binary/volume_pump
 
 	update_icon()
 		if(node1&&node2)
-			icon_state = "intact_[on?("on"):("off")]"
+			icon_state = "intact_[src.flags & THING_IS_ON ? ("on"):("off")]"
 		else
 			if(node1)
 				icon_state = "exposed_1_off"
@@ -38,13 +37,13 @@ obj/machinery/atmospherics/binary/volume_pump
 				icon_state = "exposed_2_off"
 			else
 				icon_state = "exposed_3_off"
-			on = 0
+			src.flags &= ~THING_IS_ON
 
 		return
 
 	process()
 		..()
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			return 0
 
 		var/transfer_ratio = max(1, transfer_rate/air1.volume)
@@ -78,7 +77,7 @@ obj/machinery/atmospherics/binary/volume_pump
 
 			signal.data["tag"] = id
 			signal.data["device"] = "APV"
-			signal.data["power"] = on
+			signal.data["power"] = src.flags & THING_IS_ON ? 1 : 0
 			signal.data["transfer_rate"] = transfer_rate
 
 			radio_connection.post_signal(src, signal)
@@ -100,13 +99,13 @@ obj/machinery/atmospherics/binary/volume_pump
 
 		switch(signal.data["command"])
 			if("power_on")
-				on = 1
+				src.flags |= THING_IS_ON
 
 			if("power_off")
-				on = 0
+				src.flags &= ~THING_IS_ON
 
 			if("power_toggle")
-				on = !on
+				src.flags ^= THING_IS_ON
 
 			if("set_transfer_rate")
 				var/number = text2num(signal.data["parameter"])
@@ -141,11 +140,14 @@ datum/pump_ui/volume_pump_ui/set_value(val)
 	our_pump.update_icon()
 
 datum/pump_ui/volume_pump_ui/toggle_power()
-	our_pump.on = !our_pump.on
+	our_pump.flags ^= THING_IS_ON
 	our_pump.update_icon()
 
 datum/pump_ui/volume_pump_ui/is_on()
-	return our_pump.on
+	if (our_pump.flags & THING_IS_ON)
+		return 1
+	else
+		return 0
 
 datum/pump_ui/volume_pump_ui/get_value()
 	return our_pump.transfer_rate

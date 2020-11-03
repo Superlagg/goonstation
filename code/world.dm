@@ -1211,14 +1211,14 @@ var/f_color_selector_handler/F_Color_Selector
 
 				if (nick == "buttbot")
 					for (var/obj/machinery/bot/buttbot/B in machine_registry[MACHINES_BOTS])
-						if(B.on)
+						if(B.flags & THING_IS_ON)
 							B.speak(msg)
 					return 1
 
 				//This is important.
 				else if (nick == "HeadSurgeon")
 					for (var/obj/machinery/bot/medbot/head_surgeon/HS in machine_registry[MACHINES_BOTS])
-						if (HS.on)
+						if (HS.flags & THING_IS_ON)
 							HS.speak(msg)
 					for (var/obj/item/clothing/suit/cardboard_box/head_surgeon/HS in world)
 						LAGCHECK(LAG_LOW)

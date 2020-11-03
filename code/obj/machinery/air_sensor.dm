@@ -9,7 +9,6 @@ obj/machinery/air_sensor
 	var/id_tag
 	var/frequency = 1439
 
-	var/on = 1
 	var/output = 3
 
 	deconstruct_flags = DECON_SCREWDRIVER | DECON_WRENCH | DECON_MULTITOOL
@@ -27,10 +26,10 @@ obj/machinery/air_sensor
 	var/datum/radio_frequency/radio_connection
 
 	proc/update_icon()
-		icon_state = "gsensor[on]"
+		icon_state = "gsensor[src.flags & THING_IS_ON ? 1 : 0]"
 
 	process()
-		if(on)
+		if(src.flags & THING_IS_ON)
 			var/datum/signal/signal = get_free_signal()
 			signal.transmission_method = 1 //radio signal
 			signal.data["tag"] = id_tag

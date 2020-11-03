@@ -1272,7 +1272,6 @@
 	desc = "A chair that has been modified to conduct current with over 2000 volts, enough to kill a human nearly instantly."
 	icon_state = "e_chair0"
 	foldable = 0
-	var/on = 0
 	var/obj/item/assembly/shock_kit/part1 = null
 	var/last_time = 1
 	var/lethal = 0
@@ -1321,7 +1320,7 @@
 			if (!isarea(A) || !A.powered(EQUIP))
 				dat += "\n<font color='red'>ERROR:</font> No power source detected!</b>"
 			else
-				dat += {"<A href='?src=\ref[src];on=1'>[on ? "Switch Off" : "Switch On"]</A><BR>
+				dat += {"<A href='?src=\ref[src];on=1'>[src.flags & THING_IS_ON ? "Switch Off" : "Switch On"]</A><BR>
 				<A href='?src=\ref[src];lethal=1'>[lethal ? "<font color='red'>Lethal</font>" : "Nonlethal"]</A><BR><BR>
 				<A href='?src=\ref[src];shock=1'>Shock</A><BR>"}
 
@@ -1349,9 +1348,16 @@
 		return
 
 	proc/toggle_active()
-		src.on = !(src.on)
+		if(src.flags & THING_IS_ON)
+			// Is now off, or "not-on"
+			src.flags &= ~THING_IS_ON
+			. = 0
+		else
+			src.flags |= THING_IS_ON
+			// Is now on, or "not-off"
+			. = 1
 		src.update_icon()
-		return src.on
+		return
 
 	proc/toggle_lethal()
 		src.lethal = !(src.lethal)
@@ -1359,12 +1365,12 @@
 		return
 
 	proc/update_icon()
-		src.icon_state = "e_chair[src.on]"
+		src.icon_state = "e_chair[src.flags & THING_IS_ON ? 1 : 0]"
 		if (!src.image_belt)
-			src.image_belt = image(src.icon, "e_chairo[src.on][src.lethal]", layer = FLY_LAYER + 1)
+			src.image_belt = image(src.icon, "e_chairo[src.flags & THING_IS_ON ? 1 : 0][src.lethal]", layer = FLY_LAYER + 1)
 			src.UpdateOverlays(src.image_belt, "belts")
 			return
-		src.image_belt.icon_state = "e_chairo[src.on][src.lethal]"
+		src.image_belt.icon_state = "e_chairo[src.flags & THING_IS_ON ? 1 : 0][src.lethal]"
 		src.UpdateOverlays(src.image_belt, "belts")
 
 	// Options:      1) place the chair anywhere in a powered area (fixed shock values),
@@ -1391,7 +1397,7 @@
 		return 0
 
 	proc/shock(lethal)
-		if (!src.on)
+		if (src.flags & ~THING_IS_ON)
 			return
 		if ((src.last_time + 50) > world.time)
 			return

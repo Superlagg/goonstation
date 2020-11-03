@@ -9,7 +9,6 @@
 	anchored = 1
 	flags = OPENCONTAINER
 
-	var/on = 0 //Are we currently spraying???
 	var/default_reagent = "cleaner" //Some water will also be added.
 	var/tmp/last_spray = 0
 
@@ -25,12 +24,12 @@
 		. = attack_hand(user)
 
 	attack_hand(mob/user as mob)
-		src.on = !src.on
-		if (src.on)
+		src.flags ^= THING_IS_ON
+		if (src.flags & THING_IS_ON)
 			SubscribeToProcess()
 		else
 			UnsubscribeProcess()
-		boutput(user, "You turn [src.on ? "on" : "off"] the shower head.")
+		boutput(user, "You turn [src.flags & THING_IS_ON ? "on" : "off"] the shower head.")
 
 #ifdef HALLOWEEN
 		if(halloween_mode && prob(15))
@@ -38,11 +37,11 @@
 #endif
 
 	process()
-		if(!on || (world.time < src.last_spray + SPRAY_DELAY))
+		if(src.flags & ~THING_IS_ON || (world.time < src.last_spray + SPRAY_DELAY))
 			return
 
 		if(status & (NOPOWER)) //It has a powered pump or something.
-			src.on = 0
+			src.flags &= ~THING_IS_ON
 			UnsubscribeProcess()
 			return
 

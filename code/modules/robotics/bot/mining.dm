@@ -7,7 +7,6 @@
 	layer = 5.0
 	density = 0
 	anchored = 0
-	on = 0
 	var/digging = 0
 	health = 25
 	var/diglevel = 2
@@ -30,7 +29,7 @@
 	src.ui = new/datum/digbot_ui(src)
 	setupOverlayVars()
 	sleep(5)
-	if(on)
+	if(src.flags & THING_IS_ON)
 		turnOn()
 	else
 		setEffectOverlays()
@@ -41,8 +40,8 @@
 	src.display_tool_animated = image('icons/obj/bots/aibots.dmi', "digbot powerpick digging")
 
 /obj/machinery/bot/mining/proc/togglePowerSwitch()
-	src.on = !src.on
-	if(src.on)
+	src.flags ^= THING_IS_ON
+	if(src.flags & THING_IS_ON)
 		turnOn()
 	else
 		turnOff()
@@ -53,19 +52,19 @@
 	src.updateUsrDialog()
 
 /obj/machinery/bot/mining/proc/turnOn()
-	src.on = 1
+	src.flags |= THING_IS_ON
 	src.add_sm_light("digbot\ref[src]", list(255,255,255,lumlevel * 255), use_medium_light)
 	setEffectOverlays()
 
 /obj/machinery/bot/mining/proc/turnOff()
-	src.on = 0
+	src.flags &= ~THING_IS_ON
 	src.remove_sm_light("digbot\ref[src]")
 	setEffectOverlays()
 
 /obj/machinery/bot/mining/proc/setEffectOverlays()
-	src.icon_state = "digbot[on]"
+	src.icon_state = "digbot[src.flags & THING_IS_ON ? 1 : 0]"
 	src.overlays = null
-	if(src.on)
+	if(src.flags & THING_IS_ON)
 		src.overlays += display_hover
 		pixel_y = 0
 	else
@@ -96,11 +95,11 @@
 		src.oldtarget = null
 		src.anchored = 0
 		src.emagged = 1
-		if(!src.on) 
+		if(src.flags & ~THING_IS_ON)
 			turnOn()
 
 /obj/machinery/bot/mining/process()
-	if(!src.on) return
+	if(src.flags & ~THING_IS_ON) return
 	if(src.digging) return
 	if(!istype(target, /turf/simulated/wall/asteroid/))
 		src.target = null
@@ -138,7 +137,7 @@
 				pointAtTarget()
 				break
 	return
-	
+
 /obj/machinery/bot/mining/proc/pointAtTarget()
 	if (src.target)
 		for (var/mob/O in hearers(src, null))
@@ -149,7 +148,7 @@
 		SPAWN_DBG (20)
 			P.invisibility = 101
 			qdel(P)
-	
+
 /obj/machinery/bot/mining/proc/buildPath()
 	if (!isturf(src.loc)) return
 	if (!target) return
@@ -233,26 +232,26 @@
 	onUpdate()
 		..()
 		if(!checkStillValid()) return
-	
+
 	onEnd()
-		if(checkStillValid()) 
+		if(checkStillValid())
 			target.damage_asteroid(bot.diglevel)
 			if(!istype(target, /turf/simulated/wall/asteroid/))
 				bot.target = null
 		if(bot != null)
 			bot.stopDiggingEffects()
 		..()
-	
+
 	onDelete()
 		..()
 		if(bot != null)
 			bot.stopDiggingEffects()
 
 	proc/checkStillValid()
-		if(bot == null || target == null) 
+		if(bot == null || target == null)
 			interrupt(INTERRUPT_ALWAYS)
 			return false
-		if(!bot.on || !istype(target, /turf/simulated/wall/asteroid/))
+		if(bot.flags & ~THING_IS_ON || !istype(target, /turf/simulated/wall/asteroid/))
 			bot.target = null
 			interrupt(INTERRUPT_ALWAYS)
 			return false
@@ -296,7 +295,7 @@
 
 /datum/digbot_ui/proc/render()
 	return {"
-<span>[bot.on ? "Active" : "Inactive"] - </span><a href="?src=\ref[src]&ui_target=digbot_ui&ui_action=toggle_power">Toggle Power</a><br />
+<span>[bot.flags & THING_IS_ON ? "Active" : "Inactive"] - </span><a href="?src=\ref[src]&ui_target=digbot_ui&ui_action=toggle_power">Toggle Power</a><br />
 <span>Settings:<br />
 <a href="?src=\ref[src]&ui_target=digbot_ui&ui_action=toggle_suspicious">[bot.digsuspicious ? "Digging" : "Avoiding"] suspicious rocks</a><br />
 <a href="?src=\ref[src]&ui_target=digbot_ui&ui_action=hardness">Targeting rock hardness [bot.hardthreshold] and lower</a>
@@ -350,5 +349,5 @@
 			else
 				boutput(user,  "It's not ready for that part yet.")
 				return
-		else 
+		else
 			..()

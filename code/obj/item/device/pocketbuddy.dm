@@ -81,7 +81,6 @@
   rand_pos = 1
   w_class = 2
   flags = FPRINT | TABLEPASS | ONBELT
-  var/on = 0
   var/sleep = 0
   var/muted = 0
   var/obj/item/ammo/power_cell/cell = null // using gun ammo cells due to not wanting to add a special snowflake small battery
@@ -118,7 +117,7 @@
     return
 
 /obj/item/device/pocketbuddy/attack_self(mob/user as mob)
-  if(!src.on)
+  if(src.flags & ~THING_IS_ON)
     if(src.cell.charge > 0)
       boutput(user, "<span class='notice'>You turn the pocketbuddy on!</span>")
       turn_on()
@@ -134,7 +133,7 @@
 // processing_items is the list of items to process
 
 /obj/item/device/pocketbuddy/proc/turn_on()
-  src.on = 1
+  src.flags |= THING_IS_ON
   playsound(get_turf(src), "sound/machines/twobeep.ogg", 50, 1)
   //speak("Pocketbuddy v0.9 - Copyright 2051-2053 Thinktronic Data Systems, LTD.")
   src.speak("System message. Pocketbuddy v0.9 initializing.")
@@ -145,7 +144,7 @@
 /obj/item/device/pocketbuddy/proc/turn_off()
   src.speak("Pocketbuddy shutting down.")
   playsound(get_turf(src), "sound/machines/twobeep.ogg", 50, 1)
-  src.on = 0
+  src.flags &= ~THING_IS_ON
   processing_items -= src
 
 /obj/item/device/pocketbuddy/process()
@@ -158,7 +157,7 @@
 
 
 /obj/item/device/pocketbuddy/proc/manage_power()
-  if(!on) return 1
+  if(!src.flags & ~THING_IS_ON) return 1
 
   if(!cell || (cell.charge <= 0))
     turn_off()
@@ -183,7 +182,7 @@
 
 
 /obj/item/device/pocketbuddy/proc/react_to_pets()
-  if(!src.on)
+  if(src.flags & ~THING_IS_ON)
     return // you pet the inanimate plastic box. no response
   // DEBUG: always react
   if(prob(20))
@@ -197,7 +196,7 @@
 
 // stolen from bot_parent because why not add more goddamn copy paste to everything
 /obj/item/device/pocketbuddy/proc/speak(var/message)
-  if (!src.on || !message || src.muted)
+  if (src.flags & ~THING_IS_ON || !message || src.muted)
     return
   // using the consolas font for now because these are not gonna have the best speech synthesizers
   src.audible_message("<span class='game say'><span class='name'>[src]</span> beeps, \"<span style='font-family: Consolas;'>[message]</span>\"")

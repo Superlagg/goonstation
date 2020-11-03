@@ -117,7 +117,7 @@ var/list/timewarp_interior_sounds = list('sound/ambience/industrial/Timeship_Gon
 	turn_on()
 		if(!src.cell || src.cell.charge <= 0)
 			return
-		src.on = 1
+		src.flags |= THING_IS_ON
 		src.idle = 0
 		src.moving = 0
 		src.task = null
@@ -140,7 +140,7 @@ var/list/timewarp_interior_sounds = list('sound/ambience/industrial/Timeship_Gon
 		src.wakeup()
 
 	wakeup()
-		if (src.on)
+		if (src.flags & THING_IS_ON)
 			playsound(src.loc, 'sound/machines/futurebuddy_beep.ogg', 50, 1)
 			return ..()
 
@@ -174,11 +174,11 @@ var/list/timewarp_interior_sounds = list('sound/ambience/industrial/Timeship_Gon
 
 		if(src.locked)
 
-			dat += "Status: [src.on ? "On" : "Off"]<br>"
+			dat += "Status: [src.flags & THING_IS_ON ? "On" : "Off"]<br>"
 
 		else
 
-			dat += "Status: <a href='?src=\ref[src];power=1'>[src.on ? "On" : "Off"]</a><br>"
+			dat += "Status: <a href='?src=\ref[src];power=1'>[src.flags & THING_IS_ON ? "On" : "Off"]</a><br>"
 
 		dat += "<br>Network ID: <b>\[[uppertext(src.net_id)]]</b><br>"
 
@@ -228,7 +228,7 @@ var/list/timewarp_interior_sounds = list('sound/ambience/industrial/Timeship_Gon
 			O.throw_at(edge, 100, 4)
 
 		SPAWN_DBG(0) //Delete the overlay when finished with it.
-			src.on = 0
+			src.flags &= ~THING_IS_ON
 			sleep(1.5 SECONDS)
 			qdel(Ov)
 			qdel(src)

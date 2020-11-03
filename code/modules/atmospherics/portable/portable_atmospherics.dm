@@ -73,7 +73,7 @@
 			//Perform the connection
 			connected_port = new_port
 			connected_port.connected_device = src
-			connected_port.on = 1
+			connected_port.flags |= THING_IS_ON
 
 			anchored = 1 //Prevent movement
 

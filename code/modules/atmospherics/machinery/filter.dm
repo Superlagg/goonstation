@@ -8,7 +8,6 @@ obj/machinery/atmospherics/filter
 	dir = SOUTH
 	initialize_directions = SOUTH|NORTH|WEST
 
-	var/on = 0
 
 	var/datum/gas_mixture/air_in
 	var/datum/gas_mixture/air_out1
@@ -116,7 +115,7 @@ Filter types:
 
 	update_icon()
 		if(node_out1&&node_out2&&node_in)
-			icon_state = "intact_[on?("on"):("off")]"
+			icon_state = "intact_[src.flags & THING_IS_ON?("on"):("off")]"
 		else
 			var/node_out1_direction = get_dir(src, node_out1)
 			var/node_out2_direction = get_dir(src, node_out2)
@@ -125,7 +124,7 @@ Filter types:
 
 			icon_state = "exposed_[node_out1_direction|node_out2_direction]_[node_in_bit]_off"
 
-			on = 0
+			src.flags &= ~THING_IS_ON
 
 		return
 
@@ -139,7 +138,7 @@ Filter types:
 
 	process()
 		..()
-		if(!on)
+		if(src.flags & ~THING_IS_ON)
 			return 0
 
 		var/output_starting_pressure = MIXTURE_PRESSURE(air_out2)

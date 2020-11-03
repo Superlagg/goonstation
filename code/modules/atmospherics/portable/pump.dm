@@ -6,7 +6,6 @@
 	density = 1
 	mats = 12
 	deconstruct_flags = DECON_SCREWDRIVER | DECON_WRENCH | DECON_WELDER
-	var/on = 0
 	var/direction_out = 0 //0 = siphoning, 1 = releasing
 	var/target_pressure = 100
 	desc = "A device which can siphon or release gasses."
@@ -14,7 +13,7 @@
 	volume = 750
 
 /obj/machinery/portable_atmospherics/pump/update_icon()
-	if(on)
+	if(src.flags & THING_IS_ON)
 		icon_state = "psiphon:1"
 	else
 		icon_state = "psiphon:0"
@@ -31,7 +30,7 @@
 		environment = loc.return_air()
 
 
-	if(on)
+	if(src.flags & THING_IS_ON)
 		if(direction_out)
 			var/pressure_delta = target_pressure - MIXTURE_PRESSURE(environment)
 			//Can not have a pressure delta that would cause environment pressure > tank pressure
@@ -102,7 +101,7 @@ Pressure: [MIXTURE_PRESSURE(air_contents)] KPa<BR>
 Port Status: [(connected_port)?("Connected"):("Disconnected")]
 [holding_text]
 <BR>
-Power Switch: <A href='?src=\ref[src];power=1'>[on?("On"):("Off")]</A><BR>
+Power Switch: <A href='?src=\ref[src];power=1'>[src.flags & THING_IS_ON?("On"):("Off")]</A><BR>
 Pump Direction: <A href='?src=\ref[src];direction=1'>[direction_out?("Out"):("In")]</A><BR>
 Target Pressure: <A href='?src=\ref[src];pressure_adj=-100'>-</A> <A href='?src=\ref[src];pressure_adj=-10'>-</A> <A href='?src=\ref[src];pressure_set=1'>[target_pressure]</A> <A href='?src=\ref[src];pressure_adj=10'>+</A> <A href='?src=\ref[src];pressure_adj=100'>+</A><BR>
 <HR>
@@ -124,9 +123,9 @@ Target Pressure: <A href='?src=\ref[src];pressure_adj=-100'>-</A> <A href='?src=
 		src.add_dialog(usr)
 
 		if(href_list["power"])
-			on = !on
+			src.flags ^= THING_IS_ON
 			if (src.direction_out)
-				if (src.on)
+				if (src.flags & THING_IS_ON)
 					message_admins("[key_name(usr)] turns on [src], pumping its contents into the air at [log_loc(src)]. See station logs for atmos readout.")
 					logTheThing("station", usr, null, "turns on [src] [log_atmos(src)], pumping its contents into the air at [log_loc(src)].")
 				else
@@ -140,7 +139,7 @@ Target Pressure: <A href='?src=\ref[src];pressure_adj=-100'>-</A> <A href='?src=
 				holding.set_loc(loc)
 				usr.put_in_hand_or_eject(holding) // try to eject it into the users hand, if we can
 				holding = null
-			if (src.on && src.direction_out)
+			if (src.flags & THING_IS_ON && src.direction_out)
 				message_admins("[key_name(usr)] removed a tank from [src], pumping its contents into the air at [log_loc(src)]. See station logs for atmos readout.")
 				logTheThing("station", usr, null, "removed a tank from [src] [log_atmos(src)], pumping its contents into the air at [log_loc(src)].")
 

@@ -8,12 +8,11 @@
 	layer = 5.0 //TODO LAYER
 	density = 0
 	anchored = 0
-	on = 1
 	health = 5
 	no_camera = 1
 
 	process()
-		if (prob(10) && src.on == 1)
+		if (prob(10) && src.flags & THING_IS_ON)
 			SPAWN_DBG(0)
 				var/message = pick("clak clak", "clak")
 				speak(message)
@@ -50,7 +49,7 @@
 			src.explode()
 
 	hear_talk(var/mob/living/carbon/speaker, messages, real_name, lang_id)
-		if (!messages || !src.on)
+		if (!messages || src.flags & ~THING_IS_ON)
 			return
 		var/m_id = (lang_id == "english" || lang_id == "") ? messages[1] : messages[2]
 		if (prob(25))
@@ -76,7 +75,7 @@
 	explode()
 		if(src.exploding) return
 		src.exploding = 1
-		src.on = 0
+		src.flags &= ~THING_IS_ON
 		src.visible_message("<span class='combat'><B>[src] blows apart!</B></span>")
 		elecflash(src, radius=1, power=3, exclude_center = 0)
 		qdel(src)

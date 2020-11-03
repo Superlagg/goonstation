@@ -291,7 +291,6 @@ Contains:
 	name = "Jetpack (Oxygen)"
 	icon_state = "jetpack_mag0"
 	uses_multiple_icon_states = 1
-	var/on = 0.0
 	w_class = 4.0
 	item_state = "jetpack_mag"
 	mats = 16
@@ -309,19 +308,23 @@ Contains:
 		return
 
 	proc/toggle()
-		src.on = !( src.on )
-		src.icon_state = text("jetpack_mag[]", src.on)
-		if(src.on)
-			boutput(usr, "<span class='notice'>The jetpack is now on</span>")
-		else
+		if(src.flags & THING_IS_ON)
+			// Is now off, or "not-on"
+			src.flags &= ~THING_IS_ON
 			boutput(usr, "<span class='notice'>The jetpack is now off</span>")
+		else
+			src.flags |= THING_IS_ON
+			// Is now on, or "not-off"
+			boutput(usr, "<span class='notice'>The jetpack is now on</span>")
+
+		src.icon_state = text("jetpack_mag[]", src.flags & THING_IS_ON ? 1 : 0)
 		return
 
 	proc/allow_thrust(num, mob/user as mob)
 		if (MagneticTether != 1)
 			return 0
 
-		if (!( src.on ))
+		if (src.flags & ~THING_IS_ON)
 			return 0
 		if ((num < 0.01 || TOTAL_MOLES(src.air_contents) < num))
 			return 0
@@ -349,7 +352,6 @@ Contains:
 	name = "Jetpack (Oxygen)"
 	icon_state = "jetpack0"
 	uses_multiple_icon_states = 1
-	var/on = 0.0
 	w_class = 4.0
 	item_state = "jetpack"
 	mats = 16
@@ -364,16 +366,19 @@ Contains:
 		return
 
 	proc/toggle()
-		src.on = !( src.on )
-		src.icon_state = text("jetpack[]", src.on)
-		if(src.on)
-			boutput(usr, "<span class='notice'>The jetpack is now on</span>")
-		else
+		if(src.flags & THING_IS_ON)
+			// Is now off, or "not-on"
+			src.flags &= ~THING_IS_ON
 			boutput(usr, "<span class='notice'>The jetpack is now off</span>")
+		else
+			src.flags |= THING_IS_ON
+			// Is now on, or "not-off"
+			boutput(usr, "<span class='notice'>The jetpack is now on</span>")
+		src.icon_state = text("jetpack[]", src.flags & THING_IS_ON ? 1 : 0)
 		return
 
 	proc/allow_thrust(num, mob/user as mob)
-		if (!( src.on ))
+		if (src.flags & ~THING_IS_ON)
 			return 0
 		if ((num < 0.01 || TOTAL_MOLES(src.air_contents) < num))
 			return 0
@@ -593,19 +598,10 @@ Contains:
 			//S = null
 			qdel(S)
 
-/*/obj/item/tank/supersoaker
-	name = "Super Soaker"
-	icon_state = "jetpack0"
-	var/on = 0.0
-	w_class = 4.0
-	item_state = "jetpack"*/
-
-
 /obj/item/tank/jetpack/jetpackmk2
 	name = "Jetpack MKII (Oxygen)"
 	icon_state = "jetpack_mk2_0"
 	uses_multiple_icon_states = 1
-	on = 0.0
 	w_class = 4.0
 	item_state = "jetpack_mk2_0"
 	mats = 16
@@ -622,17 +618,20 @@ Contains:
 		return
 
 	toggle()
-		src.on = !( src.on )
-		src.icon_state = text("jetpack_mk2_[]", src.on)
-		if(src.on)
+		if(src.flags & THING_IS_ON)
+			// Is now off, or "not-on"
+			src.flags &= ~THING_IS_ON
+			boutput(usr, "<span class='notice'>The jetpack is now off</span>")
+		else
+			src.flags |= THING_IS_ON
+			// Is now on, or "not-off"
 			boutput(usr, "<span class='notice'>The jetpack is now on</span>")
 			playsound(src.loc, "sound/misc/JetpackMK2on.ogg", 50, 1)
-		else
-			boutput(usr, "<span class='notice'>The jetpack is now off</span>")
+		src.icon_state = text("jetpack_mk2_[]", src.flags & THING_IS_ON ? 1 : 0)
 		return
 
 	allow_thrust(num, mob/user as mob)
-		if (!( src.on ))
+		if (src.flags & ~THING_IS_ON)
 			return 0
 		if ((num < 0.01 || TOTAL_MOLES(src.air_contents) < num))
 			return 0
@@ -667,12 +666,15 @@ Contains:
 		return
 
 	toggle()
-		src.on = !( src.on )
-		src.icon_state = text("sjetpack_mag[]", src.on)
-		if(src.on)
-			boutput(usr, "<span class='notice'>The jetpack is now on</span>")
-		else
+		if(src.flags & THING_IS_ON)
+			// Is now off, or "not-on"
+			src.flags &= ~THING_IS_ON
 			boutput(usr, "<span class='notice'>The jetpack is now off</span>")
+		else
+			src.flags |= THING_IS_ON
+			// Is now on, or "not-off"
+			boutput(usr, "<span class='notice'>The jetpack is now on</span>")
+		src.icon_state = text("sjetpack_mag[]", src.flags & THING_IS_ON ? 1 : 0)
 		return
 
 /obj/item/tank/jetpack/abilities = list(/obj/ability_button/jetpack_toggle, /obj/ability_button/tank_valve_toggle)

@@ -585,7 +585,6 @@ Green Wire: <a href='?src=\ref[src];wires=[WIRE_TRANSMIT]'>[src.wires & WIRE_TRA
 	icon = 'icons/obj/objects.dmi'
 	icon_state = "shieldoff"
 	w_class = 1
-	var/active = 0
 	is_syndicate = 1
 	mats = 10
 
@@ -593,17 +592,20 @@ Green Wire: <a href='?src=\ref[src];wires=[WIRE_TRANSMIT]'>[src.wires & WIRE_TRA
 		if (!(radio_controller && istype(radio_controller)))
 			return
 
-		src.active = !src.active
-		if (src.active)
-			boutput(user, "You activate [src].")
-			src.icon_state = "shieldon"
-			if (!radio_controller.active_jammers.Find(src))
-				radio_controller.active_jammers.Add(src)
-		else
+		if(src.flags & THING_IS_ON)
+			// Is now off, or "not-on"
+			src.flags &= ~THING_IS_ON
 			boutput(user, "You shut off [src].")
 			icon_state = "shieldoff"
 			if (radio_controller.active_jammers.Find(src))
 				radio_controller.active_jammers.Remove(src)
+		else
+			src.flags |= THING_IS_ON
+			// Is now on, or "not-off"
+			boutput(user, "You activate [src].")
+			src.icon_state = "shieldon"
+			if (!radio_controller.active_jammers.Find(src))
+				radio_controller.active_jammers.Add(src)
 
 	disposing()
 		if (radio_controller && istype(radio_controller) && radio_controller.active_jammers.Find(src))
@@ -634,7 +636,6 @@ Green Wire: <a href='?src=\ref[src];wires=[WIRE_TRANSMIT]'>[src.wires & WIRE_TRA
 	name = "\improper Electropack"
 	icon_state = "electropack0"
 	var/code = 2.0
-	var/on = 0.0
 //	var/e_pads = 0.0
 	frequency = 1451
 	throw_speed = 1
@@ -690,8 +691,8 @@ Green Wire: <a href='?src=\ref[src];wires=[WIRE_TRANSMIT]'>[src.wires & WIRE_TRA
 				src.code = max(1, src.code)
 			else
 				if (href_list["power"])
-					src.on = !( src.on )
-					src.icon_state = text("electropack[]", src.on)
+					src.flags ^= THING_IS_ON
+					src.icon_state = text("electropack[]", src.flags & THING_IS_ON ? 1 : 0)
 		if (!( src.master ))
 			if (ismob(src.loc))
 				attack_self(src.loc)
@@ -723,7 +724,7 @@ Green Wire: <a href='?src=\ref[src];wires=[WIRE_TRANSMIT]'>[src.wires & WIRE_TRA
 	if (!signal || !signal.data || ("[signal.data["code"]]" != "[code]"))//(signal.encryption != code))
 		return
 
-	if (ismob(src.loc) && src.on)
+	if (ismob(src.loc) && src.flags & THING_IS_ON)
 		var/mob/M = src.loc
 		if (src == M.back)
 			M.show_message("<span class='alert'><B>You feel a sharp shock!</B></span>")
@@ -754,7 +755,7 @@ Green Wire: <a href='?src=\ref[src];wires=[WIRE_TRANSMIT]'>[src.wires & WIRE_TRA
 		return
 	src.add_dialog(user)
 	var/dat = {"<TT>
-<a href='?src=\ref[src];power=1'>Turn [src.on ? "Off" : "On"]</a><br>
+<a href='?src=\ref[src];power=1'>Turn [src.flags & THING_IS_ON? "Off" : "On"]</a><br>
 <B>Frequency/Code</B> for electropack:<br>
 Frequency:
 <a href='?src=\ref[src];freq=-10'>-</a>

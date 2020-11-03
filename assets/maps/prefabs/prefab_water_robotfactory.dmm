@@ -721,7 +721,7 @@
 "cc" = (
 /obj/table/reinforced/chemistry/auto,
 /obj/item/clothing/mask/cigarette/random{
-	on = 1
+	on = 0
 	},
 /turf/simulated/floor/shuttlebay{
 	icon_state = "engine-blue"
