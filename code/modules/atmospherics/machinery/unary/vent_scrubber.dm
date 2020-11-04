@@ -20,6 +20,7 @@
 //
 	initialize()
 		..()
+		src.flags |= THING_IS_ON
 		if(frequency)
 			set_frequency(frequency)
 		update_icon()

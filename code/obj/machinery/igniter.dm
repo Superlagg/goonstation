@@ -5,6 +5,7 @@
 	machine_registry_idx = MACHINES_SPARKERS
 	var/id = null
 	anchored = 1.0
+	on = 1
 	desc = "A device that ignites in order to start fires remotely."
 
 /obj/machinery/igniter/attack_ai(mob/user as mob)

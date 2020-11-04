@@ -10,7 +10,6 @@
 	var/icon_state_variant_suffix = null
 	var/item_state_variant_suffix = null
 
-	var/welding = 0.0
 	var/status = 0 // flamethrower construction :shobon:
 	flags = FPRINT | TABLEPASS | CONDUCT | ONBELT
 	tool_flags = TOOL_WELDING
@@ -27,24 +26,28 @@
 	module_research = list("tools" = 4, "metals" = 1, "fuels" = 5)
 	rand_pos = 1
 	inventory_counter_enabled = 1
+	/// list("chemID" = list("default_use" = amt2useByDefault, "use_mult" = amt2useMultiplier, "burns_eyes" = BurnsEyes?, "sounds" = list('sounds2play','whenUweld')))
+	var/list/fueltable = list("fuel" = list("default_use" = 1, "use_mult" = 1, "burns_eyes" = 1, "sounds" = list('sound/items/Welder.ogg', 'sound/items/Welder2.ogg')))
+	var/fueltype = "fuel"
 	var/capacity = 20
 
 	New()
 		..()
+		src.AddComponent(/datum/component/item_effect/burn_fueled, src.fueltable, do_welding = 1, always_works = 0)
 		src.create_reagents(capacity)
-		reagents.add_reagent("fuel", capacity)
-		src.inventory_counter.update_number(get_fuel())
-
+		if (fueltable.Find(fueltype))
+			src.reagents.add_reagent(fueltype, capacity)
+		src.inventory_counter.update_number(src.reagents.total_volume)
 		src.setItemSpecial(/datum/item_special/flame)
 		return
 
 	examine()
 		. = ..()
-		. += "It has [get_fuel()] units of fuel left!"
+		. += "It has [src.reagents.total_volume] units of fuel left!"
 
 	attack(mob/living/carbon/M as mob, mob/living/carbon/user as mob)
-		if (!src.welding)
-			if (!src.cautery_surgery(M, user, 0, src.welding))
+		if (src.flags & ~THING_IS_ON)
+			if (!src.cautery_surgery(M, user, 0, src.flags & THING_IS_ON ? 1 : 0))
 				return ..()
 		if (!ismob(M))
 			return
@@ -52,7 +55,7 @@
 		if (ishuman(M))
 			var/mob/living/carbon/human/H = M
 			if (H.bleeding || (H.butt_op_stage == 4 && user.zone_sel.selecting == "chest"))
-				if (!src.cautery_surgery(H, user, 15, src.welding))
+				if (!src.cautery_surgery(H, user, 15, src.flags & THING_IS_ON ? 1 : 0))
 					return ..()
 			else if (user.zone_sel.selecting != "chest" && user.zone_sel.selecting != "head")
 				if (!H.limbs.vars[user.zone_sel.selecting])
@@ -149,11 +152,11 @@
 				playsound(src.loc, "sound/effects/zzzt.ogg", 50, 1, -6)
 			else
 				boutput(user, "<span class='alert'>The [O.name] is empty!</span>")
-		else if (src.welding)
+		else if (src.flags & THING_IS_ON)
 			use_fuel(0.2)
 			if (get_fuel() <= 0)
 				boutput(usr, "<span class='notice'>Need more fuel!</span>")
-				src.welding = 0
+				src.flags &= ~THING_IS_ON
 				src.force = 3
 				hit_type = DAMAGE_BLUNT
 				set_icon_state("weldingtool-off" + src.icon_state_variant_suffix)
@@ -169,11 +172,11 @@
 
 	attack_self(mob/user as mob)
 		if (status > 1) return
-		src.welding = !(src.welding)
-		if (src.welding)
+		src.flags ^= THING_IS_ON
+		if (src.flags & THING_IS_ON)
 			if (get_fuel() <= 0)
 				boutput(user, "<span class='notice'>Need more fuel!</span>")
-				src.welding = 0
+				src.flags &= ~THING_IS_ON
 				return 0
 			boutput(user, "<span class='notice'>You will now weld when you attack.</span>")
 			src.force = 15
@@ -200,7 +203,7 @@
 		return
 
 	process()
-		if(!welding)
+		if(src.flags & ~THING_IS_ON)
 			processing_items.Remove(src)
 			return
 		var/turf/location = src.loc
@@ -213,7 +216,7 @@
 		if (prob(10))
 			use_fuel(1)
 			if (!get_fuel())
-				welding = 0
+				src.flags &= ~THING_IS_ON
 				force = 3
 				hit_type = DAMAGE_BLUNT
 				set_icon_state("weldingtool-off" + src.icon_state_variant_suffix)
@@ -232,37 +235,6 @@
 		src.inventory_counter.update_number(get_fuel())
 		return
 
-	proc/eyecheck(mob/user as mob)
-		if(user.isBlindImmune())
-			return
-		//check eye protection
-		var/safety = 0
-		if (ishuman(user))
-			var/mob/living/carbon/human/H = user
-			// we want to check for the thermals first so having a polarized eye doesn't protect you if you also have a thermal eye
-			if (istype(H.glasses, /obj/item/clothing/glasses/thermal) || H.eye_istype(/obj/item/organ/eye/cyber/thermal) || istype(H.glasses, /obj/item/clothing/glasses/nightvision) || H.eye_istype(/obj/item/organ/eye/cyber/nightvision))
-				safety = -1
-			else if (istype(H.head, /obj/item/clothing/head/helmet/welding))
-				var/obj/item/clothing/head/helmet/welding/WH = H.head
-				if(!WH.up)
-					safety = 2
-				else
-					safety = 0
-			else if (istype(H.head, /obj/item/clothing/head/helmet/space))
-				safety = 2
-			else if (istype(H.glasses, /obj/item/clothing/glasses/sunglasses) || H.eye_istype(/obj/item/organ/eye/cyber/sunglass))
-				safety = 1
-		switch (safety)
-			if (1)
-				boutput(usr, "<span class='alert'>Your eyes sting a little.</span>")
-				user.take_eye_damage(rand(1, 2))
-			if (0)
-				boutput(usr, "<span class='alert'>Your eyes burn.</span>")
-				user.take_eye_damage(rand(2, 4))
-			if (-1)
-				boutput(usr, "<span class='alert'><b>Your goggles intensify the welder's glow. Your eyes itch and burn severely.</b></span>")
-				user.change_eye_blurry(rand(12, 20))
-				user.take_eye_damage(rand(12, 16))
 
 	proc/cauterise(mob/living/carbon/human/H as mob, mob/living/carbon/user as mob, var/part)
 		if(!istype(H)) return
@@ -314,21 +286,6 @@
 		user.visible_message("<span class='alert'>[user.name] welds [H.name]'s robotic part to their stump with [src].</span>", "<span class='alert'>You weld [H.name]'s robotic part to their stump with [src].</span>")
 		H.bioHolder.RemoveEffect("loose_robot_[part]")
 		return
-
-	proc/try_weld(mob/user, var/fuel_amt = 2, var/use_amt = -1, var/noisy=1, var/burn_eyes=1) //fuel amt is how much fuel is needed to weld, use_amt is how much fuel is used per action
-		if (src.welding)
-			if(use_amt == -1)
-				use_amt = fuel_amt
-			if (src.get_fuel() < fuel_amt)
-				boutput(user, "<span class='notice'>Need more fuel!</span>")
-				return 0 //welding, doesnt have fuel
-			src.use_fuel(use_amt)
-			if(noisy)
-				playsound(user.loc, list('sound/items/Welder.ogg', 'sound/items/Welder2.ogg')[noisy], 50, 1)
-			if(burn_eyes)
-				src.eyecheck(user)
-			return 1 //welding, has fuel
-		return 0 //not welding
 
 /obj/item/weldingtool/vr
 	icon_state = "weldingtool-off-vr"

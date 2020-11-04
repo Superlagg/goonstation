@@ -10,6 +10,7 @@
 	anchored = 1.0
 	plane = PLANE_NOSHADOW_ABOVE
 	text = ""
+	on = 1
 	var/area/area = null
 	var/otherarea = null
 	//	luminosity = 1

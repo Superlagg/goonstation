@@ -17,6 +17,10 @@
 	//its still a bit stronger than non-inventory interactions, why not
 	var/last_ignite = 0
 
+/obj/item/device/igniter/New()
+	. = ..()
+	src.AddComponent(/datum/component/item_effect/burn_simple)
+
 /obj/item/device/igniter/attack(mob/M as mob, mob/user as mob)
 	if (ishuman(M))
 		if (M:bleeding || (M:butt_op_stage == 4 && user.zone_sel.selecting == "chest"))
@@ -26,7 +30,7 @@
 	else return ..()
 
 /obj/item/device/igniter/attackby(obj/item/W as obj, mob/user as mob)
-	if ((istype(W, /obj/item/device/radio/signaler) && !( src.status )))
+	if ((istype(W, /obj/item/device/radio/signaler) && src.flags & ~THING_IS_ON))
 		var/obj/item/device/radio/signaler/S = W
 		if (!( S.b_stat ))
 			return
@@ -44,7 +48,7 @@
 		R.part2 = src
 		src.add_fingerprint(user)
 
-	else if ((istype(W, /obj/item/device/prox_sensor) && !( src.status )))
+	else if ((istype(W, /obj/item/device/prox_sensor) && src.flags & ~THING_IS_ON))
 
 		var/obj/item/assembly/prox_ignite/R = new /obj/item/assembly/prox_ignite( user )
 		W.set_loc(R)
@@ -60,7 +64,7 @@
 		R.part2 = src
 		src.add_fingerprint(user)
 
-	else if ((istype(W, /obj/item/device/timer) && !( src.status )))
+	else if ((istype(W, /obj/item/device/timer) && src.flags & ~THING_IS_ON))
 
 		var/obj/item/assembly/time_ignite/R = new /obj/item/assembly/time_ignite( user )
 		W.set_loc(R)
@@ -75,7 +79,7 @@
 		src.set_loc(R)
 		R.part2 = src
 		src.add_fingerprint(user)
-	else if ((istype(W, /obj/item/device/analyzer/healthanalyzer) && !( src.status )))
+	else if ((istype(W, /obj/item/device/analyzer/healthanalyzer) && src.flags & ~THING_IS_ON))
 
 		var/obj/item/assembly/anal_ignite/R = new /obj/item/assembly/anal_ignite( user ) // Hehehe anal
 		W.set_loc(R)
@@ -115,8 +119,10 @@
 		src.status = !(src.status)
 		if (src.status)
 			user.show_message("<span class='notice'>The igniter is ready!</span>")
+			src.flags |= THING_IS_ON // assemblies are scary and I dont know how to make this not break them
 		else
 			user.show_message("<span class='notice'>The igniter can now be attached!</span>")
+			src.flags &= ~THING_IS_ON
 		src.add_fingerprint(user)
 
 	return
@@ -139,7 +145,7 @@
 		last_ignite = world.time
 
 /obj/item/device/igniter/proc/ignite()
-	if (src.status && can_ignite())
+	if (src.flags & THING_IS_ON && can_ignite())
 		var/turf/location = src.loc
 
 		if (src.master)
@@ -155,7 +161,7 @@
 /obj/item/device/igniter/examine(mob/user)
 	. = ..()
 	if ((in_range(src, user) || src.loc == user))
-		if (src.status)
+		if (src.flags & THING_IS_ON)
 			. += "The igniter is ready!"
 		else
 			. += "The igniter can be attached!"

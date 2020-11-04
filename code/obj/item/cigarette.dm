@@ -136,29 +136,22 @@
 
 	attackby(obj/item/W as obj, mob/user as mob)
 		if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
-			if (isweldingtool(W) && W:try_weld(user,0,-1,0,0))
+			var/sigreturn = SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, W, user, 1, 1)
+			if (sigreturn & ITEM_EFFECT_WELD)
 				src.light(user, "<span class='alert'><b>[user]</b> casually lights [src] with [W], what a badass.</span>")
-				return
-			else if (istype(W, /obj/item/sword) && W:active)
-				src.light(user, "<span class='alert'><b>[user]</b> swishes [W] alarmingly close to [his_or_her(user)] face and lights [src] ablaze.</span>")
-				return
-			else if (istype(W, /obj/item/clothing/head/cakehat) && W:on)
-				src.light(user, "<span class='alert'>Did [user] just light [his_or_her(user)] [src.name] with [W]? Holy Shit.</span>")
-				return
-			else if (istype(W, /obj/item/device/igniter))
-				src.light(user, "<span class='alert'><b>[user]</b> fumbles around with [W]; a small flame erupts from [src].</span>")
-				return
-			else if (istype(W, /obj/item/device/light/zippo) && W:on)
-				src.light(user, "<span class='alert'>With a single flick of their wrist, [user] smoothly lights [src] with [W]. Damn they're cool.</span>")
-				return
-			else if ((istype(W, /obj/item/match) || istype(W, /obj/item/clothing/mask/cigarette) || istype(W, /obj/item/device/light/candle)) && W:on)
-				src.light(user, "<span class='alert'><b>[user]</b> lights [src] with [W].</span>")
-				return
-			else if (W.burning)
-				src.light(user, "<span class='alert'><b>[user]</b> lights [src] with [W]. Goddamn.</span>")
-				return
-			else
-				return ..()
+			else if (sigreturn & ITEM_EFFECT_BURN)
+				if (istype(W, /obj/item/sword))
+					src.light(user, "<span class='alert'><b>[user]</b> swishes [W] alarmingly close to [his_or_her(user)] face and lights [src] ablaze.</span>")
+				else if (istype(W, /obj/item/clothing/head/cakehat))
+					src.light(user, "<span class='alert'>Did [user] just light [his_or_her(user)] [src.name] with [W]? Holy Shit.</span>")
+				else if (istype(W, /obj/item/device/igniter))
+					src.light(user, "<span class='alert'><b>[user]</b> fumbles around with [W]; a small flame erupts from [src].</span>")
+				else if (istype(W, /obj/item/device/light/zippo))
+					src.light(user, "<span class='alert'>With a single flick of their wrist, [user] smoothly lights [src] with [W]. Damn they're cool.</span>")
+				else if (W.burning)
+					src.light(user, "<span class='alert'><b>[user]</b> lights [src] with [W]. Goddamn.</span>")
+				else
+					src.light(user, "<span class='alert'><b>[user]</b> lights [src] with [W].</span>")
 		else
 			return ..() // CALL your GODDAMN PARENTS
 
@@ -790,25 +783,26 @@
 
 	afterattack(atom/target, mob/user as mob)
 		if (istype(target, /obj/item/match))
-			if (target:on > 0)
+			var/obj/item/match/M = target
+			if (M.flags & THING_IS_ON)
 				return
-			if (target:on == -1)
-				user.show_text("You [pick("fumble", "fuss", "mess", "faff")] around with [target] and try to get it to light, but it's no use.", "red")
+			if (M.flags & THING_IS_BROKEN)
+				user.show_text("You [pick("fumble", "fuss", "mess", "faff")] around with [M] and try to get it to light, but it's no use.", "red")
 				return
 			else if (prob(25))
-				user.visible_message("<b>[user]</b> awkwardly strikes [src] on [target]. [target] breaks!",\
-				"You awkwardly strike [src] on [target]. [target] breaks![prob(50) ? " [pick("Damn!", "Fuck!", "Shit!", "Crap!")]" : null]")
+				user.visible_message("<b>[user]</b> awkwardly strikes [src] on [M]. [M] breaks!",\
+				"You awkwardly strike [src] on [M]. [M] breaks![prob(50) ? " [pick("Damn!", "Fuck!", "Shit!", "Crap!")]" : null]")
 				playsound(user.loc, 'sound/items/matchstick_hit.ogg', 50, 1)
-				target:put_out(user, 1)
+				M.put_out(user, 1)
 				return
 			else if (prob(10))
-				user.visible_message("<b>[user]</b> awkwardly strikes [src] on [target]. A small flame sparks into life from the tip.",\
-				"You awkwardly strike [src] on [target]. A small flame sparks into life from the tip.")
-				target:light(user)
+				user.visible_message("<b>[user]</b> awkwardly strikes [src] on [M]. A small flame sparks into life from the tip.",\
+				"You awkwardly strike [src] on [M]. A small flame sparks into life from the tip.")
+				M.light(user)
 				return
 			else
-				user.visible_message("<b>[user]</b> awkwardly strikes [src] on [target]. Nothing happens.",\
-				"You awkwardly strike [src] on [target]. Nothing happens.")
+				user.visible_message("<b>[user]</b> awkwardly strikes [src] on [M]. Nothing happens.",\
+				"You awkwardly strike [src] on [M]. Nothing happens.")
 				playsound(user.loc, 'sound/items/matchstick_hit.ogg', 50, 1)
 				return
 		else
@@ -1039,11 +1033,19 @@
 	col_g = 0.69
 	col_b = 0.27
 	var/infinite_fuel = 0 //1 is infinite fuel. Borgs use this apparently.
+	/// list("chemID" = list("default_use" = amt2useByDefault, "use_mult" = amt2useMultiplier, "burns_eyes" = BurnsEyes?, "sounds" = list('sounds2play','whenUweld')))
+	var/list/fueltable = list("fuel" = list("default_use" = 1, "use_mult" = 1, "burns_eyes" = 0, "sounds" = list('sound/items/Welder.ogg', 'sound/items/Welder2.ogg')))
+	var/fueltype = "fuel"
+	var/capacity = 20
 
 	New()
 		..()
+		if (infinite_fuel)
+			src.AddComponent(/datum/component/item_effect/burn_simple)
+		else
+			src.AddComponent(/datum/component/item_effect/burn_fueled, src.fueltable, do_welding = 0, always_works = 0)
 		src.create_reagents(100)
-		reagents.add_reagent("fuel", 100)
+		reagents.add_reagent(fueltype, 100)
 
 		src.setItemSpecial(/datum/item_special/flame)
 		return
@@ -1053,7 +1055,7 @@
 			if (src.flags & ~THING_IS_ON)
 				if (!reagents)
 					return
-				if (!reagents.get_reagent_amount("fuel"))
+				if (!reagents.get_reagent_amount(fueltype))
 					user.show_text("Out of fuel.", "red")
 					return
 				src.flags |= THING_IS_ON
@@ -1125,12 +1127,12 @@
 				user.show_text("You can't seem to find any way to add more fuel to [src]. It's probably fine.", "blue")
 				return
 
-			if (reagents.get_reagent_amount("fuel") >= src.reagents.maximum_volume) //this could be == but just in case...
+			if (reagents.get_reagent_amount(fueltype) >= src.reagents.maximum_volume) //this could be == but just in case...
 				boutput(user, "<span class='alert'>[src] is full!</span>")
 				return
 
 			if (O.reagents.total_volume)
-				O.reagents.trans_to(src, src.reagents.maximum_volume - src.reagents.get_reagent_amount("fuel"))
+				O.reagents.trans_to(src, src.reagents.maximum_volume - src.reagents.get_reagent_amount(fueltype))
 				boutput(user, "<span class='notice'>[src] has been refueled.</span>")
 				playsound(src.loc, "sound/effects/zzzt.ogg", 50, 1, -6)
 			else
@@ -1147,8 +1149,8 @@
 		if (src.flags & THING_IS_ON)
 			if (!reagents)
 				return
-			if (!infinite_fuel && reagents.get_reagent_amount("fuel"))
-				reagents.remove_reagent("fuel", 1)
+			if (!infinite_fuel && reagents.get_reagent_amount(fueltype))
+				reagents.remove_reagent(fueltype, 1)
 			var/turf/location = src.loc
 			if (ismob(location))
 				var/mob/M = location
@@ -1157,7 +1159,7 @@
 			var/turf/T = get_turf(src.loc)
 			if (T)
 				T.hotspot_expose(700,5)
-			if (!reagents.get_reagent_amount("fuel"))
+			if (!reagents.get_reagent_amount(fueltype))
 				src.flags &= ~THING_IS_ON
 				set_icon_state(src.icon_off)
 				src.item_state = "zippo"

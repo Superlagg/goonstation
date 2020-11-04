@@ -109,3 +109,6 @@
 #define ITEM_EFFECT_NOTHING 0
 /// The item has declared that it is ready and willing to set something on fire
 #define ITEM_EFFECT_BURN (1<<0)
+/// The item has declared that it is ready and willing to weld something
+#define ITEM_EFFECT_WELD (1<<1)
+

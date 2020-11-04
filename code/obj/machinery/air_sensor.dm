@@ -77,7 +77,7 @@ obj/machinery/air_sensor
 
 	New()
 		..()
-
+		src.flags |= THING_IS_ON
 		if(radio_controller)
 			set_frequency(frequency)
 

@@ -139,6 +139,7 @@
 
 	New()
 		..()
+		src.AddComponent(/datum/component/item_effect/burn_simple)
 		light = new /datum/light/point
 		light.set_brightness(0.6)
 		light.set_height(1.8)

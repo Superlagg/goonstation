@@ -41,6 +41,7 @@ obj/machinery/access_button
 
 	New()
 		..()
+		src.flags |= THING_IS_ON
 		UnsubscribeProcess()
 		if(radio_controller)
 			set_frequency(frequency)

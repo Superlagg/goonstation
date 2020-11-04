@@ -2,7 +2,7 @@
 CONTAINS:
 GETLINEEEEEEEEEEEEEEEEEEEEE
 (well not really but it should)
-
+//LAGG_FLAGGED_BAZINGA
 */
 
 /obj/item/flamethrower/

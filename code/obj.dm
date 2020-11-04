@@ -65,8 +65,7 @@
 
 	New()
 		setupProperties()
-		if(on)
-			src.flags |= THING_IS_ON
+		if(on) src.flags |= THING_IS_ON
 		. = ..()
 
 	ex_act(severity)
@@ -347,7 +346,7 @@
 				user.u_equip(T)
 				qdel(T)
 			return
-		if (isweldingtool(C) && C:try_weld(user,0))
+		if (SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, C, user, 1, 1) & ITEM_EFFECT_WELD)
 			boutput(user, "<span class='notice'>Slicing lattice joints ...</span>")
 			new /obj/item/rods/steel(src.loc)
 			qdel(src)
@@ -380,13 +379,12 @@
 			return
 
 	attackby(obj/item/W as obj, mob/user as mob)
-		if (isweldingtool(W))
-			if(W:try_weld(user,1))
-				boutput(user, "<span class='notice'>You disassemble the barricade.</span>")
-				var/obj/item/rods/R = new /obj/item/rods/steel(src.loc)
-				R.amount = src.strength
-				qdel(src)
-				return
+		if (SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, W, user, 1, 1) & ITEM_EFFECT_WELD)
+			boutput(user, "<span class='notice'>You disassemble the barricade.</span>")
+			var/obj/item/rods/R = new /obj/item/rods/steel(src.loc)
+			R.amount = src.strength
+			qdel(src)
+			return
 		else if (istype(W,/obj/item/rods))
 			var/obj/item/rods/R = W
 			var/difference = 5 - src.strength
