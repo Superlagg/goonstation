@@ -41,16 +41,15 @@
 /datum/component/item_effect/burn_fueled/proc/try_to_burn(var/obj/item/that, var/obj/item/this, var/mob/user, var/use_amt = 0, var/noisy = 0)
 	if (!that || !this || (!src.fuel_table && !src.always_works)) return ITEM_EFFECT_NOTHING
 	if (src.do_welding) . |= ITEM_EFFECT_WELD
-	if (src.always_works)
-		. |= ITEM_EFFECT_BURN
+	if (src.always_works) . |= ITEM_EFFECT_BURN
 	else if (this.reagents && this.flags & THING_IS_ON && this.flags & ~THING_IS_BROKEN)
 		var/loaded_fuel
 		for (var/chem_id in src.fuel_table)
-			if (this.?reagents.has_reagent(chem_id))
+			if (this?.reagents.has_reagent(chem_id))
 				loaded_fuel = chem_id
 				break
 		if (!loaded_fuel) return ITEM_EFFECT_NOTHING // Whatever's in there, we can't use it
-		var/fuel_amt = this.?reagents.get_reagent_amount(loaded_fuel)
+		var/fuel_amt = this?.reagents.get_reagent_amount(loaded_fuel)
 		if(!fuel_amt) return ITEM_EFFECT_NOTHING // we don't have any fuel
 		var/amt_2_use = (use_amt * fuel_table[loaded_fuel]["use_mult"])
 
@@ -65,7 +64,7 @@
 
 		if(user && noisy && fuel_table[loaded_fuel]["sounds"].len)
 			var/where_plays_it = user ? user.loc : this.loc
-			playsound(what_plays_it, pick(fuel_table[loaded_fuel]["sounds"]), 50, 1)
+			playsound(where_plays_it, pick(fuel_table[loaded_fuel]["sounds"]), 50, 1)
 		if(user && fuel_table[loaded_fuel]["burns_eyes"])
 			if(!user.isBlindImmune())
 				var/safety = 0
