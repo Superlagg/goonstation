@@ -464,14 +464,8 @@
 				playsound(src.loc, "sound/items/Screwdriver.ogg", 100, 1)
 				src.anchored = 1
 
-		else if(isweldingtool(W) || istype(W, /obj/item/device/light/zippo) || istype(W, /obj/item/device/igniter))
-			// These are for burning down plants with.
-			if(isweldingtool(W) && !W:try_weld(usr, 3, noisy = 0, burn_eyes = 1))
-				return
-			else if(istype(W, /obj/item/device/light/zippo) && !W:on)
-				boutput(user, "<span class='alert'>It would help if you lit it first, dumbass!</span>")
-				return
-			if(src.current)
+		else if (SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT_CHECK, W) & ITEM_EFFECT_BURN && src.current)
+			if(SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, W, user, 3, 1) & ITEM_EFFECT_BURN)
 				var/datum/plant/growing = src.current
 				if(growing.attacked_proc)
 					// It will fight back if possible, and halts the attack if it returns
@@ -492,7 +486,6 @@
 								if(growing.HYPattacked_proc(src,user,W) || MUT.HYPattacked_proc_M(src,user,W)) return
 					else
 						if(growing.HYPattacked_proc(src,user,W)) return
-
 				if(src.dead)
 					src.visible_message("<span class='alert'>[src] goes up in flames!</span>")
 					src.reagents.add_reagent("ash", src.growth)
@@ -500,6 +493,9 @@
 					// Ashes in the plantpot I guess.
 				else
 					if(!HYPdamageplant("fire",150)) src.visible_message("<span class='alert'>[src] resists the fire!</span>")
+			else if (W.flags & ~THING_IS_ON)
+				boutput(user, "<span class='alert'>It would help if you lit it first, dumbass!</span>")
+				return
 
 		else if(istype(W,/obj/item/saw))
 			// Allows you to cut down plants. Never really saw the point in chainsaws considering

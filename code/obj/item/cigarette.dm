@@ -38,6 +38,7 @@
 	New()
 		..()
 		src.create_reagents(60)
+		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burn_eyes = 0)
 
 		if (src.flags & THING_IS_ON) //if we spawned lit, do something about it!
 			src.flags &= ~THING_IS_ON
@@ -842,6 +843,7 @@
 
 	New()
 		..()
+		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burn_eyes = 0)
 		light = new /datum/light/point
 		light.set_brightness(0.4)
 		light.set_color(0.94, 0.69, 0.27)
@@ -931,14 +933,9 @@
 			user.show_text("You [pick("fumble", "fuss", "mess", "faff")] around with [src] and try to get it to light, but it's no use.", "red")
 			return
 		else if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
-			if (istype(target, /obj/item/match) && target.flags & THING_IS_ON)
+			if (SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, target, user, 1, 1) & ITEM_EFFECT_BURN)
 				user.visible_message("<b>[user]</b> lights [src] with the flame from [target].",\
 				"You light [src] with the flame from [target].")
-				src.light(user)
-				return
-			else if (istype(target, /obj/item/clothing/mask/cigarette) && target.flags & THING_IS_ON)
-				user.visible_message("<b>[user]</b> lights [src] with [target].",\
-				"You light [src] with [target].")
 				src.light(user)
 				return
 			else if (istype(target, /obj/item/matchbook))
@@ -1033,19 +1030,15 @@
 	col_g = 0.69
 	col_b = 0.27
 	var/infinite_fuel = 0 //1 is infinite fuel. Borgs use this apparently.
-	/// list("chemID" = list("default_use" = amt2useByDefault, "use_mult" = amt2useMultiplier, "burns_eyes" = BurnsEyes?, "sounds" = list('sounds2play','whenUweld')))
-	var/list/fueltable = list("fuel" = list("default_use" = 1, "use_mult" = 1, "burns_eyes" = 0, "sounds" = list('sound/items/Welder.ogg', 'sound/items/Welder2.ogg')))
-	var/fueltype = "fuel"
-	var/capacity = 20
+	/// list("chemID" = "chemID", "default_use" = amt2useByDefault, "use_mult" = amt2useMultiplier)
+	var/list/fueltype = list("fuel" = "fuel", "default_use" = 1, "use_mult" = 1)
+	var/capacity = 100
 
 	New()
 		..()
-		if (infinite_fuel)
-			src.AddComponent(/datum/component/item_effect/burn_simple)
-		else
-			src.AddComponent(/datum/component/item_effect/burn_fueled, src.fueltable, do_welding = 0, always_works = 0)
-		src.create_reagents(100)
-		reagents.add_reagent(fueltype, 100)
+		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = infinite_fuel ? 1 : 0, do_welding = 0, burn_eyes = 0, fuel_2_use = src.fueltype)
+		src.create_reagents(capacity)
+		reagents.add_reagent(fueltype["fuel"], capacity)
 
 		src.setItemSpecial(/datum/item_special/flame)
 		return
@@ -1055,7 +1048,7 @@
 			if (src.flags & ~THING_IS_ON)
 				if (!reagents)
 					return
-				if (!reagents.get_reagent_amount(fueltype))
+				if (!reagents.get_reagent_amount(fueltype["fuel"]))
 					user.show_text("Out of fuel.", "red")
 					return
 				src.flags |= THING_IS_ON
@@ -1127,12 +1120,12 @@
 				user.show_text("You can't seem to find any way to add more fuel to [src]. It's probably fine.", "blue")
 				return
 
-			if (reagents.get_reagent_amount(fueltype) >= src.reagents.maximum_volume) //this could be == but just in case...
+			if (reagents.get_reagent_amount(fueltype["fuel"]) >= src.reagents.maximum_volume) //this could be == but just in case...
 				boutput(user, "<span class='alert'>[src] is full!</span>")
 				return
 
 			if (O.reagents.total_volume)
-				O.reagents.trans_to(src, src.reagents.maximum_volume - src.reagents.get_reagent_amount(fueltype))
+				O.reagents.trans_to(src, src.reagents.maximum_volume - src.reagents.get_reagent_amount(fueltype["fuel"]))
 				boutput(user, "<span class='notice'>[src] has been refueled.</span>")
 				playsound(src.loc, "sound/effects/zzzt.ogg", 50, 1, -6)
 			else
@@ -1149,8 +1142,8 @@
 		if (src.flags & THING_IS_ON)
 			if (!reagents)
 				return
-			if (!infinite_fuel && reagents.get_reagent_amount(fueltype))
-				reagents.remove_reagent(fueltype, 1)
+			if (!infinite_fuel && reagents.get_reagent_amount(fueltype["fuel"]))
+				reagents.remove_reagent(fueltype["fuel"], 1)
 			var/turf/location = src.loc
 			if (ismob(location))
 				var/mob/M = location
@@ -1159,7 +1152,7 @@
 			var/turf/T = get_turf(src.loc)
 			if (T)
 				T.hotspot_expose(700,5)
-			if (!reagents.get_reagent_amount(fueltype))
+			if (!reagents.get_reagent_amount(fueltype["fuel"]))
 				src.flags &= ~THING_IS_ON
 				set_icon_state(src.icon_off)
 				src.item_state = "zippo"

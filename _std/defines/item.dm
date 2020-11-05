@@ -105,10 +105,11 @@
 #define ATTACK_PRE_DONT_ATTACK 1
 
 // componentized item effect stuff
+// COMSIG_ITEM_ATTACK_OBJECT attempts to run the attached item effect component(s)
+// COMSIG_ITEM_ATTACK_OBJECT_CHECK just returns whatever flags are associated with its item effect component(s)
 /// Whatever we wanted the item to do, it couldn't do it
 #define ITEM_EFFECT_NOTHING 0
 /// The item has declared that it is ready and willing to set something on fire
 #define ITEM_EFFECT_BURN (1<<0)
 /// The item has declared that it is ready and willing to weld something
 #define ITEM_EFFECT_WELD (1<<1)
-

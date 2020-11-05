@@ -44,10 +44,11 @@
 			src.overlays = null
 
 	attackby(obj/item/W, mob/user)
-		if (istype(W, /obj/item/clothing/mask/cigarette) && W:on)
-			W:put_out(user, "<b>[user]</b> puts out [W] in [src].")
-			user.u_equip(W)
-			qdel(W)
+		if (istype(W, /obj/item/clothing/mask/cigarette) && W.flags & THING_IS_ON)
+			var/obj/item/clothing/mask/cigarette/C = W
+			C.put_out(user, "<b>[user]</b> puts out [C] in [src].")
+			user.u_equip(C)
+			qdel(C)
 			src.butts ++ // hehhh
 			src.update_icon()
 			src.overlays = null

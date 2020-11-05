@@ -26,17 +26,20 @@
 	module_research = list("tools" = 4, "metals" = 1, "fuels" = 5)
 	rand_pos = 1
 	inventory_counter_enabled = 1
-	/// list("chemID" = list("default_use" = amt2useByDefault, "use_mult" = amt2useMultiplier, "burns_eyes" = BurnsEyes?, "sounds" = list('sounds2play','whenUweld')))
-	var/list/fueltable = list("fuel" = list("default_use" = 1, "use_mult" = 1, "burns_eyes" = 1, "sounds" = list('sound/items/Welder.ogg', 'sound/items/Welder2.ogg')))
-	var/fueltype = "fuel"
+	/// list("chemID" = "chemID", "default_use" = amt2useByDefault, "use_mult" = amt2useMultiplier)
+	var/list/fueltype = list("fuel" = "fuel", "default_use" = 1, "use_mult" = 1)
+	/// How much fuel can it hold?
 	var/capacity = 20
+	/// Does it try to cause eye damage to its user?
+	var/burns_eyes = 1
+	/// Which sounds to play when it gets used successfully
+	var/list/sounds = list('sound/items/Welder.ogg', 'sound/items/Welder2.ogg')
 
 	New()
 		..()
-		src.AddComponent(/datum/component/item_effect/burn_fueled, src.fueltable, do_welding = 1, always_works = 0)
-		src.create_reagents(capacity)
-		if (fueltable.Find(fueltype))
-			src.reagents.add_reagent(fueltype, capacity)
+		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 1, do_welding = 1, burn_eyes = src.burns_eyes, fuel_2_use = src.fueltype, sounds_2_play = src.sounds)
+		src.create_reagents(src.capacity)
+		src.reagents.add_reagent(src.fueltype["fuel"], src.capacity)
 		src.inventory_counter.update_number(src.reagents.total_volume)
 		src.setItemSpecial(/datum/item_special/flame)
 		return

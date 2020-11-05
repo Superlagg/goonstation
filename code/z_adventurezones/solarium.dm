@@ -51,16 +51,16 @@ var/global/the_sun = null
 		..()
 
 	attackby(obj/item/O as obj, mob/user as mob)
-		if (istype(O, /obj/item/clothing/mask/cigarette))
-			if (!O:on)
-				O:light(user, "<span class='alert'><b>[user]</b> lights [O] on [src] and casually takes a drag from it. Wow.</span>")
-				if (!user.is_heat_resistant())
-					SPAWN_DBG (10)
-						user.visible_message("<span class='alert'><b>[user]</b> burns away into ash! It's almost as though being that close to a star wasn't a great idea!</span>",\
-						"<span class='alert'><b>You burn away into ash! It's almost as though being that close to a star wasn't a great idea!</b></span>")
-						user.firegib()
-				else
-					user.unlock_medal("Helios", 1)
+		if (istype(O, /obj/item/clothing/mask/cigarette) && O.flags & ~THING_IS_ON)
+			var/obj/item/clothing/mask/cigarette/C = O
+			C.light(user, "<span class='alert'><b>[user]</b> lights [C] on [src] and casually takes a drag from it. Wow.</span>")
+			if (!user.is_heat_resistant())
+				SPAWN_DBG (10)
+					user.visible_message("<span class='alert'><b>[user]</b> burns away into ash! It's almost as though being that close to a star wasn't a great idea!</span>",\
+					"<span class='alert'><b>You burn away into ash! It's almost as though being that close to a star wasn't a great idea!</b></span>")
+					user.firegib()
+			else
+				user.unlock_medal("Helios", 1)
 
 var/global/server_kicked_over = 0
 var/global/it_is_okay_to_do_the_endgame_thing = 0
@@ -87,10 +87,10 @@ var/global/derelict_mode = 0
 
 	attackby(obj/item/O as obj, mob/user as mob)
 		..()
-		if (server_kicked_over && istype(O, /obj/item/clothing/mask/cigarette))
-			if (!O:on)
-				O:light(user, "<span class='alert'>[user] lights the [O] with [src]. That's pretty meta.</span>")
-				user.unlock_medal("Nero", 1)
+		if (server_kicked_over && istype(O, /obj/item/clothing/mask/cigarette) && O.flags & ~THING_IS_ON)
+			var/obj/item/clothing/mask/cigarette/C = O
+			C.light(user, "<span class='alert'>[user] lights the [C] with [src]. That's pretty meta.</span>")
+			user.unlock_medal("Nero", 1)
 
 		if (!O || !O.force)
 			return
@@ -155,7 +155,7 @@ var/global/derelict_mode = 0
 			sleep(1 SECOND)
 			boutput(world, "<tt>BUG: CPU0 on fire!</tt>")
 			logTheThing("diary", null, null, "The server would have restarted, if I hadn't removed the line of code that does that. Instead, we play through.", "game")
-			
+
 			SPAWN_DBG(5 SECONDS)
 				for (var/client/C in clients)
 					cinematic.remove_client(C)
