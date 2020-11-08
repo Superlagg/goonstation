@@ -942,9 +942,18 @@ var/list/globalContextActions = null
 
 			execute(var/atom/target, var/mob/user)
 				for (var/obj/item/weldingtool/W in user.equipped_list())
-					if(W.try_weld(user, 2))
-						user.show_text("You weld [target] carefully.", "blue")
-						return ..()
+					var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+					SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, this = W, user = user, results = burn_return, use_amt = 1, noisy = 1)
+					if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+						if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+							boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+						else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+							boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+						else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+							boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+						else
+							user.show_text("You weld [target] carefully.", "blue")
+							return ..()
 
 		pry
 			name = "Pry"

@@ -21,6 +21,7 @@
 
 
 	New()
+		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burns_eyes = 1)
 		..()
 
 	attack_self(mob/user as mob)
@@ -32,23 +33,29 @@
 
 	attackby(obj/item/W as obj, mob/user as mob)
 		if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN && sparks)
-			if (isweldingtool(W) && W:try_weld(user,0,-1,0,0))
-				src.light(user, "<span class='alert'><b>[user]</b> casually lights [src] with [W], what a badass.</span>")
-
-			else if (istype(W, /obj/item/clothing/head/cakehat) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
-				src.light(user, "<span class='alert'>Did [user] just light \his [src] with [W]? Holy Shit.</span>")
-
-			else if (istype(W, /obj/item/device/igniter))
-				src.light(user, "<span class='alert'><b>[user]</b> fumbles around with [W]; sparks erupt from [src].</span>")
-
-			else if (istype(W, /obj/item/device/light/zippo) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
-				src.light(user, "<span class='alert'>With a single flick of their wrist, [user] smoothly lights [src] with [W]. Damn they're cool.</span>")
-
-			else if ((istype(W, /obj/item/match) || istype(W, /obj/item/device/light/candle)) && W.flags & THING_IS_ON && W.flags & ~THING_IS_BROKEN)
-				src.light(user, "<span class='alert'><b>[user] lights [src] with [W].</span>")
-
-			else if (W.burning)
-				src.light(user, "<span class='alert'><b>[user]</b> lights [src] with [W]. Goddamn.</span>")
+			var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+			SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, this = W, user = user, results = burn_return, use_amt = 1, noisy = 1)
+			if(burn_return[HAS_EFFECT] & ITEM_EFFECT_BURN || W.burning || W.hit_type == DAMAGE_BURN)
+				if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+					boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+					boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+					boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+				else if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+					src.light(user, "<span class='alert'><b>[user]</b> casually lights [src] with [W], what a badass.</span>")
+				else if (istype(W, /obj/item/clothing/head/cakehat))
+					src.light(user, "<span class='alert'>Did [user] just light \his [src] with [W]? Holy Shit.</span>")
+				else if (istype(W, /obj/item/device/igniter))
+					src.light(user, "<span class='alert'><b>[user]</b> fumbles around with [W]; sparks erupt from [src].</span>")
+				else if (istype(W, /obj/item/device/light/zippo))
+					src.light(user, "<span class='alert'>With a single flick of their wrist, [user] smoothly lights [src] with [W]. Damn they're cool.</span>")
+				else if (istype(W, /obj/item/match) || istype(W, /obj/item/device/light/candle))
+					src.light(user, "<span class='alert'><b>[user] lights [src] with [W].</span>")
+				else if (W.burning)
+					src.light(user, "<span class='alert'><b>[user]</b> lights [src] with [W]. Goddamn.</span>")
+				else
+					src.light(user, "<span class='alert'><b>[user]</b> lights [src] with [W].</span>")
 		else
 			return ..()
 

@@ -37,7 +37,7 @@
 
 	New()
 		..()
-		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 1, do_welding = 1, burn_eyes = src.burns_eyes, fuel_2_use = src.fueltype, sounds_2_play = src.sounds)
+		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 1, do_welding = 1, burns_eyes = src.burns_eyes, fuel_2_use = src.fueltype, sounds_2_play = src.sounds)
 		src.create_reagents(src.capacity)
 		src.reagents.add_reagent(src.fueltype["fuel"], src.capacity)
 		src.inventory_counter.update_number(src.reagents.total_volume)
@@ -156,7 +156,6 @@
 			else
 				boutput(user, "<span class='alert'>The [O.name] is empty!</span>")
 		else if (src.flags & THING_IS_ON)
-			use_fuel(0.2)
 			if (get_fuel() <= 0)
 				boutput(usr, "<span class='notice'>Need more fuel!</span>")
 				src.flags &= ~THING_IS_ON
@@ -247,32 +246,36 @@
 		var/variant = H.bioHolder.HasEffect("lost_[part]")
 		if (!variant) return
 
-
-		if(!src.try_weld(user, 5))
-			return
-
-		H.TakeDamage("chest",0,20)
-		if (prob(50)) H.emote("scream")
-
-		variant = max(1, variant-20)
-		H.bioHolder.RemoveEffect("lost_[part]")
-		H.bioHolder.AddEffect("lost_[part]", variant)
-
-		for (var/mob/O in AIviewers(H, null))
-			if (O == (user || H))
-				continue
-			if (H == user)
-				O.show_message("<span class='alert'>[user.name] cauterises their own stump with [src]!</span>", 1)
+		var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+		SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, this = src, user = user, results = burn_return, use_amt = 1, noisy = 1)
+		if(burn_return[HAS_EFFECT] & ITEM_EFFECT_BURN || src.burning || src.hit_type == DAMAGE_BURN)
+			if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+				boutput(user, "<span class='notice'>\the [src] is out of fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+				boutput(user, "<span class='notice'>\the [src] doesn't have enough fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+				boutput(user, "<span class='notice'>\the [src] isn't lit!</span>")
 			else
-				O.show_message("<span class='alert'>[H.name] has their stump cauterised by [user.name] with [src].</span>", 1)
+				H.TakeDamage("chest",0,20)
+				if (prob(50)) H.emote("scream")
 
-		if(H != user)
-			boutput(H, "<span class='alert'>[user.name] cauterises your stump with [src].</span>")
-			boutput(user, "<span class='alert'>You cauterise [H.name]'s stump with [src].</span>")
-		else
-			boutput(user, "<span class='alert'>You cauterise your own stump with [src].</span>")
+				variant = max(1, variant-20)
+				H.bioHolder.RemoveEffect("lost_[part]")
+				H.bioHolder.AddEffect("lost_[part]", variant)
 
-		return
+				for (var/mob/O in AIviewers(H, null))
+					if (O == (user || H))
+						continue
+					if (H == user)
+						O.show_message("<span class='alert'>[user.name] cauterises their own stump with [src]!</span>", 1)
+					else
+						O.show_message("<span class='alert'>[H.name] has their stump cauterised by [user.name] with [src].</span>", 1)
+
+				if(H != user)
+					boutput(H, "<span class='alert'>[user.name] cauterises your stump with [src].</span>")
+					boutput(user, "<span class='alert'>You cauterise [H.name]'s stump with [src].</span>")
+				else
+					boutput(user, "<span class='alert'>You cauterise your own stump with [src].</span>")
 
 	proc/attach_robopart(mob/living/carbon/human/H as mob, mob/living/carbon/user as mob, var/part)
 		if (!istype(H)) return
@@ -281,14 +284,20 @@
 
 		if (!H.bioHolder.HasEffect("loose_robot_[part]")) return
 
-		if(!src.try_weld(user, 5))
-			return
-
-		H.TakeDamage("chest",0,20)
-		if (prob(50)) H.emote("scream")
-		user.visible_message("<span class='alert'>[user.name] welds [H.name]'s robotic part to their stump with [src].</span>", "<span class='alert'>You weld [H.name]'s robotic part to their stump with [src].</span>")
-		H.bioHolder.RemoveEffect("loose_robot_[part]")
-		return
+		var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+		SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, this = src, user = user, results = burn_return, use_amt = 1, noisy = 1)
+		if(burn_return[HAS_EFFECT] & ITEM_EFFECT_BURN || src.burning || src.hit_type == DAMAGE_BURN)
+			if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+				boutput(user, "<span class='notice'>\the [src] is out of fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+				boutput(user, "<span class='notice'>\the [src] doesn't have enough fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+				boutput(user, "<span class='notice'>\the [src] isn't lit!</span>")
+			else
+				H.TakeDamage("chest",0,20)
+				if (prob(50)) H.emote("scream")
+				user.visible_message("<span class='alert'>[user.name] welds [H.name]'s robotic part to their stump with [src].</span>", "<span class='alert'>You weld [H.name]'s robotic part to their stump with [src].</span>")
+				H.bioHolder.RemoveEffect("loose_robot_[part]")
 
 /obj/item/weldingtool/vr
 	icon_state = "weldingtool-off-vr"

@@ -461,9 +461,16 @@
 			C.amount = src.wires
 			src.wires = 0
 
-		else if (isweldingtool(W) && src.type == /obj/item/parts/robot_parts/chest)
-			var/obj/item/weldingtool/welder = W
-			if (welder.try_weld(user, 3, 3))
+		var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+		SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, this = W, user = user, results = burn_return, use_amt = 1, noisy = 1)
+		if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+			if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+				boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+				boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+				boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+			else
 				var/obj/item/clothing/suit/armor/makeshift/R = new /obj/item/clothing/suit/armor/makeshift(get_turf(user))
 				boutput(user, "<span class='notice'>You remove the internal support structures of the [src]. It's structural integrity is ruined, but you could squeeze into it now.</span>")
 				user.u_equip(src)

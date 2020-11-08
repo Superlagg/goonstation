@@ -18,16 +18,12 @@
 	var/last_ignite = 0
 
 /obj/item/device/igniter/New()
+	src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burns_eyes = 0)
 	. = ..()
-	src.AddComponent(/datum/component/item_effect/burn_simple)
 
 /obj/item/device/igniter/attack(mob/M as mob, mob/user as mob)
-	if (ishuman(M))
-		if (M:bleeding || (M:butt_op_stage == 4 && user.zone_sel.selecting == "chest"))
-			if (!src.cautery_surgery(M, user, 15))
-				return ..()
-		else return ..()
-	else return ..()
+	if (ishuman(M) && (M:bleeding || (M:butt_op_stage == 4 && user.zone_sel.selecting == "chest")) && !src.cautery_surgery(M, user, 15))
+		return ..()
 
 /obj/item/device/igniter/attackby(obj/item/W as obj, mob/user as mob)
 	if ((istype(W, /obj/item/device/radio/signaler) && src.flags & ~THING_IS_ON))

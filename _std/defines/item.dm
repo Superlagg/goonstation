@@ -106,10 +106,27 @@
 
 // componentized item effect stuff
 // COMSIG_ITEM_ATTACK_OBJECT attempts to run the attached item effect component(s)
-// COMSIG_ITEM_ATTACK_OBJECT_CHECK just returns whatever flags are associated with its item effect component(s)
-/// Whatever we wanted the item to do, it couldn't do it
+/// The
 #define ITEM_EFFECT_NOTHING 0
-/// The item has declared that it is ready and willing to set something on fire
+/// The item can set things on fire
 #define ITEM_EFFECT_BURN (1<<0)
-/// The item has declared that it is ready and willing to weld something
+/// The item can weld things, whether or not its actually a welder
 #define ITEM_EFFECT_WELD (1<<1)
+
+// defs for the list of values an item effect component should return
+/// Bitflags for the list of valid effects that an item can be considered capable of doing
+#define HAS_EFFECT "has these effects"
+/// Bitflags for the degrees of success and failure regarding the item's effects
+#define EFFECT_RESULT "effects had these results"
+
+// Success, failure, and result flags returned by an item effect component through a list
+/// The item effect failed for some reason
+#define ITEM_EFFECT_FAILURE 0
+/// The item effect did the thing it was supposed to do
+#define ITEM_EFFECT_SUCCESS 1
+/// The item has no fuel
+#define ITEM_EFFECT_NO_FUEL 2
+/// The item has fuel, but not enough
+#define ITEM_EFFECT_NOT_ENOUGH_FUEL 4
+/// The item is not on
+#define ITEM_EFFECT_NOT_ON 8

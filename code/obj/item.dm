@@ -769,8 +769,18 @@
 /obj/item/attackby(obj/item/W as obj, mob/user as mob, params)
 	if (src.material)
 		src.material.triggerTemp(src ,1500)
-	if (src.burn_possible && src.burn_point <= 1500 && SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, W, user, 1, 1) & ITEM_EFFECT_BURN)
-		src.combust()
+	if (src.burn_possible && src.burn_point <= 1500)
+		var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+		SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, this = W, user = user, results = burn_return, use_amt = 1, noisy = 1)
+		if(burn_return[HAS_EFFECT] & ITEM_EFFECT_BURN || W.burning || W.hit_type == DAMAGE_BURN)
+			if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+				boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+				boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+				boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+			else
+				src.combust()
 	else
 		..(W, user)
 

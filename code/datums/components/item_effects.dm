@@ -1,30 +1,16 @@
-#define NO_FUEL 1
-#define NOT_ENOUGH_FUEL 2
-#define NOT_ON 3
-
 /// Just plonk some of these on an item and it'll be recognized as a thing that does that thing
 /datum/component/item_effect
 /datum/component/item_effect/Initialize()
 	if(!istype(parent, /obj/item))
 		return COMPONENT_INCOMPATIBLE
 
-/datum/component/item_effect/proc/is_it_on(var/obj/item/thing, var/needs_fuel)
+/datum/component/item_effect/proc/is_it_on(var/obj/item/thing)
 	if (!thing) return FALSE
 
 	if (thing.flags & THING_IS_ON && thing.flags & ~THING_IS_BROKEN)
 		return TRUE
 	else
 		return FALSE
-
-/datum/component/item_effect/proc/can_not_burn(var/mob/user, var/obj/item/thing, var/why = 0)
-	if (!user || !thing) return
-	switch(why)
-		if(NO_FUEL)
-			boutput(user, "<span class='notice'>\the [thing] is out of fuel!</span>")
-		if(NOT_ENOUGH_FUEL)
-			boutput(user, "<span class='notice'>\the [thing] doesn't have enough fuel!</span>")
-		if(NOT_ON)
-			boutput(user, "<span class='notice'>\the [thing] isn't lit!</span>")
 
 /// Sets things on fire, but can do other things, like consume fuel, weld things, and blind people
 /datum/component/item_effect/burn_things
@@ -34,7 +20,8 @@
 	var/list/sounds_2_play
 	/// list("chemID" = "chemID", "default_use" = amt2useByDefault, "use_mult" = amt2useMultiplier)
 	var/list/fuel_2_use
-/// src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 1, do_welding = 1, burn_eyes = src.burns_eyes, fuel_2_use = src.fueltype, sounds_2_play = src.sounds)
+
+/// src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 1, do_welding = 1, burns_eyes = src.burns_eyes, fuel_2_use = src.fueltype, sounds_2_play = src.sounds)
 /datum/component/item_effect/burn_things/Initialize(var/needs_fuel = 0, var/do_welding = 0, var/burns_eyes, var/list/fuel_2_use, var/list/sounds_2_play)
 	..()
 	src.do_welding = do_welding
@@ -43,39 +30,34 @@
 	src.burns_eyes = burns_eyes
 	src.sounds_2_play = sounds_2_play
 	RegisterSignal(parent, list(COMSIG_ITEM_ATTACK_OBJECT), .proc/try_to_burn)
-	RegisterSignal(parent, list(COMSIG_ITEM_ATTACK_OBJECT_CHECK), .proc/it_burns)
 
-/// SEND_SIGNAL(thing_getting_burned, COMSIG_ITEM_ATTACK_OBJECT, thing_doing_burning) & ITEM_EFFECT_BURN/ITEM_EFFECT_WELD
-/// So you can have item effect specific failure actions, like calling you a dope for not lighting your lighter
-/datum/component/item_effect/burn_things/proc/try_to_burn(var/obj/item/that, var/obj/item/this)
-	if (!that || !this) return ITEM_EFFECT_NOTHING
+/datum/component/item_effect/burn_things/proc/try_to_burn(var/obj/item/that, var/obj/item/this, var/mob/user, var/list/results, var/use_amt = 0, var/noisy = 0)
+	if (!that || !this)
+		results = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+		return
 
-	. = ITEM_EFFECT_BURN
-	if(src.do_welding)
-		. |= ITEM_EFFECT_WELD
+	results[HAS_EFFECT] |= ITEM_EFFECT_BURN
+	if (src.do_welding)
+		results[HAS_EFFECT] |= ITEM_EFFECT_WELD
 
-/// SEND_SIGNAL(thing_getting_burned, COMSIG_ITEM_ATTACK_OBJECT, thing_doing_burning, PERSON_USING_BURNER, FUEL_2_USE, MAKE_NOISE_Y/N) & ITEM_EFFECT_BURN/ITEM_EFFECT_WELD
-/datum/component/item_effect/burn_things/proc/try_to_burn(var/obj/item/that, var/obj/item/this, var/mob/user, var/use_amt = 0, var/noisy = 0)
-	if (!that || !this || src.is_it_on(this))
-		src.can_not_burn(user, this, NOT_ON)
-		return ITEM_EFFECT_NOTHING
+	if(!src.is_it_on(this))
+		results[EFFECT_RESULT] |= ITEM_EFFECT_NOT_ON
+		return
+
 	if (src.needs_fuel)
 		var/fuel_amt = this?.reagents.get_reagent_amount(fuel_2_use["fuel"])
 		if(!fuel_amt)
-			src.can_not_burn(user, this, NO_FUEL)
-			return ITEM_EFFECT_NOTHING // we don't have any fuel
+			results[EFFECT_RESULT] |= ITEM_EFFECT_NO_FUEL
+			return
 
 		var/amt_2_use = (use_amt * fuel_2_use["use_mult"])
 		if ((fuel_amt =- amt_2_use) >= 0)
-			this.reagents.remove_reagents(loaded_fuel, amt_2_use)
-			this.?inventory_counter.update_number(this.reagents.get_reagent_amount(loaded_fuel))
+			this.reagents.remove_reagent(fuel_2_use["use_mult"], amt_2_use)
+			this?.inventory_counter.update_number(this.reagents.get_reagent_amount(fuel_2_use["use_mult"]))
+			results[EFFECT_RESULT] |= ITEM_EFFECT_SUCCESS
 		else
-			src.can_not_burn(user, this, NOT_ENOUGH_FUEL)
-			return ITEM_EFFECT_NOTHING // we don't have any fuel
-
-	. = ITEM_EFFECT_BURN
-	if(src.do_welding)
-		. |= ITEM_EFFECT_WELD
+			results[EFFECT_RESULT] |= ITEM_EFFECT_NOT_ENOUGH_FUEL
+			return
 
 	if(noisy && src.sounds_2_play)
 		playsound(user ? user.loc : this.loc, pick(src.sounds_2_play), 50, 1)
@@ -113,8 +95,3 @@
 /datum/component/item_effect/burn_things/UnregisterFromParent()
 	UnregisterSignal(parent, COMSIG_ITEM_ATTACK_OBJECT)
 	. = ..()
-
-#undef NO_FUEL
-#undef NOT_ENOUGH_FUEL
-#undef BAD_FUEL
-#undef NOT_ON

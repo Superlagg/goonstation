@@ -464,8 +464,16 @@
 				playsound(src.loc, "sound/items/Screwdriver.ogg", 100, 1)
 				src.anchored = 1
 
-		else if (SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT_CHECK, W) & ITEM_EFFECT_BURN && src.current)
-			if(SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, W, user, 3, 1) & ITEM_EFFECT_BURN)
+		var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+		SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, this = W, user = user, results = burn_return, use_amt = 1, noisy = 1)
+		if(burn_return[HAS_EFFECT] & ITEM_EFFECT_BURN || W.burning || W.hit_type == DAMAGE_BURN)
+			if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+				boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+				boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+				boutput(user, "<span class='alert'>It would help if you lit it first, dumbass!</span>")
+			else
 				var/datum/plant/growing = src.current
 				if(growing.attacked_proc)
 					// It will fight back if possible, and halts the attack if it returns
@@ -491,11 +499,7 @@
 					src.reagents.add_reagent("ash", src.growth)
 					HYPdestroyplant()
 					// Ashes in the plantpot I guess.
-				else
-					if(!HYPdamageplant("fire",150)) src.visible_message("<span class='alert'>[src] resists the fire!</span>")
-			else if (W.flags & ~THING_IS_ON)
-				boutput(user, "<span class='alert'>It would help if you lit it first, dumbass!</span>")
-				return
+				else if(!HYPdamageplant("fire",150)) src.visible_message("<span class='alert'>[src] resists the fire!</span>")
 
 		else if(istype(W,/obj/item/saw))
 			// Allows you to cut down plants. Never really saw the point in chainsaws considering

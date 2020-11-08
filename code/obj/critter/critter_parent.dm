@@ -1104,12 +1104,21 @@
 
 			src.critter_name = t
 
-		else if (SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, W, user, 1, 1) & ITEM_EFFECT_BURN || W.burning || W.hit_type == DAMAGE_BURN) // jesus motherfucking christ
-			user.visible_message("<span class='alert'><b>[user]</b> warms [src] with [W].</span>",\
-			"<span class='alert'>You warm [src] with [W].</span>")
-			src.warm_count -= 2
-			src.warm_count = max(src.warm_count, 0)
-			src.hatch_check(0, user)
+		var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+		SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, this = W, user = user, results = burn_return, use_amt = 1, noisy = 1)
+		if(burn_return[HAS_EFFECT] & ITEM_EFFECT_BURN || W.burning || W.hit_type == DAMAGE_BURN)
+			if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+				boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+				boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+				boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+			else
+				user.visible_message("<span class='alert'><b>[user]</b> warms [src] with [W].</span>",\
+				"<span class='alert'>You warm [src] with [W].</span>")
+				src.warm_count -= 2
+				src.warm_count = max(src.warm_count, 0)
+				src.hatch_check(0, user)
 		else
 			return ..()
 

@@ -38,7 +38,7 @@
 	New()
 		..()
 		src.create_reagents(60)
-		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burn_eyes = 0)
+		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burns_eyes = 0)
 
 		if (src.flags & THING_IS_ON) //if we spawned lit, do something about it!
 			src.flags &= ~THING_IS_ON
@@ -137,22 +137,30 @@
 
 	attackby(obj/item/W as obj, mob/user as mob)
 		if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
-			var/sigreturn = SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, W, user, 1, 1)
-			if (sigreturn & ITEM_EFFECT_WELD)
-				src.light(user, "<span class='alert'><b>[user]</b> casually lights [src] with [W], what a badass.</span>")
-			else if (sigreturn & ITEM_EFFECT_BURN)
-				if (istype(W, /obj/item/sword))
-					src.light(user, "<span class='alert'><b>[user]</b> swishes [W] alarmingly close to [his_or_her(user)] face and lights [src] ablaze.</span>")
-				else if (istype(W, /obj/item/clothing/head/cakehat))
-					src.light(user, "<span class='alert'>Did [user] just light [his_or_her(user)] [src.name] with [W]? Holy Shit.</span>")
-				else if (istype(W, /obj/item/device/igniter))
-					src.light(user, "<span class='alert'><b>[user]</b> fumbles around with [W]; a small flame erupts from [src].</span>")
-				else if (istype(W, /obj/item/device/light/zippo))
-					src.light(user, "<span class='alert'>With a single flick of their wrist, [user] smoothly lights [src] with [W]. Damn they're cool.</span>")
-				else if (W.burning)
-					src.light(user, "<span class='alert'><b>[user]</b> lights [src] with [W]. Goddamn.</span>")
+			var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+			SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, this = W, user = user, results = burn_return, use_amt = 1, noisy = 1)
+			if(burn_return[HAS_EFFECT] & ITEM_EFFECT_BURN || W.burning || W.hit_type == DAMAGE_BURN)
+				if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+					boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+					boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+					boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+				else if (burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+					src.light(user, "<span class='alert'><b>[user]</b> casually lights [src] with [W], what a badass.</span>")
 				else
-					src.light(user, "<span class='alert'><b>[user]</b> lights [src] with [W].</span>")
+					if (istype(W, /obj/item/sword))
+						src.light(user, "<span class='alert'><b>[user]</b> swishes [W] alarmingly close to [his_or_her(user)] face and lights [src] ablaze.</span>")
+					else if (istype(W, /obj/item/clothing/head/cakehat))
+						src.light(user, "<span class='alert'>Did [user] just light [his_or_her(user)] [src.name] with [W]? Holy Shit.</span>")
+					else if (istype(W, /obj/item/device/igniter))
+						src.light(user, "<span class='alert'><b>[user]</b> fumbles around with [W]; a small flame erupts from [src].</span>")
+					else if (istype(W, /obj/item/device/light/zippo))
+						src.light(user, "<span class='alert'>With a single flick of their wrist, [user] smoothly lights [src] with [W]. Damn they're cool.</span>")
+					else if (W.burning)
+						src.light(user, "<span class='alert'><b>[user]</b> lights [src] with [W]. Goddamn.</span>")
+					else
+						src.light(user, "<span class='alert'><b>[user]</b> lights [src] with [W].</span>")
 		else
 			return ..() // CALL your GODDAMN PARENTS
 
@@ -843,7 +851,7 @@
 
 	New()
 		..()
-		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burn_eyes = 0)
+		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burns_eyes = 0)
 		light = new /datum/light/point
 		light.set_brightness(0.4)
 		light.set_color(0.94, 0.69, 0.27)
@@ -923,7 +931,7 @@
 			src.visible_message("<span class='alert'>The [src] ignites!</span>")
 			src.light()
 
-	afterattack(atom/target, mob/user as mob)
+	afterattack(obj/item/target, mob/user as mob)
 		if (src.flags & THING_IS_ON)
 			if (!ismob(target) && target.reagents)
 				user.show_text("You heat [target].", "blue")
@@ -933,10 +941,19 @@
 			user.show_text("You [pick("fumble", "fuss", "mess", "faff")] around with [src] and try to get it to light, but it's no use.", "red")
 			return
 		else if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
-			if (SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, target, user, 1, 1) & ITEM_EFFECT_BURN)
-				user.visible_message("<b>[user]</b> lights [src] with the flame from [target].",\
-				"You light [src] with the flame from [target].")
-				src.light(user)
+			var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+			SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, this = target, user = user, results = burn_return, use_amt = 1, noisy = 1)
+			if(burn_return[HAS_EFFECT] & ITEM_EFFECT_BURN || target.burning || target.hit_type == DAMAGE_BURN)
+				if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+					boutput(user, "<span class='notice'>\the [target] is out of fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+					boutput(user, "<span class='notice'>\the [target] doesn't have enough fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+					boutput(user, "<span class='notice'>\the [target] isn't lit!</span>")
+				else
+					user.visible_message("<b>[user]</b> lights [src] with the flame from [target].",\
+					"You light [src] with the flame from [target].")
+					src.light(user)
 				return
 			else if (istype(target, /obj/item/matchbook))
 				if (prob(10))
@@ -1036,7 +1053,7 @@
 
 	New()
 		..()
-		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = infinite_fuel ? 1 : 0, do_welding = 0, burn_eyes = 0, fuel_2_use = src.fueltype)
+		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = infinite_fuel ? 1 : 0, do_welding = 0, burns_eyes = 0, fuel_2_use = src.fueltype)
 		src.create_reagents(capacity)
 		reagents.add_reagent(fueltype["fuel"], capacity)
 

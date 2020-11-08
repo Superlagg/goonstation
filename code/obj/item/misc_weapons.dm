@@ -43,6 +43,7 @@
 	stamina_damage = 35 // This gets applied by obj/item/attack, regardless of if the saber is active.
 	stamina_cost = 5
 	stamina_crit_chance = 35
+	var/active = 0
 	var/active_force = 60
 	var/active_stamina_dmg = 40
 	var/active_stamina_cost = 40
@@ -59,6 +60,9 @@
 
 	New()
 		..()
+		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 1, burns_eyes = 0)
+		if(src.active)
+			src.flags |= THING_IS_ON
 		if(src.bladecolor == "invalid")
 			src.bladecolor = pick(valid_colors)
 		var/r = 0
