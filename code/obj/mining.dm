@@ -472,16 +472,25 @@
 			boutput(user, "<span class='alert'>It's way too dangerous to do that while it's active!</span>")
 			return
 
-		if (isweldingtool(W))
-			if (src.health < 50)
+		if(isweldingtool(W))
+			if(src.health < 50)
 				boutput(usr, "<span class='alert'>You need to use wire to fix the cabling first.</span>")
-				return
-			if(W:try_weld(user, 1))
-				src.damage(-10)
-				src.malfunctioning = 0
-				user.visible_message("<b>[user]</b> uses [W] to repair some of [src]'s damage.")
-				if (src.health >= 100)
-					boutput(user, "<span class='notice'><b>[src] looks fully repaired!</b></span>")
+			else
+				var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+				SEND_SIGNAL(this = W, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 1, noisy = 1)
+				if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+					else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+						boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+					else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+						boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+					else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+						boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+					else
+						src.damage(-10)
+						src.malfunctioning = 0
+						user.visible_message("<b>[user]</b> uses [W] to repair some of [src]'s damage.")
+						if (src.health >= 100)
+							boutput(user, "<span class='notice'><b>[src] looks fully repaired!</b></span>")
 
 		else if (istype(W,/obj/item/cable_coil/))
 			var/obj/item/cable_coil/C = W

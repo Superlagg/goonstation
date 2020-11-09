@@ -21,7 +21,7 @@
 	/// list("chemID" = "chemID", "default_use" = amt2useByDefault, "use_mult" = amt2useMultiplier)
 	var/list/fuel_2_use
 
-/// src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 1, do_welding = 1, burns_eyes = src.burns_eyes, fuel_2_use = src.fueltype, sounds_2_play = src.sounds)
+/// AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 1, do_welding = 1, burns_eyes = src.burns_eyes, fuel_2_use = src.fueltype, sounds_2_play = src.sounds)
 /datum/component/item_effect/burn_things/Initialize(var/needs_fuel = 0, var/do_welding = 0, var/burns_eyes, var/list/fuel_2_use, var/list/sounds_2_play)
 	..()
 	src.do_welding = do_welding
@@ -30,8 +30,9 @@
 	src.burns_eyes = burns_eyes
 	src.sounds_2_play = sounds_2_play
 	RegisterSignal(parent, list(COMSIG_ITEM_ATTACK_OBJECT), .proc/try_to_burn)
+	RegisterSignal(parent, list(COMSIG_ITEM_ATTACK_OBJECT), .proc/spend_fuel)
 
-/datum/component/item_effect/burn_things/proc/try_to_burn(var/obj/item/that, var/obj/item/this, var/mob/user, var/list/results, var/use_amt = 0, var/noisy = 0)
+/datum/component/item_effect/burn_things/proc/try_to_burn(var/obj/item/this, var/obj/item/that, var/mob/user, var/list/results, var/use_amt = 0, var/noisy = 0)
 	if (!that || !this)
 		results = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
 		return
@@ -45,19 +46,22 @@
 		return
 
 	if (src.needs_fuel)
-		var/fuel_amt = this?.reagents.get_reagent_amount(fuel_2_use["fuel"])
+		var/fuel_amt = this?.reagents.get_reagent_amount(src.fuel_2_use["fuel"])
 		if(!fuel_amt)
 			results[EFFECT_RESULT] |= ITEM_EFFECT_NO_FUEL
 			return
 
-		var/amt_2_use = (use_amt * fuel_2_use["use_mult"])
-		if ((fuel_amt =- amt_2_use) >= 0)
-			this.reagents.remove_reagent(fuel_2_use["use_mult"], amt_2_use)
-			this?.inventory_counter.update_number(this.reagents.get_reagent_amount(fuel_2_use["use_mult"]))
-			results[EFFECT_RESULT] |= ITEM_EFFECT_SUCCESS
+		var/amt_2_use = (use_amt * src.fuel_2_use["use_mult"])
+		fuel_amt = fuel_amt - amt_2_use
+		if (fuel_amt >= 0)
+			this.reagents.remove_reagent(src.fuel_2_use["fuel"], amt_2_use)
+			this?.inventory_counter.update_number(this.reagents.get_reagent_amount(src.fuel_2_use["fuel"]))
 		else
 			results[EFFECT_RESULT] |= ITEM_EFFECT_NOT_ENOUGH_FUEL
 			return
+
+	results[EFFECT_RESULT] |= ITEM_EFFECT_SUCCESS
+	results[EFFECT_RESULT] &= ~ITEM_EFFECT_FAILURE
 
 	if(noisy && src.sounds_2_play)
 		playsound(user ? user.loc : this.loc, pick(src.sounds_2_play), 50, 1)
@@ -91,6 +95,37 @@
 					boutput(usr, "<span class='alert'><b>Your goggles intensify the welder's glow. Your eyes itch and burn severely.</b></span>")
 					user.change_eye_blurry(rand(12, 20))
 					user.take_eye_damage(rand(12, 16))
+
+/datum/component/item_effect/burn_things/proc/try_to_burn(var/obj/item/this, var/obj/item/that, var/mob/user, var/list/results, var/use_amt = 0, var/noisy = 0)
+	if (!that || !this)
+		results = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+		return
+
+	results[HAS_EFFECT] |= ITEM_EFFECT_BURN
+	if (src.do_welding)
+		results[HAS_EFFECT] |= ITEM_EFFECT_WELD
+
+	if(!src.is_it_on(this))
+		results[EFFECT_RESULT] |= ITEM_EFFECT_NOT_ON
+		return
+
+	if (src.needs_fuel)
+		var/fuel_amt = this?.reagents.get_reagent_amount(src.fuel_2_use["fuel"])
+		if(!fuel_amt)
+			results[EFFECT_RESULT] |= ITEM_EFFECT_NO_FUEL
+			return
+
+		var/amt_2_use = (use_amt * src.fuel_2_use["use_mult"])
+		fuel_amt = fuel_amt - amt_2_use
+		if (fuel_amt >= 0)
+			this.reagents.remove_reagent(src.fuel_2_use["fuel"], amt_2_use)
+			this?.inventory_counter.update_number(this.reagents.get_reagent_amount(src.fuel_2_use["fuel"]))
+			results[EFFECT_RESULT] |= ITEM_EFFECT_SUCCESS
+			results[EFFECT_RESULT] &= ~ITEM_EFFECT_FAILURE
+		else
+			results[EFFECT_RESULT] |= ITEM_EFFECT_NOT_ENOUGH_FUEL
+			return
+
 
 /datum/component/item_effect/burn_things/UnregisterFromParent()
 	UnregisterSignal(parent, COMSIG_ITEM_ATTACK_OBJECT)

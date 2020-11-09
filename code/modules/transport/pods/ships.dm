@@ -508,15 +508,23 @@ obj/machinery/vehicle/miniputt/pilot
 				boutput(user, "You should probably finish putting these parts together. A wrench would do the trick!")
 
 		if(2)
-			if (isweldingtool(W))
-				if(!W:try_weld(user, 1))
-					return
-				boutput(user, "You begin to weld the joints of the frame...")
-				if (!do_after(user, 30))
-					boutput(user, "<span class='alert'>You were interrupted!</span>")
-					return
-				boutput(user, "You weld the joints of the frame together.")
-				stage = 3
+			var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+			SEND_SIGNAL(this = W, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 1, noisy = 1)
+			if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+
+				if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+					boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+					boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+					boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+				else
+					boutput(user, "You begin to weld the joints of the frame...")
+					if (!do_after(user, 30))
+						boutput(user, "<span class='alert'>You were interrupted!</span>")
+						return
+					boutput(user, "You weld the joints of the frame together.")
+					stage = 3
 			else
 				boutput(user, "Even with the bolts secured, the joints of this frame still feel pretty wobbly. Welding it will make it nice and sturdy.")
 
@@ -684,15 +692,23 @@ obj/machinery/vehicle/miniputt/pilot
 				boutput(user, "You don't think you're going anywhere without a skin on this pod, do you? Get some armor!")
 
 		if(8)
-			if (isweldingtool(W))
-				if(!W:try_weld(user, 1))
-					return
-				boutput(user, "You begin to weld the exterior...")
-				if (!do_after(user, 30))
-					boutput(user, "<span class='alert'>You were interrupted!</span>")
-					return
-				boutput(user, "You weld the seams of the outer skin to make it air-tight.")
-				stage = 9
+			var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+			SEND_SIGNAL(this = W, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 1, noisy = 1)
+			if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+
+				if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+					boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+					boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+					boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+				else
+					boutput(user, "You begin to weld the exterior...")
+					if (!do_after(user, 30))
+						boutput(user, "<span class='alert'>You were interrupted!</span>")
+						return
+					boutput(user, "You weld the seams of the outer skin to make it air-tight.")
+					stage = 9
 			else
 				boutput(user, "The outer skin still feels pretty loose. Welding it together would make it nice and airtight.")
 
@@ -1454,15 +1470,23 @@ obj/machinery/vehicle/miniputt/pilot
 				boutput(user, "You should probably finish putting these parts together. A wrench would do the trick!")
 
 		if(2)
-			if (isweldingtool(W))
-				if(!W:try_weld(user, 1))
-					return
-				boutput(user, "You begin to weld the joints of the frame...")
-				if (!do_after(user, 30))
-					boutput(user, "<span class='alert'>You were interrupted!</span>")
-					return
-				boutput(user, "You weld the joints of the frame together.")
-				stage = 3
+			var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+			SEND_SIGNAL(this = W, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 1, noisy = 1)
+			if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+
+				if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+					boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+					boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+					boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+				else
+					boutput(user, "You begin to weld the joints of the frame...")
+					if (!do_after(user, 30))
+						boutput(user, "<span class='alert'>You were interrupted!</span>")
+						return
+					boutput(user, "You weld the joints of the frame together.")
+					stage = 3
 			else
 				boutput(user, "Even with the bolts secured, the joints of this frame still feel pretty wobbly. Welding it will make it nice and sturdy.")
 
@@ -1630,15 +1654,23 @@ obj/machinery/vehicle/miniputt/pilot
 				boutput(user, "You don't think you're going anywhere without a skin on this pod, do you? Get some armor!")
 
 		if(8)
-			if (isweldingtool(W))
-				if(!W:try_weld(user, 1))
-					return
-				boutput(user, "You begin to weld the exterior...")
-				if (!do_after(user, 30))
-					boutput(user, "<span class='alert'>You were interrupted!</span>")
-					return
-				boutput(user, "You weld the seams of the outer skin to make it air-tight.")
-				stage = 9
+			var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+			SEND_SIGNAL(this = W, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 1, noisy = 1)
+			if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+
+				if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+					boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+					boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+					boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+				else
+					boutput(user, "You begin to weld the exterior...")
+					if (!do_after(user, 30))
+						boutput(user, "<span class='alert'>You were interrupted!</span>")
+						return
+					boutput(user, "You weld the seams of the outer skin to make it air-tight.")
+					stage = 9
 			else
 				boutput(user, "The outer skin still feels pretty loose. Welding it together would make it nice and airtight.")
 

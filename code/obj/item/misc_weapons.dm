@@ -60,7 +60,7 @@
 
 	New()
 		..()
-		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 1, burns_eyes = 0)
+		AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 1, burns_eyes = 0)
 		if(src.active)
 			src.flags |= THING_IS_ON
 		if(src.bladecolor == "invalid")

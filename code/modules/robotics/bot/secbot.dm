@@ -1179,11 +1179,21 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 
 
 /obj/item/secbot_assembly/attackby(obj/item/W as obj, mob/user as mob)
-	if ((isweldingtool(W)) && (!src.build_step))
-		if(W:try_weld(user, 1))
-			src.build_step++
-			src.overlays += image('icons/obj/bots/aibots.dmi', "hs_hole")
-			boutput(user, "You weld a hole in [src]!")
+	if (!src.build_step)
+		var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+		SEND_SIGNAL(this = W, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 1, noisy = 1)
+		if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+
+			if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+				boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+				boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+				boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+			else
+				src.build_step++
+				src.overlays += image('icons/obj/bots/aibots.dmi', "hs_hole")
+				boutput(user, "You weld a hole in [src]!")
 
 	else if (istype(W, /obj/item/device/prox_sensor) && src.build_step == 1)
 		src.build_step++

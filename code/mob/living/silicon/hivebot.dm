@@ -515,20 +515,26 @@
 	return
 
 /mob/living/silicon/hivebot/attackby(obj/item/W as obj, mob/user as mob)
-	if (isweldingtool(W))
+	var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+	SEND_SIGNAL(this = W, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 1, noisy = 1)
+	if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
 		if (src.get_brute_damage() < 1)
 			boutput(user, "<span class='alert'>[src] has no dents to repair.</span>")
-			return
-		if(!W:try_weld(user, 1))
-			return
-		src.HealDamage("All", 30, 0)
-		src.add_fingerprint(user)
-		if (src.get_brute_damage() < 1)
-			src.bruteloss = 0
-			src.visible_message("<span class='alert'><b>[user] fully repairs the dents on [src]!</b></span>")
+		if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+			boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+		else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+			boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+		else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+			boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
 		else
-			src.visible_message("<span class='alert'>[user] has fixed some of the dents on [src].</span>")
-		health_update_queue |= src
+			src.HealDamage("All", 30, 0)
+			src.add_fingerprint(user)
+			if (src.get_brute_damage() < 1)
+				src.bruteloss = 0
+				src.visible_message("<span class='alert'><b>[user] fully repairs the dents on [src]!</b></span>")
+			else
+				src.visible_message("<span class='alert'>[user] has fixed some of the dents on [src].</span>")
+			health_update_queue |= src
 
 	// Added ability to repair burn-damaged AI shells (Convair880).
 	else if (istype(W, /obj/item/cable_coil))

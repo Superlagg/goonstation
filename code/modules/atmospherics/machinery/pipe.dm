@@ -347,28 +347,29 @@ obj/machinery/atmospherics/pipe
 
 
 		attackby(var/obj/item/W as obj, var/mob/user as mob)
-			if(isweldingtool(W))
-
+			var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+			SEND_SIGNAL(this = W, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 1, noisy = 1)
+			if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
 				if(!ruptured)
 					boutput(user, "<span class='alert'>That isn't damaged!</span>")
-					return
-
-				if(!W:try_weld(user, 1, noisy=2))
-					return
-
-				boutput(user, "You start to repair the [src.name].")
-
-				if (do_after(user, 20))
-					ruptured --
+				if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+					boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+					boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+				else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+					boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
 				else
-					boutput(user, "<span class='alert'>You were interrupted!</span>")
-					return
-				if(!ruptured)
-					boutput(user, "You have fully repaired the [src.name].")
-					icon_state = initial_icon_state
-				else boutput(user, "You have partially repaired the [src.name].")
-				return
-
+					boutput(user, "You start to repair the [src.name].")
+					if (do_after(user, 20))
+						ruptured --
+					else
+						boutput(user, "<span class='alert'>You were interrupted!</span>")
+						return
+					if(!ruptured)
+						boutput(user, "You have fully repaired the [src.name].")
+						icon_state = initial_icon_state
+					else
+						boutput(user, "You have partially repaired the [src.name].")
 
 		disposing()
 			if(node1)

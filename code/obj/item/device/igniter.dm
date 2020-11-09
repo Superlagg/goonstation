@@ -18,7 +18,7 @@
 	var/last_ignite = 0
 
 /obj/item/device/igniter/New()
-	src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burns_eyes = 0)
+	AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burns_eyes = 0)
 	. = ..()
 
 /obj/item/device/igniter/attack(mob/M as mob, mob/user as mob)

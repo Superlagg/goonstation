@@ -46,7 +46,16 @@
 		return
 
 	attackby(obj/item/W as obj, mob/user as mob)
-		if (isweldingtool(W) && W:try_weld(user,0,-1,0,0))
-			src.gib(1)
+		var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+		SEND_SIGNAL(this = W, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 1, noisy = 1)
+		if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+			if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+				boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+				boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+				boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+			else
+				src.gib(1)
 		else
 			..()

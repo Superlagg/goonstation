@@ -1069,17 +1069,24 @@
 		return
 
 	attackby(obj/item/W as obj, mob/user as mob)
-		if (isweldingtool(W))
-			user.lastattacked = src
-
-			if(health == max_health)
+		user.lastattacked = src
+		if(isweldingtool(W))
+			if(src.health >= max_health)
 				boutput(user, "<span class='notice'>The locker isn't damaged!</span>")
-				return
-
-			if(W:try_weld(user, 4))
-				repair_damage(20)
-				user.visible_message("<span class='notice'>[user] repairs the [src] with [W]!</span>")
-				return
+			else
+				var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+				SEND_SIGNAL(this = W, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 1, noisy = 1)
+				if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+					if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+						boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+					else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+						boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+					else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+						boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+					else
+						repair_damage(20)
+						user.visible_message("<span class='notice'>[user] repairs the [src] with [W]!</span>")
+					return
 
 		if (health <= 0)
 			boutput(user, "<span class='alert'>The locker is broken, it needs to be repaired first!</span>")

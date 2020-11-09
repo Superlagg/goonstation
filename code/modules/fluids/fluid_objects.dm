@@ -70,25 +70,33 @@
 
 
 	attackby(obj/item/I as obj, mob/user as mob)
-		if (isweldingtool(I))
-			if(!I:try_weld(user, 2))
+		var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+		SEND_SIGNAL(this = W, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 2, noisy = 1)
+		if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+
+			if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+				boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+				boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+			else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+				boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+			else
+				if(!src.welded)
+					src.welded = 1
+					logTheThing("station", user, null, "welded [name] shut at [log_loc(user)].")
+					user.show_text("You weld the drain shut.")
+				else
+					logTheThing("station", user, null, "un-welded [name] at [log_loc(user)].")
+					src.welded = 0
+					user.show_text("You unseal the drain with your welder.")
+
+				if (src.clogged)
+					src.clogged = 0
+					user.show_text("The drain clog melts away.")
+
+				src.update_icon()
 				return
 
-			if (!src.welded)
-				src.welded = 1
-				logTheThing("station", user, null, "welded [name] shut at [log_loc(user)].")
-				user.show_text("You weld the drain shut.")
-			else
-				logTheThing("station", user, null, "un-welded [name] at [log_loc(user)].")
-				src.welded = 0
-				user.show_text("You unseal the drain with your welder.")
-
-			if (src.clogged)
-				src.clogged = 0
-				user.show_text("The drain clog melts away.")
-
-			src.update_icon()
-			return
 		if (istype(I,/obj/item/material_piece/cloth))
 			var/obj/item/material_piece/cloth/C = I
 			src.clogged += (20 * C.amount) //One piece of cloth clogs for about 1 minute. (cause the machine loop updates ~3 second interval)

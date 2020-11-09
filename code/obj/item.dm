@@ -771,7 +771,7 @@
 		src.material.triggerTemp(src ,1500)
 	if (src.burn_possible && src.burn_point <= 1500)
 		var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
-		SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, this = W, user = user, results = burn_return, use_amt = 1, noisy = 1)
+		SEND_SIGNAL(W, COMSIG_ITEM_ATTACK_OBJECT, that = src, user = user, results = burn_return, use_amt = 1, noisy = 1)
 		if(burn_return[HAS_EFFECT] & ITEM_EFFECT_BURN || W.burning || W.hit_type == DAMAGE_BURN)
 			if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
 				boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")

@@ -106,7 +106,7 @@
 
 // componentized item effect stuff
 // COMSIG_ITEM_ATTACK_OBJECT attempts to run the attached item effect component(s)
-/// The
+/// The item has no listed effect
 #define ITEM_EFFECT_NOTHING 0
 /// The item can set things on fire
 #define ITEM_EFFECT_BURN (1<<0)
@@ -115,12 +115,12 @@
 
 // defs for the list of values an item effect component should return
 /// Bitflags for the list of valid effects that an item can be considered capable of doing
-#define HAS_EFFECT "has these effects"
+#define HAS_EFFECT "effect_list"
 /// Bitflags for the degrees of success and failure regarding the item's effects
-#define EFFECT_RESULT "effects had these results"
+#define EFFECT_RESULT "effect_result_list"
 
 // Success, failure, and result flags returned by an item effect component through a list
-/// The item effect failed for some reason
+/// The item effect failed for some nonspecific reason
 #define ITEM_EFFECT_FAILURE 0
 /// The item effect did the thing it was supposed to do
 #define ITEM_EFFECT_SUCCESS 1

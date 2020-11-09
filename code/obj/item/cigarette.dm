@@ -38,7 +38,7 @@
 	New()
 		..()
 		src.create_reagents(60)
-		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burns_eyes = 0)
+		AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burns_eyes = 0)
 
 		if (src.flags & THING_IS_ON) //if we spawned lit, do something about it!
 			src.flags &= ~THING_IS_ON
@@ -138,7 +138,7 @@
 	attackby(obj/item/W as obj, mob/user as mob)
 		if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
 			var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
-			SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, this = W, user = user, results = burn_return, use_amt = 1, noisy = 1)
+			SEND_SIGNAL(this = W, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 1, noisy = 1)
 			if(burn_return[HAS_EFFECT] & ITEM_EFFECT_BURN || W.burning || W.hit_type == DAMAGE_BURN)
 				if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
 					boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
@@ -851,7 +851,7 @@
 
 	New()
 		..()
-		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burns_eyes = 0)
+		AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 0, do_welding = 0, burns_eyes = 0)
 		light = new /datum/light/point
 		light.set_brightness(0.4)
 		light.set_color(0.94, 0.69, 0.27)
@@ -942,7 +942,7 @@
 			return
 		else if (src.flags & ~THING_IS_ON && src.flags & ~THING_IS_BROKEN)
 			var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
-			SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_OBJECT, this = target, user = user, results = burn_return, use_amt = 1, noisy = 1)
+			SEND_SIGNAL(this = target, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 1, noisy = 1)
 			if(burn_return[HAS_EFFECT] & ITEM_EFFECT_BURN || target.burning || target.hit_type == DAMAGE_BURN)
 				if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
 					boutput(user, "<span class='notice'>\the [target] is out of fuel!</span>")
@@ -1053,7 +1053,7 @@
 
 	New()
 		..()
-		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = infinite_fuel ? 1 : 0, do_welding = 0, burns_eyes = 0, fuel_2_use = src.fueltype)
+		AddComponent(/datum/component/item_effect/burn_things, needs_fuel = infinite_fuel ? 1 : 0, do_welding = 0, burns_eyes = 0, fuel_2_use = src.fueltype)
 		src.create_reagents(capacity)
 		reagents.add_reagent(fueltype["fuel"], capacity)
 

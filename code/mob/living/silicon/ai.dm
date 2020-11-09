@@ -292,13 +292,21 @@ var/list/ai_emotions = list("Happy" = "ai_happy",\
 				src.dismantle_stage = 2
 		else ..()
 
-	else if (isweldingtool(W))
-		if(src.bruteloss)
-			if(W:try_weld(user, 1))
-				src.add_fingerprint(user)
-				src.HealDamage(null, 15, 0)
-				src.visible_message("<span class='alert'><b>[user.name]</b> repairs some of the damage to [src.name]'s chassis.</span>")
-		else boutput(user, "<span class='alert'>There's no structural damage on [src.name] to mend.</span>")
+	var/list/burn_return = list(HAS_EFFECT = ITEM_EFFECT_NOTHING, EFFECT_RESULT = ITEM_EFFECT_FAILURE)
+	SEND_SIGNAL(this = W, COMSIG_ITEM_ATTACK_OBJECT, src, user = user, results = burn_return, use_amt = 1, noisy = 1)
+	if(burn_return[HAS_EFFECT] & ITEM_EFFECT_WELD)
+		if(!src.bruteloss)
+			boutput(user, "<span class='alert'>There's no structural damage on [src.name] to mend.</span>")
+		if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NO_FUEL)
+			boutput(user, "<span class='notice'>\the [W] is out of fuel!</span>")
+		else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ENOUGH_FUEL)
+			boutput(user, "<span class='notice'>\the [W] doesn't have enough fuel!</span>")
+		else if(burn_return[EFFECT_RESULT] & ITEM_EFFECT_NOT_ON)
+			boutput(user, "<span class='notice'>\the [W] isn't lit!</span>")
+		else
+			src.add_fingerprint(user)
+			src.HealDamage(null, 15, 0)
+			src.visible_message("<span class='alert'><b>[user.name]</b> repairs some of the damage to [src.name]'s chassis.</span>")
 
 	else if(istype(W, /obj/item/cable_coil) && dismantle_stage >= 2)
 		var/obj/item/cable_coil/coil = W

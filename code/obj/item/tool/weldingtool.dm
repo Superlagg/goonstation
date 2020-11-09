@@ -37,7 +37,7 @@
 
 	New()
 		..()
-		src.AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 1, do_welding = 1, burns_eyes = src.burns_eyes, fuel_2_use = src.fueltype, sounds_2_play = src.sounds)
+		AddComponent(/datum/component/item_effect/burn_things, needs_fuel = 1, do_welding = 1, burns_eyes = src.burns_eyes, fuel_2_use = src.fueltype, sounds_2_play = src.sounds)
 		src.create_reagents(src.capacity)
 		src.reagents.add_reagent(src.fueltype["fuel"], src.capacity)
 		src.inventory_counter.update_number(src.reagents.total_volume)

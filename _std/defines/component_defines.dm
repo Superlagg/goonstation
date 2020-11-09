@@ -87,6 +87,8 @@
 #define COMSIG_ITEM_ATTACK_SELF "itm_atk_self"
 /// When an item is used to attack an object
 #define COMSIG_ITEM_ATTACK_OBJECT "itm_atk_object"
+/// When an item "processes"
+#define COMSIG_ITEM_PROCESS "itm_process"
 
 // ---- implant signals ----
 /// When implanted
