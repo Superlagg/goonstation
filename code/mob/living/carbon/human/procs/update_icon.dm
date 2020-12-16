@@ -15,6 +15,7 @@
 	var/hand_offset = 0
 	var/body_offset = 0
 	var/list/override_states = null
+	var/datum/appearanceHolder/AHC = src.bioHolder?.mobAppearance
 
 	if (src.mutantrace)
 		head_offset = src.mutantrace.head_offset
@@ -379,6 +380,33 @@
 		UpdateOverlays(null, "wear_suit")
 		UpdateOverlays(null, "wear_suit_bloody")
 		UpdateOverlays(null, "material_armor")
+
+	if(AHC?.mob_appearance_flags & HAS_OVERSUIT_DETAILS)	// need more oversuits? Make more of these!
+		src.detail_standing_oversuit = image(AHC.mob_oversuit_1_icon, AHC.mob_oversuit_1_state, layer = MOB_OVERSUIT_LAYER1)
+		switch(AHC.mob_oversuit_1_color_ref)
+			if(CUST_1)
+				src.detail_standing_oversuit.color = AHC.customization_first_color
+			if(CUST_2)
+				src.detail_standing_oversuit.color = AHC.customization_second_color
+			if(CUST_3)
+				src.detail_standing_oversuit.color = AHC.customization_third_color
+			else
+				src.detail_standing_oversuit.color = "#FFFFFF"
+		src.detail_standing_oversuit.layer = MOB_OVERSUIT_LAYER2
+		UpdateOverlays(src.detail_standing_oversuit, "detail_oversuit")
+	else
+		UpdateOverlays(null, "detail_oversuit")
+
+	if (src.organHolder?.tail)
+		var/obj/item/organ/tail/our_tail = src.organHolder.tail // visual tail data is stored in the tail
+		ourtail.tail_image_oversuit.layer = MOB_OVERSUIT_LAYER1
+		UpdateOverlays(our_tail.tail_image_1, "tail_1") // i blame pali for giving me this power
+		UpdateOverlays(our_tail.tail_image_2, "tail_2")
+		UpdateOverlays(our_tail.tail_image_oversuit, "tail_oversuit")
+	else
+		UpdateOverlays(null, "tail_1")
+		UpdateOverlays(null, "tail_2")
+		UpdateOverlays(null, "tail_oversuit")
 
 	//tank transfer valve backpack's icon is handled in transfer_valve.dm
 	if (src.back)
@@ -803,12 +831,6 @@ var/list/update_body_limbs = list("r_arm" = "stump_arm_right", "l_arm" = "stump_
 		src.body_standing.overlays.len = 0
 		src.hands_standing = SafeGetOverlayImage("hands", file, "blank", MOB_HAND_LAYER1) //image('icons/mob/human.dmi', "blank", MOB_HAND_LAYER1)
 		src.hands_standing.overlays.len = 0
-		src.tail_standing = SafeGetOverlayImage("tail", 'icons/mob/human.dmi', "blank", MOB_TAIL_LAYER1)
-		src.tail_standing.overlays.len = 0
-		src.tail_standing_oversuit = SafeGetOverlayImage("tail_oversuit", 'icons/mob/human.dmi', "blank", MOB_OVERSUIT_LAYER1)
-		src.tail_standing_oversuit.overlays.len = 0
-		src.detail_standing_oversuit = SafeGetOverlayImage("detail_oversuit", 'icons/mob/human.dmi', "blank", MOB_OVERSUIT_LAYER2)
-		src.detail_standing_oversuit.overlays.len = 0
 
 		var/eye_offset = AHOLD.e_offset_y // Monkey need human eyes to see good
 		var/body_offset = AHOLD.mob_body_offset // Monkey need human arms to hug good
@@ -860,41 +882,11 @@ var/list/update_body_limbs = list("r_arm" = "stump_arm_right", "l_arm" = "stump_
 							human_image.color = "#FFFFFF"
 					src.body_standing.overlays += human_image
 
-				if(AHOLD.mob_appearance_flags & HAS_OVERSUIT_DETAILS)	// need more oversuits? Make more of these!
-					human_detail_image = image(AHOLD.mob_oversuit_1_icon, AHOLD.mob_oversuit_1_state, layer = MOB_OVERSUIT_LAYER1)
-					switch(AHOLD.mob_oversuit_1_color_ref)
-						if(CUST_1)
-							human_detail_image.color = AHOLD.customization_first_color
-						if(CUST_2)
-							human_detail_image.color = AHOLD.customization_second_color
-						if(CUST_3)
-							human_detail_image.color = AHOLD.customization_third_color
-						else
-							human_detail_image.color = "#FFFFFF"
-					src.detail_standing_oversuit.overlays += human_detail_image
-					UpdateOverlays(src.detail_standing_oversuit, "detail_oversuit")
-				else // ^^ up here because peoples' bodies turn invisible if it down there with the rest of em
-					UpdateOverlays(null, "detail_oversuit")
-
 				if (src.organHolder?.head && !(AHOLD.mob_appearance_flags & HAS_NO_HEAD))
 					var/obj/item/organ/head/our_head = src.organHolder.head
 					human_head_image = our_head.head_image // head data is stored in the head
 					human_head_image?.pixel_y = head_offset // head position is stored in the body
 					src.body_standing.overlays += human_head_image
-
-				if (src.organHolder?.tail)
-					var/obj/item/organ/tail/our_tail = src.organHolder.tail // visual tail data is stored in the tail
-					human_tail_image = our_tail.tail_image_1
-					src.tail_standing.overlays += human_tail_image
-
-					human_tail_image = our_tail.tail_image_2 // maybe our tail has multiple parts, like lizards
-					src.tail_standing.overlays += human_tail_image
-
-					human_tail_image = our_tail.tail_image_oversuit // oversuit tail, shown when facing north, for more seeable tails
-					src.tail_standing_oversuit.overlays += human_tail_image // handles over suit
-				else
-					UpdateOverlays(null, "tail")
-					UpdateOverlays(null, "tail_oversuit")
 
 			else
 				human_decomp_image.icon_state = "body_decomp[src.decomp_stage]"
@@ -1188,10 +1180,6 @@ var/list/update_body_limbs = list("r_arm" = "stump_arm_right", "l_arm" = "stump_
 	//Also forcing the updates since the overlays may have been modified on the images
 	src.UpdateOverlays(src.body_standing, "body", 1, 1)
 	src.UpdateOverlays(src.hands_standing, "hands", 1, 1)
-	src.UpdateOverlays(src.tail_standing, "tail", 1, 1) // i blame pali for giving me this power
-	src.UpdateOverlays(src.tail_standing_oversuit, "tail_oversuit", 1, 1)
-	src.UpdateOverlays(src.detail_standing_oversuit, "detail_oversuit", 1, 1)
-
 
 /mob/living/carbon/human/tdummy/UpdateDamage()
 	var/prev = health
