@@ -708,6 +708,7 @@
 				mytail.holder = null
 				src.tail = null
 				src.donor.update_body()
+				src.donor.update_clothing()
 				src.organ_list["tail"] = null
 				return mytail
 

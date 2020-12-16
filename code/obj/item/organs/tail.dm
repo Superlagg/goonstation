@@ -18,8 +18,6 @@
 	var/icon_piece_1 = null	// For setting up the icon if its in multiple pieces
 	var/icon_piece_2 = null	// Only modifies the dropped icon
 	var/failure_ability = "clumsy"	// The organ failure ability associated with this organ.
-	var/human_getting_monkeytail = 0	// If a human's getting a monkey tail
-	var/monkey_getting_humantail = 0	// If a monkey's getting a human tail
 	// vv these get sent to update_body(). no sense having it calculate all this shit multiple times
 	var/image/tail_image_1
 	var/image/tail_image_2
@@ -27,14 +25,14 @@
 
 	New()
 		..()
-		if(src.colorful) // Set us some colors
+		if (src.colorful) // Set us some colors
 			colorize_tail()
 		else
 			build_mob_tail_image()
 			update_tail_icon()
 
 	proc/colorize_tail(var/datum/appearanceHolder/AHL)
-		if(src.colorful)
+		if (src.colorful)
 			if (AHL && istype(AHL, /datum/appearanceHolder))
 				src.organ_color_1 = AHL.s_tone
 				src.organ_color_2 = AHL.customization_second_color
@@ -55,23 +53,13 @@
 		var/attachment_successful = 0
 		var/boned = 0	// Tailbones just kind of pop into place
 
-		if (src.type == /obj/item/organ/tail/monkey && !ismonkey(H))	// If we are trying to attach a monkey tail to a non-monkey
-			src.human_getting_monkeytail = 1
-			src.monkey_getting_humantail = 0
-		else if(src.type != /obj/item/organ/tail/monkey && ismonkey(H))	// If we are trying to attach a non-monkey tail to a monkey
-			src.human_getting_monkeytail = 0
-			src.monkey_getting_humantail = 1
-		else	// Tail is going to someone with a natively compatible butt-height
-			src.human_getting_monkeytail = 0
-			src.monkey_getting_humantail = 0
-
 		if (!H.organHolder.tail && H.mob_flags & IS_BONER)
 			attachment_successful = 1 // Just slap that tailbone in place, its fine
 			boned = 1	// No need to sew it up
 
 			var/fluff = pick("slap", "shove", "place", "press", "jam")
 
-			if(istype(src, /obj/item/organ/tail/bone))
+			if (istype(src, /obj/item/organ/tail/bone))
 				H.tri_message("<span class='alert'><b>[user]</b> [fluff][fluff == "press" ? "es" : "s"] the coccygeal coruna of [src] onto the apex of [H == user ? "[his_or_her(H)]" : "[H]'s"] sacrum![prob(1) ? " The tailbone wiggles happily." : ""]</span>",\
 				user, "<span class='alert'>You [fluff] the coccygeal coruna of [src] onto the apex of [H == user ? "your" : "[H]'s"] sacrum![prob(1) ? " The tailbone wiggles happily." : ""]</span>",\
 				H, "<span class='alert'>[H == user ? "You" : "<b>[user]</b>"] [fluff][H == user && fluff == "press" ? "es" : "s"] the coccygeal coruna of [src] onto the apex of your sacrum![prob(1) ? " Your tailbone wiggles happily." : ""]</span>")
@@ -99,7 +87,8 @@
 				H.organHolder.tail.op_stage = 11.0
 			src.build_mob_tail_image()
 			H.update_body()
-			H.bioHolder.RemoveEffect(src.failure_ability)
+			H.update_clothing()
+			H.bioHolder?.RemoveEffect(src.failure_ability)
 			return 1
 
 		return 0
@@ -112,12 +101,12 @@
 		return 1
 
 	on_broken(var/mult = 1)
-		if(src.get_damage() < FAIL_DAMAGE)
+		if (src.get_damage() < FAIL_DAMAGE)
 			src.unbreakme()
-		if(ischangeling(src.holder.donor))
+		if (ischangeling(src.holder.donor))
 			return
-		else if(src.failure_ability && src.holder?.donor?.mob_flags & SHOULD_HAVE_A_TAIL)
-			if(src.holder?.donor?.reagents?.get_reagent_amount("ethanol") > 50) // Drunkenness counteracts un-tailedness
+		else if (src.failure_ability && src.holder?.donor?.mob_flags & SHOULD_HAVE_A_TAIL)
+			if (src.holder?.donor?.reagents?.get_reagent_amount("ethanol") > 50) // Drunkenness counteracts un-tailedness
 				src.holder?.donor?.bioHolder?.RemoveEffect(src.failure_ability)
 			else
 				src.holder?.donor?.change_misstep_chance(10)
@@ -130,35 +119,32 @@
 
 	// builds the mob tail image, the one that gets displayed on the mob when attached
 	proc/build_mob_tail_image() // lets mash em all into one image with overlays n shit, like the head, but on the ass
-		var/humonkey = src.human_monkey_tail_interchange(src.organ_image_under_suit_1, src.human_getting_monkeytail, src.monkey_getting_humantail)
-		var/image/tail_temp_image = image(icon=src.organ_image_icon, icon_state=humonkey, layer = MOB_TAIL_LAYER1)
-		if (src.organ_color_1)
-			tail_temp_image.color = src.organ_color_1
-		src.tail_image_1 = tail_temp_image
+		src.tail_image_1 = image(icon=src.organ_image_icon, icon_state=src.get_monkey_tail_state(src.organ_image_under_suit_1))
+		src.tail_image_1.color = src.organ_color_1
+		src.tail_image_1.layer = MOB_TAIL_LAYER1
 
-		if(src.organ_image_under_suit_2)
-			humonkey = src.human_monkey_tail_interchange(src.organ_image_under_suit_2, src.human_getting_monkeytail, src.monkey_getting_humantail)
-			tail_temp_image = image(icon=src.organ_image_icon, icon_state=humonkey, layer = MOB_TAIL_LAYER2)
-			if (src.organ_color_2)
-				tail_temp_image.color = src.organ_color_2
-			src.tail_image_2 = tail_temp_image
+		if (src.organ_image_under_suit_2)
+			src.tail_image_2 = image(icon=src.organ_image_icon, icon_state=src.get_monkey_tail_state(src.organ_image_under_suit_2))
+			src.tail_image_2.color = src.organ_color_2
+			src.tail_image_2.layer = layer = MOB_TAIL_LAYER2
 
-		if(src.organ_image_over_suit)
-			humonkey = src.human_monkey_tail_interchange(src.organ_image_over_suit, src.human_getting_monkeytail, src.monkey_getting_humantail)
-			tail_temp_image = image(icon=src.organ_image_icon, icon_state=humonkey, layer = MOB_OVERSUIT_LAYER1)
-			if (src.organ_color_1)
-				tail_temp_image.color = src.organ_color_1
-			src.tail_image_oversuit = tail_temp_image
+		if (src.organ_image_over_suit)
+			src.tail_image_oversuit = image(icon=src.organ_image_icon, icon_state=src.get_monkey_tail_state(src.organ_image_over_suit))
+			src.tail_image_oversuit.color = src.organ_color_1
+			src.tail_image_oversuit.layer = MOB_OVERSUIT_LAYER1
 
-	proc/human_monkey_tail_interchange(var/tail_iconstate as text, var/human_getting_monkey_tail as num, var/monkey_getting_human_tail as num)
-		if (!tail_iconstate || (human_getting_monkey_tail && monkey_getting_human_tail))
-			logTheThing("debug", src, null, "HumanMonkeyTailInterchange fucked up. tail_iconstate = [tail_iconstate], [human_getting_monkey_tail] && [monkey_getting_human_tail]. call lagg")
-			return null	// Something went wrong
-		if (!human_getting_monkey_tail && !monkey_getting_human_tail)	// tail's going to the right place
+	proc/get_monkey_tail_state(var/tail_iconstate)
+		if (!tail_iconstate) return null	// Something went wrong
+		if (!ishuman(src.donor)) return tail_iconstate
+		var/tailtype = istype(src,/obj/item/organ/tail/monkey) ? "monkey" : "human"
+		var/mobtype = ismonkey(src.donor) ? "monkey" : "human"
+
+		/// Monkey getting monkey tail or human getting non-monkey tail? Good! Send as-is!
+		if (mobtype == tailtype)
 			return tail_iconstate	// Send it as-is
-		var/output_this_string
-		output_this_string = tail_iconstate + (human_getting_monkey_tail ? "-human" : "-monkey")
-		return output_this_string
+		/// Otherwise, append the thing that the mob isnt. Monkey? Append -human!
+		else
+			return "[tail_iconstate]-[mobtype]"
 
 	//Assembles the tail organ item sprite icon thing from multiple separate iconstates
 	//Used when a tail organ has a bunch of different colors its supposed to be

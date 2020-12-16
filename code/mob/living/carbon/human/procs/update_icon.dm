@@ -399,7 +399,6 @@
 
 	if (src.organHolder?.tail)
 		var/obj/item/organ/tail/our_tail = src.organHolder.tail // visual tail data is stored in the tail
-		ourtail.tail_image_oversuit.layer = MOB_OVERSUIT_LAYER1
 		UpdateOverlays(our_tail.tail_image_1, "tail_1") // i blame pali for giving me this power
 		UpdateOverlays(our_tail.tail_image_2, "tail_2")
 		UpdateOverlays(our_tail.tail_image_oversuit, "tail_oversuit")
