@@ -25,7 +25,7 @@
 	var/obj/item/organ/tail = null
 	var/lungs_changed = 2				//for changing lung stamina debuffs if it has changed since last cycle. starts at 2 for having 2 working lungs
 
-	var/list/organ_list = list("all", "head", "skull", "brain", "left_eye", "right_eye", "chest", "heart", "left_lung", "right_lung", "butt", "left_kidney", "right_kidney", "liver", "stomach", "intestines", "spleen", "pancreas", "appendix")
+	var/list/organ_list = list("all", "head", "skull", "brain", "left_eye", "right_eye", "chest", "heart", "left_lung", "right_lung", "butt", "left_kidney", "right_kidney", "liver", "stomach", "intestines", "spleen", "pancreas", "appendix", "tail")
 
 	var/list/organ_type_list = list(
 		"head"="/obj/item/organ/head",
@@ -47,6 +47,13 @@
 		"appendix"="/obj/item/organ/appendix",
 		"butt"="/obj/item/clothing/head/butt",
 		"tail"="/obj/item/organ/tail")
+
+	/// Organs that you could kinda sorta live without
+	var/list/organs_nonvital = list("left_eye", "right_eye", "butt", "stomach", "intestines", "spleen", "pancreas", "appendix", "tail")
+	/// Organs that you need, but won't instantly kill you
+	var/list/organs_mostlyvital = list("left_lung", "right_lung", "left_kidney", "right_kidney", "liver", "heart")
+	/// Organs that you will die without pretty much instantly
+	var/list/organs_vital = list("head", "skull", "brain", "chest")
 
 	New(var/mob/living/L, var/ling)
 		..()
@@ -357,8 +364,22 @@
 		return 0
 
 	proc/drop_organ(var/organ, var/location)
-		if (!src.donor || !organ)
+		if (!src.donor)
 			return
+
+		if(istext(organ))
+			switch(organ)
+				if("nonvital")
+					organ = pick(src.organs_nonvital)
+				if("vital")
+					organ = pick(src.organs_mostlyvital)
+				if("instakill")
+					organ = pick(src.organs_vital)
+				if("any")
+					organ = pick(src.organ_type_list)
+
+		if(!organ)
+			organ = pick(src.organ_type_list)
 
 		if (!location)
 			location = src.donor.loc
@@ -714,7 +735,7 @@
 				return mytail
 
 	/// drops the organ, then hurls it somewhere
-	proc/drop_and_throw_organ(var/organ, var/location, var/direction, var/vigor, var/showtext)
+	proc/drop_and_throw_organ(var/organ, var/location, var/direction, var/vigor = 10, var/showtext)
 		. = src.drop_organ(organ, location)
 		if(istype(., /obj))
 			var/obj/organ_toss = .

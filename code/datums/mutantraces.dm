@@ -1243,7 +1243,7 @@
 			src.original_name = mob.real_name
 			mob.real_name = "werewolf"
 
-			var/duration = 3000
+			var/duration = 5 MINUTES
 			var/datum/ailment_data/disease/D = mob.find_ailment_by_type(/datum/ailment/disease/lycanthropy/)
 
 			mob.bioHolder.AddEffect("protanopia", null, null, 0, 1)
@@ -1251,7 +1251,7 @@
 
 			if(D)
 				D.cycles++
-				duration = rand(2000, 4000) * D.cycles
+				duration = rand(4 MINUTES, 6 MINUTES) * D.cycles
 				SPAWN_DBG(duration)
 					if(src)
 						if (mob) mob.show_text("<b>You suddenly transform back into a human!</b>", "red")
@@ -1266,7 +1266,7 @@
 			mob.remove_stam_mod_max("werewolf")
 			mob.remove_stam_mod_regen("werewolf")
 			mob.remove_stun_resist_mod("werewolf")
-			mob.max_health -= 30
+			mob.max_health -= 50
 			health_update_queue |= mob
 			mob.bioHolder.RemoveEffect("protanopia")
 			mob.bioHolder.RemoveEffect("accent_scoob")

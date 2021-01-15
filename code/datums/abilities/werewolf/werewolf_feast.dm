@@ -22,19 +22,19 @@
 			return 1
 
 		if (M == target)
-			boutput(M, __red("Why would you want to maul yourself?"))
+			boutput(M, "<span class='alert'>Why would you want to maul yourself?</span>")
 			return 1
 
 		if (get_dist(M, target) > src.max_range)
-			boutput(M, __red("[target] is too far away."))
+			boutput(M, "<span class='alert'>[target] is too far away.</span>")
 			return 1
 
 		if (!ishuman(target)) // Critter mobs include robots and combat drones. There's not a lot of meat on them.
-			boutput(M, __red("[target] probably wouldn't taste very good."))
+			boutput(M, "<span class='alert'>[target] probably wouldn't taste very good.</span>")
 			return 1
 
 		if (target.canmove)
-			boutput(M, __red("[target] is moving around too much."))
+			boutput(M, "<span class='alert'>[target] is moving around too much.</span>")
 			return 1
 
 		logTheThing("combat", M, target, "starts to maul [constructTarget(target,"combat")] at [log_loc(M)].")
@@ -42,14 +42,14 @@
 		return 0
 
 /datum/action/bar/private/icon/werewolf_feast
-	duration = 250
-	interrupt_flags = INTERRUPT_MOVE | INTERRUPT_ACT | INTERRUPT_STUNNED | INTERRUPT_ACTION
+	duration = 25 SECONDS
+	interrupt_flags = INTERRUPT_STUNNED // Wolf can move around while eating, and is interrupted with stuns or moving the target out of reach
 	id = "werewolf_feast"
 	icon = 'icons/mob/critter_ui.dmi'
 	icon_state = "devour_over"
 	var/mob/living/target
 	var/datum/targetable/werewolf/werewolf_feast/feast
-	var/last_complete = 0
+	var/times_eaten = 0
 	var/do_we_get_points = 0 // For the specialist objective. Did we feed on the target long enough?
 
 	New(Target, Feast)
@@ -69,10 +69,12 @@
 
 		// It's okay when the victim expired half-way through the feast, but plain corpses are too cheap.
 		if (target.stat == 2)
-			boutput(M, __red("Urgh, this cadaver tasted horrible. Better find some fresh meat."))
-			//target.visible_message("<span class='alert'><B>[M] completely rips [target]'s corpse to pieces!</B></span>")
-			//target.gib()
-			//nah this sucks for the guy being eaten.
+			boutput(M, "<span class='alert'>Urgh, this cadaver tasted horrible. Better find some fresh meat.</span>")
+			if(ishuman(target))
+				var/mob/living/carbon/human/H = target
+				var/obj/item/organ/O = H.organHolder?.drop_and_throw_organ("any")
+				if(O) // take an organ for your trouble
+					target.visible_message("<span class='alert'><B>[M] rips \an [O] out of [target]'s corpse!</B></span>")
 			interrupt(INTERRUPT_ALWAYS)
 			return
 
@@ -84,80 +86,29 @@
 		..()
 
 		var/mob/living/M = owner
-		var/datum/abilityHolder/A = feast.holder
+		var/datum/abilityHolder/werewolf/A = feast.holder
 		var/mob/living/carbon/human/HH = target
 
 		if (!feast || get_dist(M, target) > feast.max_range || target == null || M == null || !ishuman(target) || !ishuman(M) || !A || !istype(A))
 			interrupt(INTERRUPT_ALWAYS)
 			return
 
-		var/done = world.time - started
-		var/complete = max(min((done / duration), 1), 0)
-
-		if (complete >= 0.1 && last_complete < 0.1)
-			if (M.werewolf_attack(target, "feast") != 1)
-				boutput(M, __red("[target] is moving around too much."))
+		// imagine this copypasted about a dozen times
+		if(!ON_COOLDOWN(owner, "feast_cooldown", 2.5 SECONDS)) // at least I think it was 2.5 seconds
+			if (M.werewolf_attack(target, "feast"))
+				src.times_eaten++
+			else
+				boutput(M, "<span class='alert'>[target] is moving around too much.</span>")
 				interrupt(INTERRUPT_ALWAYS)
 				return
 
-		if (complete >= 0.2 && last_complete < 0.2)
-			if (M.werewolf_attack(target, "feast") != 1)
-				boutput(M, __red("[target] is moving around too much."))
-				interrupt(INTERRUPT_ALWAYS)
-				return
-
-		if (complete >= 0.3 && last_complete < 0.3)
-			if (M.werewolf_attack(target, "feast") != 1)
-				boutput(M, __red("[target] is moving around too much."))
-				interrupt(INTERRUPT_ALWAYS)
-				return
-
-		if (complete >= 0.4 && last_complete < 0.4)
-			if (M.werewolf_attack(target, "feast") != 1)
-				boutput(M, __red("[target] is moving around too much."))
-				interrupt(INTERRUPT_ALWAYS)
-				return
-
-		if (complete >= 0.5 && last_complete < 0.5)
-			if (M.werewolf_attack(target, "feast") != 1)
-				boutput(M, __red("[target] is moving around too much."))
-				interrupt(INTERRUPT_ALWAYS)
-				return
-
-		if (complete >= 0.6 && last_complete < 0.6)
-			if (M.werewolf_attack(target, "feast") != 1)
-				boutput(M, __red("[target] is moving around too much."))
-				interrupt(INTERRUPT_ALWAYS)
-				return
-
-		if (complete >= 0.7 && last_complete < 0.7)
-			if (M.werewolf_attack(target, "feast") != 1)
-				boutput(M, __red("[target] is moving around too much."))
-				interrupt(INTERRUPT_ALWAYS)
-				return
-
+		if(src.times_eaten > 6 && !src.do_we_get_points)
 			if (HH.decomp_stage <= 2 && !(isnpcmonkey(target))) // Can't farm npc monkeys.
 				src.do_we_get_points = 1
-
-		if (complete >= 0.8 && last_complete < 0.8)
-			if (M.werewolf_attack(target, "feast") != 1)
-				boutput(M, __red("[target] is moving around too much."))
-				interrupt(INTERRUPT_ALWAYS)
-				return
-
-			if (HH.decomp_stage <= 2 && !(isnpcmonkey(target)))
-				src.do_we_get_points = 1
-
-		if (complete >= 0.9 && last_complete < 0.9)
-			if (M.werewolf_attack(target, "feast") != 1)
-				boutput(M, __red("[target] is moving around too much."))
-				interrupt(INTERRUPT_ALWAYS)
-				return
-
-			if (HH.decomp_stage <= 2 && !(isnpcmonkey(target)))
-				src.do_we_get_points = 1
-
-		last_complete = complete
+				if ((HH?.bioHolder?.Uid in A.feed_objective.mobs_fed_on))
+					boutput(M, "<span class='alert'>[HH] is still just as delicious as <i>the last time you ate [him_or_her(HH)]</i>.</span>")
+				else
+					boutput(M, "<span class='notice'>[HH] is a very satisfying meal!</span>")
 
 	onEnd()
 		..()
@@ -181,17 +132,17 @@
 							M.max_health += 10
 							health_update_queue |= M
 							W.lower_cooldowns(0.10)
-							boutput(M, __blue("You finish chewing on [HH], but what a feast it was!"))
+							boutput(M, "<span class='notice'>You finish chewing on [HH], but what a feast it was!</span>")
 						else
-							boutput(M, __red("You've mauled [HH] before and didn't like the aftertaste. Better find a different prey."))
+							boutput(M, "<span class='alert'>You've mauled [HH] before and didn't like the aftertaste. Better find a different prey.</span>")
 					else
-						boutput(M, __red("What a meagre meal. You're still hungry..."))
+						boutput(M, "<span class='alert'>What a meagre meal. You're still hungry...</span>")
 				else
-					boutput(M, __red("What a meagre meal. You're still hungry..."))
+					boutput(M, "<span class='alert'>What a meagre meal. You're still hungry...</span>")
 			else
-				boutput(M, __red("You finish chewing on [HH]."))
+				boutput(M, "<span class='alert'>You finish chewing on [HH].</span>")
 		else
-			boutput(M, __red("You finish chewing on [HH]."))
+			boutput(M, "<span class='alert'>You finish chewing on [HH].</span>")
 
 		if (A && istype(A))
 			A.locked = 0
@@ -216,17 +167,17 @@
 							M.max_health += 10
 							health_update_queue |= M
 							W.lower_cooldowns(0.10)
-							boutput(M, __blue("Your feast was interrupted, but it satisfied your hunger for the time being."))
+							boutput(M, "<span class='notice'>Your feast was interrupted, but it satisfied your hunger for the time being.</span>")
 						else
-							boutput(M, __red("You've mauled [HH] before and didn't like the aftertaste. Better find a different prey."))
+							boutput(M, "<span class='alert'>You've mauled [HH] before and didn't like the aftertaste. Better find a different prey.</span>")
 					else
-						boutput(M, __red("Your feast was interrupted and you're still hungry..."))
+						boutput(M, "<span class='alert'>Your feast was interrupted and you're still hungry...</span>")
 				else
-					boutput(M, __red("Your feast was interrupted and you're still hungry..."))
+					boutput(M, "<span class='alert'>Your feast was interrupted and you're still hungry...</span>")
 			else
-				boutput(M, __red("Your feast was interrupted."))
+				boutput(M, "<span class='alert'>Your feast was interrupted.</span>")
 		else
-			boutput(M, __red("Your feast was interrupted."))
+			boutput(M, "<span class='alert'>Your feast was interrupted.</span>")
 
 		if (A && istype(A))
 			A.locked = 0

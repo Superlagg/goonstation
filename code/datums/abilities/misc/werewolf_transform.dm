@@ -43,7 +43,7 @@
 			interrupt(INTERRUPT_ALWAYS)
 			return
 
-		boutput(M, __red("<B>You feel a strong burning sensation all over your body!</B>"))
+		boutput(M, "<span class='alert'><B>You feel a strong burning sensation all over your body!</B></span>")
 
 	onUpdate()
 		..()
@@ -58,10 +58,10 @@
 		..()
 
 		var/mob/living/M = owner
-		M.werewolf_transform(0, 1)
+		M.werewolf_transform()
 
 	onInterrupt()
 		..()
 
 		var/mob/living/M = owner
-		boutput(M, __red("Your transformation was interrupted!"))
+		boutput(M, "<span class='alert'>Your transformation was interrupted!</span>")

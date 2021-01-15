@@ -142,9 +142,10 @@
 	var/base_HPup = 5
 	var/mod_mult = 1
 
-/datum/component/consume/organheal/Initialize(var/mod_mult)
+/datum/component/consume/organheal/Initialize(var/_mod_mult)
 	..()
-	src.mod_mult = mod_mult
+	if(_mod_mult) // Probably never worked, but nobody ever tried it so... fixed it!
+		src.mod_mult = _mod_mult
 	RegisterSignal(parent, list(COMSIG_ITEM_CONSUMED), .proc/eat_organ_get_heal)
 
 /datum/component/consume/organheal/proc/eat_organ_get_heal(var/mob/M, var/mob/user, var/obj/item/I)
