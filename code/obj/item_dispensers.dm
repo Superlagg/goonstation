@@ -11,7 +11,7 @@
 	anchored = 1
 	var/filled_icon_state = "" //i tried to do this in a smart way but it was a PITA so here have this stinky code instead
 	var/empty_icon_state = "" //autoset by the s y s t e m, dont set this yourself
-	var/amount = 3 //how many items does it have?
+	amount = 3 //how many items does it have?
 	var/deposit_type = null //this is a type that this item will accept to "reload" itself
 	var/withdraw_type = null //this is a type that this item will dispense
 	var/cant_deposit = 0 //set this to 1 if you want people to not be able to put items into it
@@ -99,7 +99,7 @@
 	filled_icon_state = "dispenser_id"
 	deposit_type = /obj/item/paper
 	withdraw_type = /obj/item/card/id
-	amount = 7 
+	amount = 7
 
 	attack_hand(mob/user as mob)
 		if (!src.cant_withdraw && src.amount >= 1)

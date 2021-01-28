@@ -33,7 +33,7 @@
 	density = 0
 	anchored = 0
 	//weight = 1.0E7
-	var/amount = 50
+	amount = 50
 	on = 1
 	var/repairing = 0
 	var/improvefloors = 0

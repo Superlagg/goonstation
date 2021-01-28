@@ -3,7 +3,8 @@
 	layer = MOB_LAYER
 	animate_movement = 2
 	soundproofing = 10
-
+	force = 80
+	edible = 1
 	flags = FPRINT | FLUID_SUBMERGE
 	event_handler_flags = USE_CANPASS
 	appearance_flags = KEEP_TOGETHER | PIXEL_SCALE | LONG_GLIDE
@@ -100,8 +101,8 @@
 	var/lastKnownIP = null
 	var/obj/stool/buckled = null
 	var/obj/item/handcuffs/handcuffs = null
-	var/obj/item/l_hand = null
-	var/obj/item/r_hand = null
+	var/atom/movable/l_hand = null
+	var/atom/movable/r_hand = null
 	var/obj/item/back = null
 	var/obj/item/tank/internal = null
 	var/obj/item/clothing/mask/wear_mask = null
@@ -204,8 +205,8 @@
 	var/unobservable = 0
 
 	var/mob_flags = 0
-	var/click_delay = DEFAULT_CLICK_DELAY
-	var/combat_click_delay = COMBAT_CLICK_DELAY
+	click_delay = DEFAULT_CLICK_DELAY
+	combat_click_delay = COMBAT_CLICK_DELAY
 
 	var/last_cubed = 0
 
@@ -225,6 +226,152 @@
 //obj/item/setTwoHanded calls this if the item is inside a mob to enable the mob to handle UI and hand updates as the item changes to or from 2-hand
 /mob/proc/updateTwoHanded(var/obj/item/I, var/twoHanded = 1)
 	return 0 //0=couldnt do it(other hand full etc), 1=worked just fine.
+
+/mob/attack(mob/M as mob, mob/user as mob, def_zone, is_special = 0)
+	if (!M || !user) // not sure if this is the right thing...
+		return
+
+	if (surgeryCheck(M, user))		// Check for surgery-specific actions
+		if(insertChestItem(M, user))	// Puting item in patient's chest
+			return
+
+	if (src.Eat(M, user)) // All those checks were done in there anyway
+		return
+
+	if (src.flags & SUPPRESSATTACK)
+		logTheThing("combat", user, M, "uses [src] ([type], object name: [initial(name)]) on [constructTarget(M,"combat")]")
+		return
+
+	if (user.mind && user.mind.special_role == "vampthrall" && isvampire(M) && user.is_mentally_dominated_by(M))
+		boutput(user, "<span class='alert'>You cannot harm your master!</span>") //This message was previously sent to the attacking item. YEP.
+		return
+
+	if(user.traitHolder && !user.traitHolder.hasTrait("glasscannon"))
+		if (!user.process_stamina(src.stamina_cost))
+			logTheThing("combat", user, M, "tries to attack [constructTarget(M,"combat")] with [src] ([type], object name: [initial(name)]) but is out of stamina")
+			return
+
+	var/obj/item/affecting = M.get_affecting(user, def_zone)
+	var/hit_area = parse_zone(affecting)
+	var/d_zone = affecting
+
+	if (!M.melee_attack_test(user, src, d_zone))
+		logTheThing("combat", user, M, "attacks [constructTarget(M,"combat")] with [src] ([type], object name: [initial(name)]) but the attack is blocked!")
+		return
+
+
+	if (src.material)
+		src.material.triggerOnAttack(src, user, M)
+	for (var/atom/A in M)
+		if (A.material)
+			A.material.triggerOnAttacked(A, user, M, src)
+
+	user.violate_hippocratic_oath()
+
+	for (var/mob/V in by_cat[TR_CAT_NERVOUS_MOBS])
+		if (get_dist(user,V) > 6)
+			continue
+		if (prob(8) && user)
+			if (M != V)
+				V.emote("scream")
+				V.changeStatus("stunned", 3 SECONDS)
+
+	var/datum/attackResults/msgs = new(user)
+	msgs.clear(M)
+	msgs.affecting = affecting
+	msgs.logs = list()
+	msgs.logc("attacks [constructTarget(M,"combat")] with [src] ([type], object name: [initial(name)])")
+
+	SEND_SIGNAL(M, COMSIG_MOB_ATTACKED_PRE, user, src)
+	if(SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_PRE, M, user) & ATTACK_PRE_DONT_ATTACK)
+		return
+	var/stam_crit_pow = src.stamina_crit_chance
+	if (prob(stam_crit_pow))
+		msgs.stamina_crit = 1
+		msgs.played_sound = pick(sounds_punch)
+		//moved to item_attack_message
+		//msgs.visible_message_target("<span class='alert'><B><I>... and lands a devastating hit!</B></I></span>")
+
+	msgs.played_sound = src.hitsound
+
+	var/power = src.force
+
+	var/attack_resistance = M.check_attack_resistance(src)
+	if (attack_resistance)
+		power = 0
+		if (istext(attack_resistance))
+			msgs.show_message_target(attack_resistance)
+
+	var/armor_mod = 0
+	armor_mod = M.get_melee_protection(d_zone, src.hit_type)
+
+	var/pierce_prot = 0
+	if (d_zone == "head")
+		pierce_prot = M.get_head_pierce_prot()
+	else
+		pierce_prot = M.get_chest_pierce_prot()
+
+	if(user.traitHolder && user.traitHolder.hasTrait("glasscannon"))
+		power *= 2
+
+	if(user.is_hulk())
+		power *= 1.5
+
+	var/pre_armor_power = power
+	power -= armor_mod
+
+	var/armor_blocked = 0
+
+	if(pre_armor_power > 0 && power/pre_armor_power <= 0.66)
+		block_spark(M,armor=1)
+		switch(hit_type)
+			if (DAMAGE_BLUNT)
+				playsound(get_turf(M), 'sound/impact_sounds/block_blunt.ogg', 50, 1, -1, pitch=1.5)
+			if (DAMAGE_CUT)
+				playsound(get_turf(M), 'sound/impact_sounds/block_cut.ogg', 50, 1, -1, pitch=1.5)
+			if (DAMAGE_STAB)
+				playsound(get_turf(M), 'sound/impact_sounds/block_stab.ogg', 50, 1, -1, pitch=1.5)
+			if (DAMAGE_BURN)
+				playsound(get_turf(M), 'sound/impact_sounds/block_burn.ogg', 50, 1, -1, pitch=1.5)
+		if(power <= 0)
+			fuckup_attack_particle(user)
+			armor_blocked = 1
+
+	msgs.msg_group = "[usr]_attacks_[M]_with_[src]"
+	msgs.visible_message_target(user.item_attack_message(M, src, hit_area, msgs.stamina_crit, armor_blocked))
+
+	if (w_class > STAMINA_MIN_WEIGHT_CLASS)
+		var/stam_power = stamina_damage
+
+		//reduce stamina by the same proportion that base damage was reduced
+		//min cap is stam_power/2 so we still cant ignore it entirely
+		if ((power + armor_mod) == 0) //mbc lazy runtime fix
+			stam_power = stam_power / 2 //do the least
+		else
+			stam_power = max(  stam_power / 2, stam_power * ( power / (power + armor_mod) )  )
+
+		//stam_power -= armor_mod
+		msgs.force_stamina_target = 1
+		msgs.stamina_target -= max(stam_power, 0)
+
+	if(M.traitHolder && M.traitHolder.hasTrait("deathwish"))
+		power *= 2
+
+	if (ishuman(user))
+		var/mob/living/carbon/human/H = user
+		if (H.blood_pressure["total"] > 585)
+			msgs.visible_message_self("<span class='alert'><I>[user] gasps and wheezes from the exertion!</I></span>")
+			user.losebreath += rand(1,2)
+			msgs.stamina_self -= 10
+
+
+	msgs.damage = power
+	msgs.flush()
+	src.add_fingerprint(user)
+	// #ifdef COMSIG_ITEM_ATTACK_POST
+	// SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_POST, M, user, power)
+	// #endif
+	return
 
 // mob procs
 /mob/New(var/loc, var/datum/appearanceHolder/AH_passthru)	// I swear Adhara is the reason half my code even comes close to working
@@ -1134,64 +1281,88 @@
 /mob/proc/restrained()
 	. = src.hasStatus("handcuffed")
 
-/mob/proc/drop_from_slot(obj/item/item, turf/T)
-	if (!item)
+/mob/proc/drop_from_slot(atom/movable/A, turf/T)
+	if (!A)
 		return
-	if (!(item in src.contents))
+	if (!(A in src.contents))
 		return
-	if (item.cant_drop)
-		return
-	if (item.cant_self_remove && src.l_hand != item && src.r_hand != item)
-		return
-	u_equip(item)
+	if(istype(A, /obj/item))
+		var/obj/item/item = A
+		if (item.cant_drop)
+			return
+		if (item.cant_self_remove && src.l_hand != item && src.r_hand != item)
+			return
+	u_equip(A)
 	src.set_clothing_icon_dirty()
 	if (!T)
 		T = src.loc
-	if (item)
-		item.set_loc(T)
-		item.dropped(src)
-		if (item)
-			item.layer = initial(item.layer)
-	T.Entered(item)
+	if (A)
+		A.set_loc(T)
+		A.dropped(src)
+		if (A)
+			A.layer = initial(A.layer)
+	T.Entered(A)
 
-/mob/proc/drop_item(obj/item/W)
+/mob/proc/drop_item(atom/W)
 	.= 0
 	if (!W) //only pass W if you KNOW that the mob has it
 		W = src.equipped()
-	if (istype(W))
+	if (istype(W, /obj/item))
+		var/obj/item/I = W
 		var/obj/item/magtractor/origW
-		if (W.useInnerItem && W.contents.len > 0)
-			if (istype(W, /obj/item/magtractor))
-				origW = W
-			var/obj/item/held = W.holding
+		if (I.useInnerItem && I.contents.len > 0)
+			if (istype(I, /obj/item/magtractor))
+				origW = I
+			var/atom/held = I.holding
 			if (!held)
-				held = pick(W.contents)
+				held = pick(I.contents)
 			if (held && !istype(held, /obj/ability_button))
-				W = held
-		if (!istype(W) || W.cant_drop) return
+				I = held
+		if (!istype(I) || I.cant_drop) return
 
-		if (W && !W.qdeled)
+		if (I && !I.qdeled)
 			if (istype(src.loc, /obj/vehicle))
 				var/obj/vehicle/V = src.loc
 				if (V.throw_dropped_items_overboard == 1)
-					W.set_loc(get_turf(V))
+					I.set_loc(get_turf(V))
 				else
-					W.set_loc(src.loc)
+					I.set_loc(src.loc)
 			else if (istype(src.loc, /obj/machinery/bot/mulebot))
-				W.set_loc(get_turf(src.loc))
+				I.set_loc(get_turf(src.loc))
 			else
-				W.set_loc(src.loc)
-			if (W)
-				W.layer = initial(W.layer)
+				I.set_loc(src.loc)
+			if (I)
+				I.layer = initial(I.layer)
 
-			u_equip(W)
+			u_equip(I)
 			.= 1
 		else
-			u_equip(W)
+			u_equip(I)
 			.= 0
 		if (origW)
 			origW.holding = null
 			actions.stopId("magpickerhold", src)
+	else if(istype(W, /mob))
+		var/mob/M = W
+		if (M && !M.qdeled)
+			if (istype(src.loc, /obj/vehicle))
+				var/obj/vehicle/V = src.loc
+				if (V.throw_dropped_items_overboard == 1)
+					M.set_loc(get_turf(V))
+				else
+					M.set_loc(src.loc)
+			else if (istype(src.loc, /obj/machinery/bot/mulebot))
+				M.set_loc(get_turf(src.loc))
+			else
+				M.set_loc(src.loc)
+			if (M)
+				M.layer = initial(M.layer)
+			u_equip(M)
+			.= 1
+		else
+			u_equip(M)
+			.= 0
+
 
 //throw the dropped item
 /mob/proc/drop_item_throw()
@@ -1212,7 +1383,7 @@
 		src.set_clothing_icon_dirty()
 
 /mob/proc/equipped()
-	RETURN_TYPE(/obj/item)
+	RETURN_TYPE(/atom/movable)
 	if (issilicon(src))
 		if (ishivebot(src)||isrobot(src))
 			if (src:module_active)
@@ -1228,13 +1399,15 @@
 
 	if (src.r_hand)
 		. += src.r_hand
-		if (src.r_hand.chokehold)
-			. += src.r_hand.chokehold
+		if (istype(src.r_hand, /obj/item))
+			var/obj/item/I = src.r_hand
+			. += I.chokehold
 
 	if (src.l_hand)
 		. += src.l_hand
-		if (src.l_hand.chokehold)
-			. += src.l_hand.chokehold
+		if (istype(src.l_hand, /obj/item))
+			var/obj/item/I = src.l_hand
+			. += I.chokehold
 
 	//handle mag tracktor
 	if (check_for_magtractor)
@@ -1274,7 +1447,7 @@
 /mob/proc/swap_hand()
 	return
 
-/mob/proc/u_equip(obj/item/W)
+/mob/proc/u_equip(atom/W)
 	if (W == src.r_hand)
 		src.r_hand = null
 	if (W == src.l_hand)
@@ -1293,7 +1466,12 @@
 
 	set_clothing_icon_dirty()
 
-	W.dropped(src)
+	if(istype(W, /obj/item))
+		var/obj/item/I = W
+		I.dropped(src)
+	// else if(istype(W, /mob))
+	// 	var/mob/M = W
+	// 	M.dropped(src) // LAGGNOTE: DOESNT EXIST WOW
 
 
 /mob/verb/memory()

@@ -943,7 +943,7 @@
 	desc = "A handy dispenser for handcuffs."
 	icon = 'icons/obj/stationobjs.dmi'
 	icon_state = "dispenser_handcuffs"
-	var/amount = 3
+	amount = 3
 
 	attackby(obj/item/W as obj, mob/user as mob)
 		if (istype(W, /obj/item/handcuffs))

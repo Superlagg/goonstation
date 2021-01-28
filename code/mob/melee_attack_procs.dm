@@ -313,6 +313,9 @@
 	//if (target.melee_attack_test(src, null, null, 1) != 1)
 	//	return
 
+	if(!isnum_safe(damtype))
+		damtype = DAMAGE_BLUNT // darn mobs
+
 	var/obj/item/affecting = target.get_affecting(src)
 	var/datum/attackResults/disarm/msgs = calculate_disarm_attack(target, affecting, 0, 0, extra_damage, is_special)
 	msgs.damage_type = damtype
@@ -409,7 +412,7 @@
 
 	if (is_shove) return msgs
 
-	var/obj/item/I = target.equipped()
+	var/atom/movable/I = target.equipped()
 	if (I)
 		var/disarm_item_prob = 37
 		if (target.check_block() && !(HAS_MOB_PROPERTY(target, PROP_CANTMOVE)))

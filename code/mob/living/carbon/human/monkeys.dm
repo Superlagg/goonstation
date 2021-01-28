@@ -1,10 +1,11 @@
 
 #define IS_NPC_HATED_ITEM(x) ( \
+		istype(x, /obj/item) && (\
 		istype(x, /obj/item/clothing/suit/straight_jacket) || \
 		istype(x, /obj/item/handcuffs) || \
 		istype(x, /obj/item/device/radio/electropack) || \
 		x:block_vision \
-	)
+	))
 
 /mob/living/carbon/human/monkey //Please ignore how silly this path is.
 	name = "monkey"

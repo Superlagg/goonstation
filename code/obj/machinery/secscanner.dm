@@ -212,21 +212,23 @@
 			if(contraband_access in perp_id.access)
 				has_contraband_permit = 1
 
-		if (istype(perp.l_hand))
-			if (istype(perp.l_hand, /obj/item/gun/))  // perp is carrying a gun
-				if(!has_carry_permit)
-					threatcount += perp.l_hand.contraband
-			else // not carrying a gun
-				if(!has_contraband_permit)
-					threatcount += perp.l_hand.contraband
+			if (istype(perp.l_hand, /obj/item))
+				var/obj/item/I = perp.l_hand
+				if (istype(I, /obj/item/gun/)) // perp is carrying a gun
+					if(!has_carry_permit)
+						threatcount += I.contraband
+				else // not carrying a gun, but potential contraband?
+					if(!has_contraband_permit)
+						threatcount += I.contraband
 
-		if (istype(perp.r_hand))
-			if (istype(perp.r_hand, /obj/item/gun/)) // perp is carrying a gun
-				if(!has_carry_permit)
-					threatcount += perp.r_hand.contraband
-			else // not carrying a gun, but potential contraband?
-				if(!has_contraband_permit)
-					threatcount += perp.r_hand.contraband
+			if (istype(perp.r_hand, /obj/item))
+				var/obj/item/I = perp.r_hand
+				if (istype(I, /obj/item/gun/)) // perp is carrying a gun
+					if(!has_carry_permit)
+						threatcount += I.contraband
+				else // not carrying a gun, but potential contraband?
+					if(!has_contraband_permit)
+						threatcount += I.contraband
 
 		if (istype(perp.wear_suit))
 			if (!has_contraband_permit)

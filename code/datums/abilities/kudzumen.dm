@@ -612,7 +612,7 @@
 	screen_loc = "WEST,CENTER+4"
 	var/theme = null // for wire's tooltips, it's about time this got varized
 	var/datum/controller/process/kudzu/kudzu_controller
-	var/amount = 0
+	amount = 0
 
 	New(var/datum/abilityHolder/kudzu/holder, var/datum/controller/process/kudzu/K)
 		..(holder)
@@ -666,7 +666,7 @@
 	name = "Kudzu Growth"
 	screen_loc = "WEST,CENTER+4"
 	var/theme = null // for wire's tooltips, it's about time this got varized
-	var/amount = 0
+	amount = 0
 
 
 /obj/item/kudzu/kudzumen_vine

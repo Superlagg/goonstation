@@ -104,11 +104,15 @@
 		suicides += src.w_uniform
 
 	if (!src.restrained() && !src.getStatusDuration("paralysis") && !src.getStatusDuration("stunned"))
-		if (src.l_hand && src.l_hand.custom_suicide)
-			suicides += src.l_hand
+		if (istype(src.l_hand, /obj/item))
+			var/obj/item/I = src.l_hand
+			if(I.custom_suicide)
+				suicides += I
 
-		if (src.r_hand && src.r_hand.custom_suicide)
-			suicides += src.r_hand
+		if (istype(src.r_hand, /obj/item))
+			var/obj/item/I = src.r_hand
+			if(I.custom_suicide)
+				suicides += I
 
 		for (var/obj/O in orange(1,src))
 			LAGCHECK(LAG_HIGH)

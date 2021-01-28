@@ -135,7 +135,7 @@
 
 /obj/fluid_spawner
 	var/reagent_id = "water"
-	var/amount = 10
+	amount = 10
 	var/delay = 600
 	icon = 'icons/effects/mapeditor.dmi'
 	icon_state = "fluid_spawn"

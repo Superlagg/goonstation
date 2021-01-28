@@ -843,22 +843,24 @@ Report Arrests: <A href='?src=\ref[src];operation=report'>[report_arrests ? "On"
 				threatcount += 4
 			*/
 			if (istype(perp.l_hand))
-				if (istype(perp.l_hand, /obj/item/gun/)) // perp is carrying a gun
+				var/obj/item/I = perp.l_hand
+				if (istype(I, /obj/item/gun/)) // perp is carrying a gun
 					if(!has_carry_permit)
-						threatcount += perp.l_hand.contraband
+						threatcount += I.contraband
 				else // not carrying a gun, but potential contraband?
 					if(!has_contraband_permit)
-						threatcount += perp.l_hand.contraband
+						threatcount += I.contraband
 
-			if (istype(perp.r_hand))
-				if (istype(perp.r_hand, /obj/item/gun/)) // perp is carrying a gun
+			if (istype(perp.r_hand, /obj/item))
+				var/obj/item/I = perp.r_hand
+				if (istype(I, /obj/item/gun/)) // perp is carrying a gun
 					if(!has_carry_permit)
-						threatcount += perp.r_hand.contraband
+						threatcount += I.contraband
 				else // not carrying a gun, but potential contraband?
 					if(!has_contraband_permit)
-						threatcount += perp.r_hand.contraband
+						threatcount += I.contraband
 
-			if (istype(perp.belt))
+			if (istype(perp.belt, /obj/item))
 				if (istype(perp.belt, /obj/item/gun/))
 					if (!has_carry_permit)
 						threatcount += perp.belt.contraband * 0.5

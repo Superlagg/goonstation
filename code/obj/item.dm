@@ -5,10 +5,7 @@
 	text = ""
 	var/icon_old = null
 	var/uses_multiple_icon_states = 0
-	var/force = null
 	var/item_state = null
-	/// for bleeding system things, options: DAMAGE_BLUNT, DAMAGE_CUT, DAMAGE_STAB in order of how much it affects the chances to increase bleeding
-	var/hit_type = DAMAGE_BLUNT
 	throwforce = 1
 	var/r_speed = 1.0
 	var/health = 4 // burn faster
@@ -21,64 +18,30 @@
 	var/burn_type = 0
 	var/burning = null
 	var/burning_last_process = 0
-	var/hitsound = 'sound/impact_sounds/Generic_Hit_1.ogg'
-	/// how big they are, determines if they can fit in backpacks and pockets and the like
-	var/w_class = 3.0
 	/// how hard they are to pull around, determines how much something slows you down while pulling it
 	p_class = 1.5
-	/// Can't remove from non-hand slots
-	var/cant_self_remove = 0
-	/// Can't be removed from non-hand slots by others
-	var/cant_other_remove = 0
-	/// Cant' be removed in general. I guess.
-	var/cant_drop = 0
 
 	flags = FPRINT | TABLEPASS
 	var/tool_flags = 0
-	var/c_flags = null
 	var/tooltip_flags = null
 	var/item_function_flags = null
 	var/force_use_as_tool = 0
 
 	pressure_resistance = 50
 	var/obj/item/master = null
-	var/amount = 1
-	var/max_stack = 1
-	/// if null, only current type. otherwise uses this
-	var/stack_type = null
-	/// If nonzero, bots consider this a thing people shouldn't be carrying without authorization
-	var/contraband = 0
-	var/hide_attack = 0 //If 1, hide the attack animation + particles. Used for hiding attacks with silenced .22 and sleepy pen
-						//If 2, play the attack animation but hide the attack particles.
 
 	var/needOnMouseMove = 0 //If 1, we check all the stuff required for onMouseMove for this. Leave this off unless required. Might cause extra lag.
-
-	var/image/wear_image = null
-	var/wear_image_icon = 'icons/mob/belt.dmi'
-	var/image/inhand_image = null
-	var/inhand_image_icon = 'icons/mob/inhand/hand_general.dmi'
-	/// set to a colour to make the inhand image be that colour. if the item is coloured though that takes priority over this variable
-	var/inhand_color = null
-
-	var/equipped_in_slot = null // null if not equipped, otherwise contains the slot in which it is
 
 	var/arm_icon = "" //set to an icon state in human.dmi minus _s/_l and l_arm_/r_arm_ to allow use as an arm
 	var/over_clothes = 0 //draw over clothes when used as a limb
 	var/override_attack_hand = 1 //when used as an arm, attack with item rather than using attack_hand
 	var/can_hold_items = 0 //when used as an arm, can it hold things?
 
-	var/stamina_damage = STAMINA_ITEM_DMG //amount of stamina removed from target per hit.
-	var/stamina_cost = STAMINA_ITEM_COST  //amount of stamina removed from USER per hit. This cant bring you below 10 points and you will not be able to attack if it would.
-	var/stamina_crit_chance = STAMINA_CRIT_CHANCE //Crit chance when attacking with this.
-
 	var/limb_hit_bonus = 0 // attack bonus for when you have this item as a limb and hit someone with it
 
 	var/list/module_research = null//list()
 	var/module_research_type = null
 	var/module_research_no_diminish = 0
-
-	/// can you eat the thing?
-	var/edible = 0
 
 	var/duration_put    = -1 // If set to something other than -1 these will control
 	var/duration_remove = -1 // how long it takes to remove or put the item onto a person. 1/10ths of a second.
@@ -87,12 +50,6 @@
 	/// Should this item use a contained item (in contents) to attack with instead?
 	var/useInnerItem = 0
 	var/obj/item/holding = null
-
-	/// Requires both hands. Do not change while equipped. Use proc for that (TBI)
-	var/two_handed = 0
-	///Delay before next click after using this.
-	var/click_delay = DEFAULT_CLICK_DELAY
-	var/combat_click_delay = COMBAT_CLICK_DELAY
 
 	var/showTooltip = 1
 	var/showTooltipDesc = 1
@@ -382,78 +339,6 @@
 		special.pixelaction(target,params,user,reach)
 		return 1
 	..()
-
-
-//disgusting proc. merge with foods later. PLEASE
-/obj/item/proc/Eat(var/mob/M as mob, var/mob/user)
-	if (!iscarbon(M) && !ismobcritter(M))
-		return 0
-	if (M?.bioHolder && !M.bioHolder.HasEffect("mattereater"))
-		if(ON_COOLDOWN(M, "eat", EAT_COOLDOWN))
-			return 0
-	var/edibility_override = SEND_SIGNAL(M, COMSIG_ITEM_CONSUMED_PRE, user, src)
-	if (!src.edible && !(src.material && src.material.edible) && !(edibility_override & FORCE_EDIBILITY))
-		return 0
-
-	if (M == user)
-		M.visible_message("<span class='notice'>[M] takes a bite of [src]!</span>",\
-		"<span class='notice'>You take a bite of [src]!</span>")
-
-		if (src.material && src.material.edible)
-			src.material.triggerEat(M, src)
-
-		if (src.reagents && src.reagents.total_volume)
-			src.reagents.reaction(M, INGEST)
-			SPAWN_DBG(0.5 SECONDS) // Necessary.
-				src.reagents.trans_to(M, src.reagents.total_volume/src.amount)
-
-		playsound(M.loc,"sound/items/eatfood.ogg", rand(10, 50), 1)
-		eat_twitch(M)
-		SPAWN_DBG(1 SECOND)
-			if (!src || !M || !user)
-				return
-			M.visible_message("<span class='alert'>[M] finishes eating [src].</span>",\
-			"<span class='alert'>You finish eating [src].</span>")
-			SEND_SIGNAL(M, COMSIG_ITEM_CONSUMED, user, src)
-			user.u_equip(src)
-			qdel(src)
-		return 1
-
-	else
-		user.tri_message("<span class='alert'><b>[user]</b> tries to feed [M] [src]!</span>",\
-		user, "<span class='alert'>You try to feed [M] [src]!</span>",\
-		M, "<span class='alert'><b>[user]</b> tries to feed you [src]!</span>")
-		logTheThing("combat", user, M, "attempts to feed [constructTarget(M,"combat")] [src] [log_reagents(src)]")
-
-		if (!do_mob(user, M))
-			return 0
-		if (get_dist(user,M) > 1)
-			return 0
-
-		user.tri_message("<span class='alert'><b>[user]</b> feeds [M] [src]!</span>",\
-		user, "<span class='alert'>You feed [M] [src]!</span>",\
-		M, "<span class='alert'><b>[user]</b> feeds you [src]!</span>")
-		logTheThing("combat", user, M, "feeds [constructTarget(M,"combat")] [src] [log_reagents(src)]")
-
-		if (src.material && src.material.edible)
-			src.material.triggerEat(M, src)
-
-		if (src.reagents && src.reagents.total_volume)
-			src.reagents.reaction(M, INGEST)
-			SPAWN_DBG(0.5 SECONDS) // Necessary.
-				src.reagents.trans_to(M, src.reagents.total_volume)
-
-		playsound(M.loc, "sound/items/eatfood.ogg", rand(10, 50), 1)
-		eat_twitch(M)
-		SPAWN_DBG(1 SECOND)
-			if (!src || !M || !user)
-				return
-			M.visible_message("<span class='alert'>[M] finishes eating [src].</span>",\
-			"<span class='alert'>You finish eating [src].</span>")
-			SEND_SIGNAL(M, COMSIG_ITEM_CONSUMED, user, src)
-			user.u_equip(src)
-			qdel(src)
-		return 1
 
 /obj/item/proc/take_damage(brute, burn, tox, disallow_limb_loss)
 	// this is a helper for organs and limbs
@@ -832,7 +717,7 @@
 	burning_last_process = src.burning
 	return null
 
-/obj/item/proc/attack_self(mob/user)
+/obj/item/attack_self(mob/user)
 	if (src.temp_flags & IS_LIMB_ITEM)
 		if (istype(src.loc,/obj/item/parts/human_parts/arm/left/item))
 			var/obj/item/parts/human_parts/arm/left/item/I = src.loc
@@ -903,7 +788,7 @@
 		equipment_proxy.additive_slowdown -= spacemove
 		equipment_proxy.space_movement -= spacemove
 
-/obj/item/proc/afterattack(atom/target, mob/user, reach, params)
+/obj/item/afterattack(atom/target, mob/user, reach, params)
 	return
 
 /obj/item/dummy/ex_act()
@@ -1090,7 +975,7 @@
 
 
 //MBC : I had to move some ItemSpecial number changes here to avoid race conditions. is_special flag passed as an arg; If true we take a look at src.special
-/obj/item/proc/attack(mob/M as mob, mob/user as mob, def_zone, is_special = 0)
+/obj/item/attack(mob/M as mob, mob/user as mob, def_zone, is_special = 0)
 	if (!M || !user) // not sure if this is the right thing...
 		return
 
@@ -1364,12 +1249,6 @@
 
 	return
 
-/obj/item/proc/handle_other_remove(var/mob/source, var/mob/living/carbon/human/target)
-	//Refactor of the item removal code. Fuck having that shit defined in human.dm >>>>>>:C
-	//Return something true (lol byond) to allow removal
-	//Return something false to disallow
-	return (!cant_other_remove && !cant_drop)
-
 /obj/item/disposing()
 	// Clean up circular references
 	disposing_abilities()
@@ -1457,7 +1336,7 @@
 		src.inventory_counter = unpool(/obj/overlay/inventory_counter)
 		src.vis_contents += src.inventory_counter
 
-/obj/item/proc/dropped(mob/user)
+/obj/item/dropped(mob/user)
 	if (user)
 		src.set_dir(user.dir)
 		#ifdef COMSIG_MOB_DROPPED
@@ -1481,7 +1360,7 @@
 		drop_grab()
 	return
 
-/obj/item/proc/pickup(mob/user)
+/obj/item/pickup(mob/user)
 	#ifdef COMSIG_ITEM_PICKUP
 	SEND_SIGNAL(src, COMSIG_ITEM_PICKUP, user)
 	#endif

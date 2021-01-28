@@ -581,17 +581,34 @@ var/datum/action_controller/actions
 		hidden = Hidden
 
 		if(item)
-			if(item.duration_put > 0)
-				duration = item.duration_put
-			else
-				duration = 45
+			var/atom/A = item
+			if(istype(A, /obj/item))
+				var/obj/item/I = item
+				if(I.duration_put > 0)
+					duration = I.duration_put
+				else
+					duration = 45
+			else if(istype(item, /mob))
+				var/mob/M = A
+				if(M.health > 0)
+					duration = M.health
+				else
+					duration = 45
 		else
-			var/obj/item/I = target.get_slot(slot)
-			if(I)
+			var/atom/A = target.get_slot(slot)
+			if(istype(A, /obj/item))
+				var/obj/item/I = A
 				if(I.duration_remove > 0)
 					duration = I.duration_remove
 				else
 					duration = 25
+			else if(istype(A, /mob))
+				var/mob/M = A
+				if(M.health > 0)
+					duration = M.health
+				else
+					duration = 25
+
 
 		duration += ExtraDuration
 
@@ -660,18 +677,19 @@ var/datum/action_controller/actions
 			interrupt(INTERRUPT_ALWAYS)
 			return
 
-		var/obj/item/I = target.get_slot(slot)
+		var/atom/movable/A = target.get_slot(slot)
 
 		if(item)
-			if(item == source.equipped() && !I)
+			if(item == source.equipped() && !A)
 				if(target.can_equip(item, slot))
 					logTheThing("combat", source, target, "successfully puts \an [item] on [constructTarget(target,"combat")] at at [log_loc(target)].")
 					for(var/mob/O in AIviewers(owner))
 						O.show_message("<span class='alert'><B>[source] puts [item] on [target]!</B></span>", 1)
 					source.u_equip(item)
 					target.force_equip(item, slot)
-		else if (I) //Wire: Fix for Cannot execute null.handle other remove().
-			if(I.handle_other_remove(source, target))
+		else if (istype(A, /obj/item)) //Wire: Fix for Cannot execute null.handle other remove().
+			var/obj/item/I = A
+			if(I.handle_other_remove(source, target)) // SUPERLAGGNOTE!!! held mobs runtime here
 				logTheThing("combat", source, target, "successfully removes \an [I] from [constructTarget(target,"combat")] at [log_loc(target)].")
 				for(var/mob/O in AIviewers(owner))
 					O.show_message("<span class='alert'><B>[source] removes [I] from [target]!</B></span>", 1)

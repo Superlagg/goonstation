@@ -886,7 +886,7 @@
 			hud.update_intent()
 			check_for_intent_trigger()
 		if ("drop")
-			src.drop_item()
+			src.drop_item()// SUPERLAGGFLAGYEE
 		if ("swaphand")
 			src.swap_hand()
 		if ("attackself")
@@ -1869,40 +1869,40 @@
 		. = TRUE
 
 /mob/living/carbon/human/put_in_hand(obj/item/I, hand)
-	if (!istype(I))
-		return 0
+	// if (!istype(I))
+	// 	return 0
 	if (src.equipped() && istype(src.equipped(), /obj/item/magtractor))
 		var/obj/item/magtractor/M = src.equipped()
 		if (M.pickupItem(I, src))
 			actions.start(new/datum/action/magPickerHold(M), src)
 			return 1
 		return 0
-	if (I.two_handed) //MARKER1
-		if (src.r_hand || src.l_hand)
-			return 0
-		if (src.limbs && (!src.limbs.r_arm || istype(src.limbs.r_arm, /obj/item/parts/human_parts/arm/right/item)))
-			return 0
-		if (src.limbs && (!src.limbs.l_arm || istype(src.limbs.l_arm, /obj/item/parts/human_parts/arm/left/item)))
-			return 0
-		src.l_hand = I
-		src.r_hand = I
-		I.pickup(src)
-		I.add_fingerprint(src)
-		I.set_loc(src)
-		src.update_inhands()
-		hud.add_object(I, HUD_LAYER+2, hud.layouts[hud.layout_style]["twohand"])
-		hud.set_visible(hud.lhand, 0)
-		hud.set_visible(hud.rhand, 0)
-		hud.set_visible(hud.twohandl, 1)
-		hud.set_visible(hud.twohandr, 1)
+	// if (I.two_handed) //MARKER1
+	// 	if (src.r_hand || src.l_hand)
+	// 		return 0
+	// 	if (src.limbs && (!src.limbs.r_arm || istype(src.limbs.r_arm, /obj/item/parts/human_parts/arm/right/item)))
+	// 		return 0
+	// 	if (src.limbs && (!src.limbs.l_arm || istype(src.limbs.l_arm, /obj/item/parts/human_parts/arm/left/item)))
+	// 		return 0
+	// 	src.l_hand = I
+	// 	src.r_hand = I
+	// 	//I.pickup(src)
+	// 	I.add_fingerprint(src)
+	// 	I.set_loc(src)
+	// 	src.update_inhands()
+	// 	hud.add_object(I, HUD_LAYER+2, hud.layouts[hud.layout_style]["twohand"])
+	// 	hud.set_visible(hud.lhand, 0)
+	// 	hud.set_visible(hud.rhand, 0)
+	// 	hud.set_visible(hud.twohandl, 1)
+	// 	hud.set_visible(hud.twohandr, 1)
 
-		var/icon/IC = new/icon(I.icon)
-		var/width = IC.Width()
-		var/regex/locfinder = new(@"^(CENTER[+-]\d:)(\d+)(.*)$") //matches screen placement of the 2handed spot (e.g.: "CENTER-1:31, SOUTH:5"), saves the pixel offset of the east-west component separate from the rest
-		if(locfinder.Find("[I.screen_loc]")) //V offsets the screen loc of the item by half the difference of the sprite width and the default sprite width (32), to center the sprite in the box V
-			I.screen_loc = "[locfinder.group[1]][text2num(locfinder.group[2])-(width-32)/2][locfinder.group[3]]"
+	// 	var/icon/IC = new/icon(I.icon)
+	// 	var/width = IC.Width()
+	// 	var/regex/locfinder = new(@"^(CENTER[+-]\d:)(\d+)(.*)$") //matches screen placement of the 2handed spot (e.g.: "CENTER-1:31, SOUTH:5"), saves the pixel offset of the east-west component separate from the rest
+	// 	if(locfinder.Find("[I.screen_loc]")) //V offsets the screen loc of the item by half the difference of the sprite width and the default sprite width (32), to center the sprite in the box V
+	// 		I.screen_loc = "[locfinder.group[1]][text2num(locfinder.group[2])-(width-32)/2][locfinder.group[3]]"
 
-		return 1
+	// 	return 1
 	else
 		if (isnull(hand))
 			if (src.put_in_hand(I, src.hand))
@@ -1913,12 +1913,12 @@
 		else
 			if (hand)
 				if (!src.l_hand)
-					if (I == src.r_hand && I.cant_self_remove)
+					if (I == src.r_hand/*  && I.cant_self_remove */)
 						return 0
 					if (src.limbs && (!src.limbs.l_arm || istype(src.limbs.l_arm, /obj/item/parts/human_parts/arm/left/item)))
 						return 0
 					src.l_hand = I
-					I.pickup(src)
+					//I.pickup(src)
 					I.add_fingerprint(src)
 					I.set_loc(src)
 					src.update_inhands()
@@ -1928,12 +1928,12 @@
 					return 0
 			else
 				if (!src.r_hand)
-					if (I == src.l_hand && I.cant_self_remove)
+					if (I == src.l_hand/*  && I.cant_self_remove */)
 						return 0
 					if (src.limbs && (!src.limbs.r_arm || istype(src.limbs.r_arm, /obj/item/parts/human_parts/arm/right/item)))
 						return 0
 					src.r_hand = I
-					I.pickup(src)
+					//I.pickup(src)
 					I.add_fingerprint(src)
 					I.set_loc(src)
 					src.update_inhands()
@@ -2237,8 +2237,10 @@
 			SEND_SIGNAL(old, COMSIG_ITEM_SWAP_AWAY, src)
 		if(src.equipped())
 			SEND_SIGNAL(src.equipped(), COMSIG_ITEM_SWAP_TO, src)
-	if(src.equipped() && (src.equipped().item_function_flags & USE_INTENT_SWITCH_TRIGGER) && !src.equipped().two_handed)
-		src.equipped().intent_switch_trigger(src)
+	if(istype(src.equipped(), /obj/item))
+		var/obj/item/I = src.equipped()
+		if((I.item_function_flags & USE_INTENT_SWITCH_TRIGGER) && !I.two_handed) // SUPERLAGGNOTE!!! held mobs runtime here
+			I.intent_switch_trigger(src)
 
 /mob/living/carbon/human/emp_act()
 	boutput(src, "<span class='alert'><B>Your equipment malfunctions.</B></span>")
@@ -3292,8 +3294,11 @@
 					. += 3
 
 /mob/living/carbon/human/proc/check_for_intent_trigger()
-	if(src.equipped() && (src.equipped().item_function_flags & USE_INTENT_SWITCH_TRIGGER))
-		src.equipped().intent_switch_trigger(src)
+	var/atom/A = src.equipped()
+	if(istype(A, /obj/item))
+		var/obj/item/I = A
+		if(I && (I.item_function_flags & USE_INTENT_SWITCH_TRIGGER)) // SUPERLAGGNOTE!!! held mobs runtime here
+			I.intent_switch_trigger(src)
 
 /mob/living/carbon/human/hitby(atom/movable/AM, datum/thrown_thing/thr)
 	. = ..()

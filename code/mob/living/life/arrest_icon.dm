@@ -42,10 +42,12 @@
 					var/obj/item/card/id/myID = 0
 					//mbc : its faster to check if the item in either hand has a registered owner than doing istype on equipped()
 					//this does mean that if an ID has no registered owner + carry permit enabled it will blink off as contraband. however i dont care!
-					if (H.l_hand && H.l_hand.registered_owner())
-						myID = H.l_hand
-					else if (H.r_hand && H.r_hand.registered_owner())
-						myID = H.r_hand
+					if (istype(H.l_hand, /obj/item))
+						var/obj/item/I = H.l_hand
+						myID = I.registered_owner()
+					else if (istype(H.r_hand, /obj/item))
+						var/obj/item/I = H.r_hand
+						myID = I.registered_owner()
 
 					if (!myID)
 						myID = H.wear_id
@@ -56,21 +58,24 @@
 						if (myID)
 							var/has_carry_permit = (access_carrypermit in myID.access)
 							var/has_contraband_permit = (access_contrabandpermit in myID.access)
-							if (H.l_hand)
-								if (istype(H.l_hand, /obj/item/gun/))
+							if (H.l_hand && istype(H.l_hand, /obj/item))
+								var/obj/item/I = H.l_hand
+								if (istype(I, /obj/item/gun/))
 									if(!has_carry_permit)
-										contrabandLevel += H.l_hand.contraband
+										contrabandLevel += I.contraband
 								else
 									if(!has_contraband_permit)
-										contrabandLevel += H.l_hand.contraband
+										contrabandLevel += I.contraband
 
-							if (!contrabandLevel && H.r_hand)
-								if (istype(H.r_hand, /obj/item/gun/))
+							if (!contrabandLevel && H.r_hand && istype(H.r_hand, /obj/item))
+								var/obj/item/I = H.r_hand
+								if (istype(I, /obj/item/gun/))
 									if(!has_carry_permit)
-										contrabandLevel += H.r_hand.contraband
+										contrabandLevel += I.contraband
 								else
 									if(!has_contraband_permit)
-										contrabandLevel += H.r_hand.contraband
+										contrabandLevel += I.contraband
+
 
 							if (!contrabandLevel && H.belt)
 								if (istype(H.belt, /obj/item/gun/))
@@ -93,10 +98,12 @@
 										contrabandLevel += H.back.contraband
 
 						else
-							if (H.l_hand)
-								contrabandLevel += H.l_hand.contraband
-							if (!contrabandLevel && H.r_hand)
-								contrabandLevel += H.r_hand.contraband
+							if (istype(H.l_hand, /obj/item))
+								var/obj/item/I = H.l_hand
+								contrabandLevel += I.contraband
+							if (!contrabandLevel && istype(H.r_hand, /obj/item))
+								var/obj/item/I = H.r_hand
+								contrabandLevel += I.contraband
 							if (!contrabandLevel && H.belt)
 								contrabandLevel += H.belt.contraband
 							if (!contrabandLevel && H.wear_suit)

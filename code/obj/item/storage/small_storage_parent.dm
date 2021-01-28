@@ -97,7 +97,7 @@
 			src.attackby(O, user, O.loc)
 
 	//failure returns 0 or lower for diff messages - sorry
-	proc/check_can_hold(obj/item/W)
+	proc/check_can_hold(atom/movable/W)
 		if (!W)
 			return 0
 		.= 1
@@ -269,7 +269,7 @@
 		RETURN_TYPE(/list)
 		. = src.contents.Copy()
 		for(var/atom/A as() in .)
-			if(!istype(A, /obj/item) || istype(A, /obj/item/grab))
+			if(!istype(A, /atom/movable) || istype(A, /obj/item/grab))
 				. -= A
 
 	proc/add_contents(obj/item/I)

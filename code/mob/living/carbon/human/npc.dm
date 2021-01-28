@@ -662,8 +662,10 @@
 				src.set_pulling(pick(pullables))
 	*/
 
-	if(src.l_hand?.cant_drop)
-		return
+	if(istype(src.l_hand, /obj/item))
+		var/obj/item/I = src.l_hand
+		if(I.cant_drop)
+			return
 
 	var/obj/item/pickup
 	var/pickup_score = 0
@@ -734,8 +736,10 @@
 				BB.layer = initial(BB.layer)
 			return
 
-	if(src.r_hand?.cant_drop)
-		return
+	if(istype(src.r_hand, /obj/item))
+		var/obj/item/I = src.r_hand
+		if(I.cant_drop)
+			return
 
 	if(istype(src.r_hand, /obj/item/gun) && !src.r_hand:canshoot())
 		var/obj/item/gun/GN = src.r_hand

@@ -1562,7 +1562,7 @@ proc/get_colosseum_message(var/name, var/message)
 
 	stat
 		var/rarity_class = 1
-		var/amount = 1
+		amount = 1
 		icon_state = "powerup_stat"
 		var/stat_name
 		var/stat_icon = 'icons/obj/colosseum.dmi'

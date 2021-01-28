@@ -237,7 +237,8 @@
 			return 0
 
 		if(user.a_intent == "help" || user.a_intent == "grab")
-			if(!(user.equipped() && (user.equipped().item_function_flags & USE_SPECIALS_ON_ALL_INTENTS)))
+			var/obj/item/I = user.equipped()
+			if(!(I && (I.item_function_flags & USE_SPECIALS_ON_ALL_INTENTS)))
 				return 0
 
 		if (user.check_block())

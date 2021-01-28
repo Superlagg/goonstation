@@ -14,7 +14,7 @@
 	var/health_multiplier = 1
 	var/ini_dir = null
 	var/state = 2
-	var/hitsound = 'sound/impact_sounds/Glass_Hit_1.ogg'
+	hitsound = 'sound/impact_sounds/Glass_Hit_1.ogg'
 	var/shattersound = "shatter"
 	var/datum/material/reinforcement = null
 	var/blunt_resist = 0

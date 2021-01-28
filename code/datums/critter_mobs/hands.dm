@@ -8,7 +8,7 @@
 	var/offset_y = 0							// pixel offset on the y axis for inhands
 	var/render_layer = MOB_INHAND_LAYER			// the layer of the inhands overlay
 	var/show_inhands = 1						// if not null, will show inhands normally, otherwise they won't display at all
-	var/obj/item/item							// the item held in the hand
+	var/atom/item							// the item held in the hand
 	var/icon/icon = 'icons/mob/critter_ui.dmi'	// the icon of the hand UI background
 	var/icon_state = "handn"					// the icon state of the hand UI background
 	var/atom/movable/screen/hud/screenObj				// ease of life

@@ -570,6 +570,13 @@
 			return
 		. = ..()
 
+	attack_hand(mob/living/M, params, location, control)
+		. = ..()
+		boutput(world,"SOMENE PET ME AAAAA - [src]")
+		if(ishuman(M))
+			var/mob/living/carbon/human/H = M
+			H.put_in_hand(src, 1)
+
 	hand_attack(atom/target, params)
 		if (src.fits_under_table && (istype(target, /obj/machinery/optable) || istype(target, /obj/table) || istype(target, /obj/stool/bed)))
 			if (src.loc == target.loc)
@@ -1050,15 +1057,17 @@
 				for (var/i = 1, i <= hands.len, i++)
 					var/datum/handHolder/HH = hands[i]
 					if (HH.can_hold_items)
-						if (HH.item)
-							HH.item.talk_into(src, message, param, src.real_name)
+						if (HH.item && istype(HH.item, /obj/item))
+							var/obj/item/I = HH.item
+							I.talk_into(src, message, param, src.real_name)
 						return
 			if ("right hand")
 				for (var/i = hands.len, i >= 1, i--)
 					var/datum/handHolder/HH = hands[i]
 					if (HH.can_hold_items)
-						if (HH.item)
-							HH.item.talk_into(src, message, param, src.real_name)
+						if (HH.item && istype(HH.item, /obj/item))
+							var/obj/item/I = HH.item
+							I.talk_into(src, message, param, src.real_name)
 						return
 			else
 				..()

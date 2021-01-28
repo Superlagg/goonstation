@@ -116,7 +116,7 @@
 	var/stamina = STAMINA_MAX
 	var/stamina_max = STAMINA_MAX
 	var/stamina_regen = STAMINA_REGEN
-	var/stamina_crit_chance = STAMINA_CRIT_CHANCE
+	//var/stamina_crit_chance = STAMINA_CRIT_CHANCE
 	var/list/stamina_mods_regen = list()
 	var/list/stamina_mods_max = list()
 
@@ -328,29 +328,33 @@
 		if (.)
 			src.lastattacked = src
 
-/mob/living/proc/weapon_attack(atom/target, obj/item/W, reach, params)
+/mob/living/proc/weapon_attack(atom/target, atom/W, reach, params)
 	var/usingInner = 0
-	if (W.useInnerItem && W.contents.len > 0)
-		var/obj/item/held = W.holding
-		if (!held)
-			held = pick(W.contents)
-		if (held && !istype(held, /obj/ability_button))
-			W = held
-			usingInner = 1
+	if (istype(W, /obj/item))
+		var/obj/item/I = W
+		if(I.useInnerItem && I.contents.len > 0)
+			var/obj/item/held = I.holding
+			if (!held)
+				held = pick(I.contents)
+			if (held && !istype(held, /obj/ability_button))
+				W = held
+				usingInner = 1
 
 	if (reach)
 		target.attackby(W, src, params)
 	if (W && (equipped() == W || usingInner))
-		var/pixelable = isturf(target)
-		if (!pixelable)
-			if (istype(target, /atom/movable) && isturf(target:loc))
-				pixelable = 1
-		if (pixelable)
-			if (!W.pixelaction(target, params, src, reach))
-				if (W)
-					W.afterattack(target, src, reach, params)
-		else if (!pixelable && W)
-			W.afterattack(target, src, reach, params)
+		if(istype(W, /obj/item))
+			var/obj/item/I = W
+			var/pixelable = (isturf(target))
+			if (!pixelable)
+				if (istype(target, /atom/movable) && isturf(target:loc))
+					pixelable = 1
+			if (pixelable)
+				if (!I.pixelaction(target, params, src, reach))
+					if (I)
+						I.afterattack(target, src, reach, params)
+			else if (!pixelable && I)
+				I.afterattack(target, src, reach, params)
 
 /mob/living/onMouseDrag(src_object,over_object,src_location,over_location,src_control,over_control,params)
 	if (!src.restrained() && !is_incapacitated(src))
@@ -498,7 +502,11 @@
 			var/reach = can_reach(src, target)
 			if (src.pre_attack_modify())
 				equipped = src.equipped() //might have changed from successful modify
-			if (reach || (equipped && equipped.special) || (equipped && (equipped.flags & EXTRADELAY))) //Fuck you, magic number prickjerk //MBC : added bit to get weapon_attack->pixelaction to work for itemspecial
+			var/has_special = 0
+			if(istype(equipped, /obj/item))
+				var/obj/item/I = equipped
+				has_special = I.special
+			if (reach || (equipped && has_special) || (equipped && (equipped.flags & EXTRADELAY))) //Fuck you, magic number prickjerk //MBC : added bit to get weapon_attack->pixelaction to work for itemspecial
 				if (use_delay)
 					src.next_click = world.time + (equipped ? equipped.click_delay : src.click_delay)
 
@@ -514,7 +522,11 @@
 					hand_attack(target, params, location, control)
 
 				//If lastattacked was set, this must be a combat action!! Use combat click delay ||  the other condition is whether a special attack was just triggered.
-				if ((lastattacked != null && (src.lastattacked == target || src.lastattacked == equipped || src.lastattacked == src) && use_delay) || (equipped && equipped.special && equipped.special.last_use >= world.time - src.click_delay))
+				var/last_special = 0
+				if(istype(equipped, /obj/item))
+					var/obj/item/I = equipped
+					last_special = I.special?.last_use
+				if ((lastattacked != null && (src.lastattacked == target || src.lastattacked == equipped || src.lastattacked == src) && use_delay) || (last_special >= world.time - src.click_delay))
 					src.next_click = world.time + (equipped ? max(equipped.click_delay,src.combat_click_delay) : src.combat_click_delay)
 					src.lastattacked = null
 
@@ -626,14 +638,16 @@
 				src.ears.talk_into(src, messages, param, src.real_name, lang_id)
 
 		if ("right hand")
-			if (src.r_hand)
-				src.r_hand.talk_into(src, messages, param, src.real_name, lang_id)
+			if (src.r_hand && istype(src.r_hand, /obj/item))
+				var/obj/item/I = src.r_hand
+				I.talk_into(src, messages, param, src.real_name, lang_id)
 			else
 				src.emote("handpuppet")
 
 		if ("left hand")
-			if (src.l_hand)
-				src.l_hand.talk_into(src, messages, param, src.real_name, lang_id)
+			if (src.l_hand && istype(src.l_hand, /obj/item))
+				var/obj/item/I = src.l_hand
+				I.talk_into(src, messages, param, src.real_name, lang_id)
 			else
 				src.emote("handpuppet")
 

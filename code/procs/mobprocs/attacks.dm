@@ -4,7 +4,7 @@
 
 	// why is this not in human/attackby?
 
-	if (!(W.object_flags & NO_ARM_ATTACH) && (user.zone_sel && (user.zone_sel.selecting in list("l_arm","r_arm"))) && surgeryCheck(src,user) )
+	if (!(W.object_flags & NO_ARM_ATTACH) && (user.zone_sel && (user.zone_sel.selecting in list("l_arm","r_arm"))) && surgeryCheck(src,user) )// SUPERLAGGNOTE!!! held mobs runtime here
 		var/mob/living/carbon/human/H = src
 
 		if (!H.limbs.vars[user.zone_sel.selecting])
@@ -60,7 +60,7 @@
 				game_stats.Increment("violence")
 #endif
 			if (!isnull(W))
-				W.attack(src, user, (user.zone_sel && user.zone_sel.selecting ? user.zone_sel.selecting : null), is_special) // def_zone var was apparently useless because the only thing that ever passed def_zone anything was shitty bill when he attacked people
+				W.attack(src, user, (user.zone_sel && user.zone_sel.selecting ? user.zone_sel.selecting : null), is_special) // SUPERLAGGNOTE!!! held mobs runtime here // def_zone var was apparently useless because the only thing that ever passed def_zone anything was shitty bill when he attacked people
 				if (W && user != src) //ZeWaka: Fix for cannot read null.hide_attack
 					if (!W.hide_attack)
 						attack_particle(user,src)

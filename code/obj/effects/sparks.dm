@@ -8,7 +8,7 @@
 /obj/effects/sparks
 	name = "sparks"
 	icon_state = "sparks"
-	var/amount = 6.0
+	amount = 6.0
 	anchored = 1.0
 	mouse_opacity = 0
 

@@ -32,7 +32,7 @@
 
 	var/health = 600
 	var/health_max = 600
-	var/hitsound = "sound/impact_sounds/Generic_Hit_Heavy_1.ogg"
+	hitsound = "sound/impact_sounds/Generic_Hit_Heavy_1.ogg"
 	var/knocksound = 'sound/impact_sounds/Door_Metal_Knock_1.ogg' //knock knock
 
 	var/next_timeofday_opened = 0 //high tier jank
@@ -346,7 +346,7 @@
 */
 
 		var/resolvedForce = I.force
-		if (I.tool_flags & TOOL_CHOPPING)
+		if (I.tool_flags & TOOL_CHOPPING)/// SUPERLAGGNOTE THIS RUNTIMES
 			resolvedForce *= 4
 			user.lastattacked = src
 			attack_particle(user,src)

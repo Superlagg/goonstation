@@ -14,7 +14,6 @@
 	var/mechanics_type_override = null //Fix for children of scannable items being reproduced in mechanics
 	var/artifact = null
 	var/move_triggered = 0
-	var/object_flags = 0
 
 	animate_movement = 2
 //	desc = "<span class='alert'>HI THIS OBJECT DOESN'T HAVE A DESCRIPTION MAYBE IT SHOULD???</span>"
@@ -264,7 +263,7 @@
 	desc = "A bin for containing bedsheets."
 	icon = 'icons/obj/items/items.dmi'
 	icon_state = "bedbin"
-	var/amount = 23.0
+	amount = 23.0
 	anchored = 1.0
 
 	attackby(obj/item/W as obj, mob/user as mob)
@@ -291,7 +290,7 @@
 	desc = "A bin for containing towels."
 	icon = 'icons/obj/items/items.dmi'
 	icon_state = "bedbin"
-	var/amount = 23.0
+	amount = 23.0
 	anchored = 1.0
 
 	attackby(obj/item/W as obj, mob/user as mob)

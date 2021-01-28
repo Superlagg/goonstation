@@ -131,7 +131,7 @@
 			if (spread_value)
 				new_overmind.spread_mitigation += spread_value
 
-	proc/attack(var/turf/T)
+	attack(var/turf/T)
 		particleMaster.SpawnSystem(new /datum/particleSystem/blobattack(T,overmind.color))
 		if (T?.density)
 			T.blob_act(overmind.attack_power * 20)

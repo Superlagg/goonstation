@@ -106,7 +106,7 @@
 	mat_changedesc = 0
 	var/health_attack = 100
 	var/health_max = 100
-	var/hitsound = "sound/impact_sounds/Generic_Hit_Heavy_1.ogg"
+	hitsound = "sound/impact_sounds/Generic_Hit_Heavy_1.ogg"
 
 /obj/storage/closet/flock/New()
 	..()

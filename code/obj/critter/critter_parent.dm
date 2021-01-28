@@ -65,7 +65,7 @@
 	var/atk_text = "bites"
 	var/chase_text = "leaps on"
 	var/crit_text = "savagely bites"
-	var/hitsound = null
+	hitsound = null
 	var/flying = 0
 	//flags = OPENCONTAINER
 	var/sleeping = 0 //countdown, when hits 0 does a wake check

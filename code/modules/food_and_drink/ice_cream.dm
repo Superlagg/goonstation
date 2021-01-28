@@ -51,16 +51,18 @@
 		if (!src.user_can_suicide(user))
 			return 0
 		var/icecount = 0
-		if (istype(user.l_hand,/obj/item/reagent_containers/food/snacks/ice_cream) && user.l_hand.amount)
+		if (istype(user.l_hand,/obj/item/reagent_containers/food/snacks/ice_cream))
 			var/obj/item/reagent_containers/food/snacks/ice_cream/I = user.l_hand
-			icecount += I.amount
-			I.amount = 1
-			I.update_cone()
-		if (istype(user.r_hand,/obj/item/reagent_containers/food/snacks/ice_cream) && user.r_hand.amount)
+			if(I.amount)
+				icecount += I.amount
+				I.amount = 1
+				I.update_cone()
+		if (istype(user.r_hand,/obj/item/reagent_containers/food/snacks/ice_cream))
 			var/obj/item/reagent_containers/food/snacks/ice_cream/I = user.r_hand
-			icecount += I.amount
-			I.amount = 1
-			I.update_cone()
+			if(I.amount)
+				icecount += I.amount
+				I.amount = 1
+				I.update_cone()
 		if (!icecount)
 			return
 		user.visible_message("<span class='alert'><b>[user] eats the ice cream in one bite and collapses from brainfreeze!</b></span>")

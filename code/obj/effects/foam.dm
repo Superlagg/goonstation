@@ -13,7 +13,7 @@
 	mouse_opacity = 0
 	event_handler_flags = USE_HASENTERED | USE_CANPASS
 	var/foamcolor
-	var/amount = 3
+	amount = 3
 	var/expand = 1
 	animate_movement = 0
 	var/metal = 0
