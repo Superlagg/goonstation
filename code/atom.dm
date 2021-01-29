@@ -392,7 +392,13 @@
 	var/stamina_crit_chance = STAMINA_CRIT_CHANCE //Crit chance when attacking with this.
 
 	var/hitsound = 'sound/impact_sounds/Generic_Hit_1.ogg'
+	var/pickup_sfx = 0 //if null, we auto-pick from a list based on w_class
 
+	var/block_vision = 0 //cannot see when worn
+
+	var/item_function_flags = null
+	var/force_use_as_tool = 0
+	var/tool_flags = 0 // hey Fred, wanna pry open that airlock with Remy?
 
 	var/soundproofing = 5
 	appearance_flags = LONG_GLIDE | PIXEL_SCALE
@@ -579,88 +585,121 @@
 
 /atom/movable/proc/pickup(mob/user)
 
+/atom/movable/proc/can_pickup(mob/user)
+	return !src.anchored
+
 /atom/movable/proc/afterattack(atom/target, mob/user, reach, params)
 
 /atom/movable/proc/attack_self(mob/user)
 
 /atom/movable/proc/attack(mob/M as mob, mob/user as mob, def_zone, is_special = 0)
 
+/atom/movable/attack_hand(mob/user)
+	. = ..()
+	var/checkloc = src.loc
+	while(checkloc && !istype(checkloc,/turf))
+		if (isliving(checkloc) && checkloc != user)
+			return 0
+		checkloc = checkloc:loc
+
+	if(!src.can_pickup(user))
+		return 0
+
+	src.throwing = 0
+
+	if (isobj(src.loc))
+		var/obj/container = src.loc
+		container.vis_contents -= src
+
+	if (src.loc == user)
+		var/in_pocket = 0
+		if(issilicon(user)) //if it's a borg's shit, stop here
+			return 0
+		if (ishuman(user))
+			var/mob/living/carbon/human/H = user
+			if(H.l_store == src || H.r_store == src)
+				in_pocket = 1
+		if (!cant_self_remove || (!cant_drop && (user.l_hand == src || user.r_hand == src)) || in_pocket == 1)
+			user.u_equip(src)
+		else
+			boutput(user, "<span class='alert'>You can't remove this item.</span>")
+			return 0
+	else
+		//src.pickup(user) //This is called by the later put_in_hand() call
+		if (user.pulling == src)
+			user.pulling = null
+		if (isturf(src.loc))
+			pickup_particle(user,src)
+	if (!user)
+		return 0
+
+	var/area/MA = get_area(user)
+	var/area/OA = get_area(src)
+	if( OA && MA && OA != MA && OA.blocked )
+		boutput( user, "<span class='alert'>You cannot pick up items from outside a restricted area.</span>" )
+		return 0
+
+	var/atom/oldloc = src.loc /// SUPERLAGGTAGG
+	var/atom/oldloc_sfx = src.loc
+	src.set_loc(user) // this is to fix some bugs with storage items
+	if (istype(oldloc, /obj/item/storage))
+		var/obj/item/storage/S = oldloc
+		S.hud.remove_item(src) // ugh
+		oldloc_sfx = oldloc.loc
+	if (src in bible_contents)
+		bible_contents.Remove(src) // UNF
+		for_by_tcl(bible, /obj/item/storage/bible)
+			bible.hud.remove_item(src)
+	user.put_in_hand_or_drop(src)
+
+	if (hide_attack != 1)
+		if (pickup_sfx)
+			playsound(oldloc_sfx, pickup_sfx, 56, vary=0.2)
+		else
+			playsound(oldloc_sfx, "sound/items/pickup_[max(min(src.w_class,3),1)].ogg", 56, vary=0.2)
+
+	return 1
+
 //disgusting proc. merge with foods later. PLEASE
 /atom/movable/proc/Eat(var/mob/M as mob, var/mob/user)
-	if (!iscarbon(M) && !ismobcritter(M))
-		return 0
-	if (M?.bioHolder && !M.bioHolder.HasEffect("mattereater"))
-		if(ON_COOLDOWN(M, "eat", EAT_COOLDOWN))
-			return 0
-	var/edibility_override = SEND_SIGNAL(M, COMSIG_ITEM_CONSUMED_PRE, user, src)
-	if (!src.edible && !(src.material && src.material.edible) && !(edibility_override & FORCE_EDIBILITY))
-		return 0
 
-	if (M == user)
-		M.visible_message("<span class='notice'>[M] takes a bite of [src]!</span>",\
-		"<span class='notice'>You take a bite of [src]!</span>")
-
-		if (src.material && src.material.edible)
-			src.material.triggerEat(M, src)
-
-		if (src.reagents && src.reagents.total_volume)
-			src.reagents.reaction(M, INGEST)
-			SPAWN_DBG(0.5 SECONDS) // Necessary.
-				src.reagents.trans_to(M, src.reagents.total_volume/src.amount)
-
-		playsound(M.loc,"sound/items/eatfood.ogg", rand(10, 50), 1)
-		eat_twitch(M)
-		SPAWN_DBG(1 SECOND)
-			if (!src || !M || !user)
-				return
-			M.visible_message("<span class='alert'>[M] finishes eating [src].</span>",\
-			"<span class='alert'>You finish eating [src].</span>")
-			SEND_SIGNAL(M, COMSIG_ITEM_CONSUMED, user, src)
-			user.u_equip(src)
-			qdel(src)
-		return 1
-
+/atom/movable/proc/on_spin_emote(var/mob/living/carbon/human/user as mob)
+	if ((user.bioHolder && user.bioHolder.HasEffect("clumsy") && prob(50)) || (user.reagents && prob(user.reagents.get_reagent_amount("ethanol") / 2)) || prob(5))
+		. = "<B>[user]</B> [pick("spins", "twirls")] [src] around in [his_or_her(user)] hand, and drops it right on the ground.[prob(10) ? " What an oaf." : null]"
+		user.u_equip(src)
+		src.set_loc(user.loc)
+		JOB_XP(user, "Clown", 1)
 	else
-		user.tri_message("<span class='alert'><b>[user]</b> tries to feed [M] [src]!</span>",\
-		user, "<span class='alert'>You try to feed [M] [src]!</span>",\
-		M, "<span class='alert'><b>[user]</b> tries to feed you [src]!</span>")
-		logTheThing("combat", user, M, "attempts to feed [constructTarget(M,"combat")] [src] [log_reagents(src)]")
+		. = "<B>[user]</B> [pick("spins", "twirls")] [src] around in [his_or_her(user)] hand."
 
-		if (!do_mob(user, M))
-			return 0
-		if (get_dist(user,M) > 1)
-			return 0
-
-		user.tri_message("<span class='alert'><b>[user]</b> feeds [M] [src]!</span>",\
-		user, "<span class='alert'>You feed [M] [src]!</span>",\
-		M, "<span class='alert'><b>[user]</b> feeds you [src]!</span>")
-		logTheThing("combat", user, M, "feeds [constructTarget(M,"combat")] [src] [log_reagents(src)]")
-
-		if (src.material && src.material.edible)
-			src.material.triggerEat(M, src)
-
-		if (src.reagents && src.reagents.total_volume)
-			src.reagents.reaction(M, INGEST)
-			SPAWN_DBG(0.5 SECONDS) // Necessary.
-				src.reagents.trans_to(M, src.reagents.total_volume)
-
-		playsound(M.loc, "sound/items/eatfood.ogg", rand(10, 50), 1)
-		eat_twitch(M)
-		SPAWN_DBG(1 SECOND)
-			if (!src || !M || !user)
-				return
-			M.visible_message("<span class='alert'>[M] finishes eating [src].</span>",\
-			"<span class='alert'>You finish eating [src].</span>")
-			SEND_SIGNAL(M, COMSIG_ITEM_CONSUMED, user, src)
-			user.u_equip(src)
-			qdel(src)
-		return 1
-
-/obj/item/proc/handle_other_remove(var/mob/source, var/mob/living/carbon/human/target)
+/atom/movable/proc/handle_other_remove(var/mob/source, var/mob/living/carbon/human/target)
 	//Refactor**2 of the item removal code. Fuck having that shit defined in human.dm >>>>>>:C
 	//Return something true (lol byond) to allow removal
 	//Return something false to disallow
 	return (!cant_other_remove && !cant_drop)
+
+/atom/movable/proc/handle_internal_lifeform(mob/lifeform_inside_me, breath_request)
+	//Return: (NONSTANDARD)
+	//		null if object handles breathing logic for lifeform
+	//		datum/air_group to tell lifeform to process using that breath return
+	//DEFAULT: Take air from turf to give to have mob process
+	if (breath_request>0)
+		var/datum/gas_mixture/environment = return_air()
+		if(!environment)
+			var/turf/T = get_turf(lifeform_inside_me)
+			environment = T.return_air()
+			if (environment)
+				var/breath_moles = TOTAL_MOLES(environment)*BREATH_PERCENTAGE
+				return T.remove_air(breath_moles)
+			else
+				return T.remove_air(breath_request)
+		if (environment)
+			var/breath_moles = TOTAL_MOLES(environment)*BREATH_PERCENTAGE
+			return remove_air(breath_moles)
+		else
+			return remove_air(breath_request)
+	else
+		return null
 
 /atom/movable/proc/pull()
 	if (!( usr ))
@@ -761,7 +800,6 @@
 /atom/proc/attack_hand(mob/user as mob)
 	if (flags & TGUI_INTERACTIVE)
 		return ui_interact(user)
-	return
 
 /atom/proc/attack_ai(mob/user as mob)
 	return

@@ -1389,6 +1389,9 @@ var/global/icon/human_static_base_idiocy_bullshit_crap = icon('icons/mob/human.d
 	if (!M || !src) //Apparently M could be a meatcube and this causes HELLA runtimes.
 		return
 
+	if(istype(src.loc, /atom/movable) && ..())
+		return
+
 	if (!ticker)
 		boutput(M, "You cannot interact with other people before the game has started.")
 		return
@@ -1426,7 +1429,7 @@ var/global/icon/human_static_base_idiocy_bullshit_crap = icon('icons/mob/human.d
 			var/datum/limb/L = M.equipped_limb()
 			if (!L)
 				return
-			L.help(src, M)
+			L.help(src, M) /// SUPERLAGGTAG
 
 		if (INTENT_DISARM)
 			if (M.is_mentally_dominated_by(src))

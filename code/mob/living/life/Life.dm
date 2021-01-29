@@ -189,6 +189,9 @@
 	// Jewel's attempted fix for: null.return_air()
 	// These objects should be garbage collected the next tick, so it's not too bad if it's not breathing I think? I might be totallly wrong here.
 	if (loc)
+		// var/atom/Aloc = loc
+		// if(istype(Aloc, /mob) || istype(Aloc, /obj/item))
+		// 	Aloc = get_turf(loc)
 		clamp_values()
 
 		var/datum/gas_mixture/environment = loc.return_air()

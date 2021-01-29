@@ -94,6 +94,7 @@
 		return 0
 
 	equipped()
+		. = ..()
 		return 0
 
 	say(var/message)

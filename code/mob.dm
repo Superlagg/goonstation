@@ -8,6 +8,7 @@
 	flags = FPRINT | FLUID_SUBMERGE
 	event_handler_flags = USE_CANPASS
 	appearance_flags = KEEP_TOGETHER | PIXEL_SCALE | LONG_GLIDE
+	tool_flags = TOOL_PRYING
 
 	var/datum/mind/mind
 
@@ -112,6 +113,10 @@
 	var/lastDamageIconUpdate
 	var/say_language = "english"
 	var/literate = 1 // im liturit i kin reed an riet
+
+	/// Are mobs able to pick this mob up?
+	var/holdable = 1
+	two_handed = 1
 
 	var/list/movement_modifiers = list()
 
@@ -222,156 +227,6 @@
 	var/datum/aiHolder/ai = null
 
 	var/last_pulled_time = 0
-
-//obj/item/setTwoHanded calls this if the item is inside a mob to enable the mob to handle UI and hand updates as the item changes to or from 2-hand
-/mob/proc/updateTwoHanded(var/obj/item/I, var/twoHanded = 1)
-	return 0 //0=couldnt do it(other hand full etc), 1=worked just fine.
-
-/mob/attack(mob/M as mob, mob/user as mob, def_zone, is_special = 0)
-	if (!M || !user) // not sure if this is the right thing...
-		return
-
-	if (surgeryCheck(M, user))		// Check for surgery-specific actions
-		if(insertChestItem(M, user))	// Puting item in patient's chest
-			return
-
-	if (src.Eat(M, user)) // All those checks were done in there anyway
-		return
-
-	if (src.flags & SUPPRESSATTACK)
-		logTheThing("combat", user, M, "uses [src] ([type], object name: [initial(name)]) on [constructTarget(M,"combat")]")
-		return
-
-	if (user.mind && user.mind.special_role == "vampthrall" && isvampire(M) && user.is_mentally_dominated_by(M))
-		boutput(user, "<span class='alert'>You cannot harm your master!</span>") //This message was previously sent to the attacking item. YEP.
-		return
-
-	if(user.traitHolder && !user.traitHolder.hasTrait("glasscannon"))
-		if (!user.process_stamina(src.stamina_cost))
-			logTheThing("combat", user, M, "tries to attack [constructTarget(M,"combat")] with [src] ([type], object name: [initial(name)]) but is out of stamina")
-			return
-
-	var/obj/item/affecting = M.get_affecting(user, def_zone)
-	var/hit_area = parse_zone(affecting)
-	var/d_zone = affecting
-
-	if (!M.melee_attack_test(user, src, d_zone))
-		logTheThing("combat", user, M, "attacks [constructTarget(M,"combat")] with [src] ([type], object name: [initial(name)]) but the attack is blocked!")
-		return
-
-
-	if (src.material)
-		src.material.triggerOnAttack(src, user, M)
-	for (var/atom/A in M)
-		if (A.material)
-			A.material.triggerOnAttacked(A, user, M, src)
-
-	user.violate_hippocratic_oath()
-
-	for (var/mob/V in by_cat[TR_CAT_NERVOUS_MOBS])
-		if (get_dist(user,V) > 6)
-			continue
-		if (prob(8) && user)
-			if (M != V)
-				V.emote("scream")
-				V.changeStatus("stunned", 3 SECONDS)
-
-	var/datum/attackResults/msgs = new(user)
-	msgs.clear(M)
-	msgs.affecting = affecting
-	msgs.logs = list()
-	msgs.logc("attacks [constructTarget(M,"combat")] with [src] ([type], object name: [initial(name)])")
-
-	SEND_SIGNAL(M, COMSIG_MOB_ATTACKED_PRE, user, src)
-	if(SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_PRE, M, user) & ATTACK_PRE_DONT_ATTACK)
-		return
-	var/stam_crit_pow = src.stamina_crit_chance
-	if (prob(stam_crit_pow))
-		msgs.stamina_crit = 1
-		msgs.played_sound = pick(sounds_punch)
-		//moved to item_attack_message
-		//msgs.visible_message_target("<span class='alert'><B><I>... and lands a devastating hit!</B></I></span>")
-
-	msgs.played_sound = src.hitsound
-
-	var/power = src.force
-
-	var/attack_resistance = M.check_attack_resistance(src)
-	if (attack_resistance)
-		power = 0
-		if (istext(attack_resistance))
-			msgs.show_message_target(attack_resistance)
-
-	var/armor_mod = 0
-	armor_mod = M.get_melee_protection(d_zone, src.hit_type)
-
-	var/pierce_prot = 0
-	if (d_zone == "head")
-		pierce_prot = M.get_head_pierce_prot()
-	else
-		pierce_prot = M.get_chest_pierce_prot()
-
-	if(user.traitHolder && user.traitHolder.hasTrait("glasscannon"))
-		power *= 2
-
-	if(user.is_hulk())
-		power *= 1.5
-
-	var/pre_armor_power = power
-	power -= armor_mod
-
-	var/armor_blocked = 0
-
-	if(pre_armor_power > 0 && power/pre_armor_power <= 0.66)
-		block_spark(M,armor=1)
-		switch(hit_type)
-			if (DAMAGE_BLUNT)
-				playsound(get_turf(M), 'sound/impact_sounds/block_blunt.ogg', 50, 1, -1, pitch=1.5)
-			if (DAMAGE_CUT)
-				playsound(get_turf(M), 'sound/impact_sounds/block_cut.ogg', 50, 1, -1, pitch=1.5)
-			if (DAMAGE_STAB)
-				playsound(get_turf(M), 'sound/impact_sounds/block_stab.ogg', 50, 1, -1, pitch=1.5)
-			if (DAMAGE_BURN)
-				playsound(get_turf(M), 'sound/impact_sounds/block_burn.ogg', 50, 1, -1, pitch=1.5)
-		if(power <= 0)
-			fuckup_attack_particle(user)
-			armor_blocked = 1
-
-	msgs.msg_group = "[usr]_attacks_[M]_with_[src]"
-	msgs.visible_message_target(user.item_attack_message(M, src, hit_area, msgs.stamina_crit, armor_blocked))
-
-	if (w_class > STAMINA_MIN_WEIGHT_CLASS)
-		var/stam_power = stamina_damage
-
-		//reduce stamina by the same proportion that base damage was reduced
-		//min cap is stam_power/2 so we still cant ignore it entirely
-		if ((power + armor_mod) == 0) //mbc lazy runtime fix
-			stam_power = stam_power / 2 //do the least
-		else
-			stam_power = max(  stam_power / 2, stam_power * ( power / (power + armor_mod) )  )
-
-		//stam_power -= armor_mod
-		msgs.force_stamina_target = 1
-		msgs.stamina_target -= max(stam_power, 0)
-
-	if(M.traitHolder && M.traitHolder.hasTrait("deathwish"))
-		power *= 2
-
-	if (ishuman(user))
-		var/mob/living/carbon/human/H = user
-		if (H.blood_pressure["total"] > 585)
-			msgs.visible_message_self("<span class='alert'><I>[user] gasps and wheezes from the exertion!</I></span>")
-			user.losebreath += rand(1,2)
-			msgs.stamina_self -= 10
-
-
-	msgs.damage = power
-	msgs.flush()
-	src.add_fingerprint(user)
-	// #ifdef COMSIG_ITEM_ATTACK_POST
-	// SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_POST, M, user, power)
-	// #endif
-	return
 
 // mob procs
 /mob/New(var/loc, var/datum/appearanceHolder/AH_passthru)	// I swear Adhara is the reason half my code even comes close to working
@@ -936,6 +791,201 @@
 			src.set_cursor('icons/cursors/admin.dmi')
 			return
 	src.set_cursor(null)
+
+
+//obj/item/setTwoHanded calls this if the item is inside a mob to enable the mob to handle UI and hand updates as the item changes to or from 2-hand
+/mob/proc/updateTwoHanded(var/obj/item/I, var/twoHanded = 1)
+	return 0 //0=couldnt do it(other hand full etc), 1=worked just fine.
+
+/// Attacking something *with* a mob
+/mob/attack(mob/M as mob, mob/user as mob, def_zone, is_special = 0)
+	if (!M || !user) // not sure if this is the right thing...
+		return
+
+	if (surgeryCheck(M, user))		// Check for surgery-specific actions
+		if(insertChestItem(M, user))	// Puting item in patient's chest
+			return
+
+	if (src.Eat(M, user)) // All those checks were done in there anyway
+		return
+
+	if (src.flags & SUPPRESSATTACK)
+		logTheThing("combat", user, M, "uses [src] ([type], object name: [initial(name)]) on [constructTarget(M,"combat")]")
+		return
+
+	if (user.mind && user.mind.special_role == "vampthrall" && isvampire(M) && user.is_mentally_dominated_by(M))
+		boutput(user, "<span class='alert'>You cannot harm your master!</span>") //This message was previously sent to the attacking item. YEP.
+		return
+
+	if(user.traitHolder && !user.traitHolder.hasTrait("glasscannon"))
+		if (!user.process_stamina(src.stamina_cost))
+			logTheThing("combat", user, M, "tries to attack [constructTarget(M,"combat")] with [src] ([type], object name: [initial(name)]) but is out of stamina")
+			return
+
+	var/obj/item/affecting = M.get_affecting(user, def_zone)
+	var/hit_area = parse_zone(affecting)
+	var/d_zone = affecting
+
+	if (!M.melee_attack_test(user, src, d_zone))
+		logTheThing("combat", user, M, "attacks [constructTarget(M,"combat")] with [src] ([type], object name: [initial(name)]) but the attack is blocked!")
+		return
+
+	if (src.material)
+		src.material.triggerOnAttack(src, user, M)
+	for (var/atom/A in M)
+		if (A.material)
+			A.material.triggerOnAttacked(A, user, M, src)
+
+	user.violate_hippocratic_oath()
+
+	for (var/mob/V in by_cat[TR_CAT_NERVOUS_MOBS])
+		if (get_dist(user,V) > 6)
+			continue
+		if (prob(8) && user)
+			if (M != V)
+				V.emote("scream")
+				V.changeStatus("stunned", 3 SECONDS)
+
+	var/datum/attackResults/msgs = new(user)
+	msgs.clear(M)
+	msgs.affecting = affecting
+	msgs.logs = list()
+	msgs.logc("attacks [constructTarget(M,"combat")] with [src] ([type], object name: [initial(name)])")
+
+	SEND_SIGNAL(M, COMSIG_MOB_ATTACKED_PRE, user, src)
+	if(SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_PRE, M, user) & ATTACK_PRE_DONT_ATTACK)
+		return
+	var/stam_crit_pow = src.stamina_crit_chance
+	if (prob(stam_crit_pow))
+		msgs.stamina_crit = 1
+		msgs.played_sound = pick(sounds_punch)
+		//moved to item_attack_message
+		//msgs.visible_message_target("<span class='alert'><B><I>... and lands a devastating hit!</B></I></span>")
+
+	msgs.played_sound = src.hitsound
+
+	var/power = src.force
+
+	var/attack_resistance = M.check_attack_resistance(src)
+	if (attack_resistance)
+		power = 0
+		if (istext(attack_resistance))
+			msgs.show_message_target(attack_resistance)
+
+	var/armor_mod = 0
+	armor_mod = M.get_melee_protection(d_zone, src.hit_type)
+
+	if(user.traitHolder && user.traitHolder.hasTrait("glasscannon"))
+		power *= 2
+
+	if(user.is_hulk())
+		power *= 1.5
+
+	var/pre_armor_power = power
+	power -= armor_mod
+
+	var/armor_blocked = 0
+
+	if(pre_armor_power > 0 && power/pre_armor_power <= 0.66)
+		block_spark(M,armor=1)
+		switch(hit_type)
+			if (DAMAGE_BLUNT)
+				playsound(get_turf(M), 'sound/impact_sounds/block_blunt.ogg', 50, 1, -1, pitch=1.5)
+			if (DAMAGE_CUT)
+				playsound(get_turf(M), 'sound/impact_sounds/block_cut.ogg', 50, 1, -1, pitch=1.5)
+			if (DAMAGE_STAB)
+				playsound(get_turf(M), 'sound/impact_sounds/block_stab.ogg', 50, 1, -1, pitch=1.5)
+			if (DAMAGE_BURN)
+				playsound(get_turf(M), 'sound/impact_sounds/block_burn.ogg', 50, 1, -1, pitch=1.5)
+		if(power <= 0)
+			fuckup_attack_particle(user)
+			armor_blocked = 1
+
+	msgs.msg_group = "[usr]_attacks_[M]_with_[src]"
+	msgs.visible_message_target(user.item_attack_message(M, src, hit_area, msgs.stamina_crit, armor_blocked))
+
+	if (w_class > STAMINA_MIN_WEIGHT_CLASS)
+		var/stam_power = stamina_damage
+
+		//reduce stamina by the same proportion that base damage was reduced
+		//min cap is stam_power/2 so we still cant ignore it entirely
+		if ((power + armor_mod) == 0) //mbc lazy runtime fix
+			stam_power = stam_power / 2 //do the least
+		else
+			stam_power = max(  stam_power / 2, stam_power * ( power / (power + armor_mod) )  )
+
+		//stam_power -= armor_mod
+		msgs.force_stamina_target = 1
+		msgs.stamina_target -= max(stam_power, 0)
+
+	if(M.traitHolder && M.traitHolder.hasTrait("deathwish"))
+		power *= 2
+
+	if (ishuman(user))
+		var/mob/living/carbon/human/H = user
+		if (H.blood_pressure["total"] > 585)
+			msgs.visible_message_self("<span class='alert'><I>[user] gasps and wheezes from the exertion!</I></span>")
+			user.losebreath += rand(1,2)
+			msgs.stamina_self -= 10
+
+
+	msgs.damage = power
+	msgs.flush()
+	src.add_fingerprint(user)
+	// #ifdef COMSIG_ITEM_ATTACK_POST
+	// SEND_SIGNAL(src, COMSIG_ITEM_ATTACK_POST, M, user, power)
+	// #endif
+	return
+
+/// Eating a mob. huh.
+/mob/Eat(mob/M, mob/user)
+	. = ..()
+	if(M != user)
+		return // No forcefeeding rats to people
+	if (!iscarbon(M) && !ismobcritter(M))
+		return 0
+	if(src.health <= -100)
+		boutput(user, "There's nothing there to eat!")
+		return
+
+	if (M?.bioHolder && !M.bioHolder.HasEffect("mattereater"))
+		if(ON_COOLDOWN(M, "eat", EAT_COOLDOWN))
+			return 0
+	var/edibility_override = SEND_SIGNAL(M, COMSIG_ITEM_CONSUMED_PRE, user, src)
+	if (!src.edible && !(src.material && src.material.edible) && !(edibility_override & FORCE_EDIBILITY))
+		return 0
+
+	M.visible_message("<span class='notice'>[M] takes a bite out of [src]!</span>",\
+	"<span class='notice'>You take a bite out of [src]!</span>")
+
+	if (src.material && src.material.edible)
+		src.material.triggerEat(M, src)
+
+	if (src.reagents && src.reagents.total_volume)
+		src.reagents.reaction(M, INGEST)
+		SPAWN_DBG(0.5 SECONDS) // Necessary.
+			src.reagents.trans_to(M, src.reagents.total_volume/src.amount)
+
+	playsound(M.loc,"sound/items/eatfood.ogg", rand(10, 50), 1)
+	eat_twitch(M)
+	SPAWN_DBG(1 SECOND)
+		if (!src || !M || !user)
+			return
+
+		var/bite_damage = min(15, src.max_health * 0.4)
+
+		src.TakeDamage("All", bite_damage, damage_type = DAMAGE_CRUSH)
+		if(isliving(src))
+			var/mob/living/L = src
+			L.was_harmed(M)
+
+		M.visible_message("<span class='alert'>[M] finishes eating [src].</span>",\
+		"<span class='alert'>You finish eating [src].</span>")
+		SEND_SIGNAL(M, COMSIG_ITEM_CONSUMED, user, src)
+		if((iscritter(src) || ismobcritter(src)) && isdead(src))
+			user.u_equip(src)
+			qdel(src)
+	return 1
 
 // medals
 /mob/proc/revoke_medal(title, debug)

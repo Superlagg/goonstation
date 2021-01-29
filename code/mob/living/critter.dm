@@ -573,9 +573,9 @@
 	attack_hand(mob/living/M, params, location, control)
 		. = ..()
 		boutput(world,"SOMENE PET ME AAAAA - [src]")
-		if(ishuman(M))
-			var/mob/living/carbon/human/H = M
-			H.put_in_hand(src, 1)
+		// if(ishuman(M))
+		// 	var/mob/living/carbon/human/H = M
+		// 	H.put_in_hand(src, 1)
 
 	hand_attack(atom/target, params)
 		if (src.fits_under_table && (istype(target, /obj/machinery/optable) || istype(target, /obj/table) || istype(target, /obj/stool/bed)))
@@ -670,7 +670,7 @@
 		reagents = R
 
 	equipped()
-		RETURN_TYPE(/obj/item)
+		RETURN_TYPE(/atom/movable)
 		if (active_hand)
 			if (hands.len >= active_hand)
 				var/datum/handHolder/HH = hands[active_hand]

@@ -576,14 +576,14 @@
 					if (src.emote_check(voluntary, 25))
 						m_type = 1
 
-						var/obj/item/thing = src.equipped()
+						var/atom/movable/thing = src.equipped()
 						if (!thing)
 							if (src.l_hand)
 								thing = src.l_hand
 							else if (src.r_hand)
 								thing = src.r_hand
 						if (thing)
-							message = thing.on_spin_emote(src)
+							message = thing.on_spin_emote(src) /// SUPERLAGGNOTE mobs rutime here
 							maptext_out = "<I>twirls [thing]</I>"
 							animate(thing, transform = turn(matrix(), 120), time = 0.7, loop = 3)
 							animate(transform = turn(matrix(), 240), time = 0.7)

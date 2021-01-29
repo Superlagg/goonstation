@@ -236,7 +236,7 @@
 
 
 /mob/living/proc/grab_other(var/mob/living/target, var/suppress_final_message = 0, var/obj/item/grab_item = null)
-	if(!src || !target)
+	if(!src || !target || target == src)
 		return 0
 
 	var/mob/living/carbon/human/H = src
@@ -279,6 +279,10 @@
 			P.ongrab(target)
 
 	if (!grab_item)
+		if(target.holdable && H != target) // Pick them up!
+			boutput(world,"IM GRABBING [target] AAA - [src]")
+			H.put_in_hand(target)
+			return
 		var/obj/item/grab/G = new /obj/item/grab(src, src, target)
 		src.put_in_hand(G, src.hand)
 	else// special. return it too

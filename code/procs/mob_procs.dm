@@ -1,5 +1,5 @@
 // if you're looking for something like find_in_active_hand(), you'll want /mob/proc/equipped()
-/mob/proc/find_in_hand(var/obj/item/I, var/this_hand) // for when you need to find a SPECIFIC THING and not just a type
+/mob/proc/find_in_hand(var/atom/movable/I, var/this_hand) // for when you need to find a SPECIFIC THING and not just a type
 	if (!I) // did we not get passed a thing to look for?
 		return // fuck you
 	if (!src.r_hand && !src.l_hand) // is there nothing in either hand?
@@ -26,7 +26,7 @@
 	else
 		return // vOv
 
-/mob/proc/find_type_in_hand(var/obj/item/I, var/this_hand) // for finding a thing of a type but not a specific instance
+/mob/proc/find_type_in_hand(var/atom/movable/I, var/this_hand) // for finding a thing of a type but not a specific instance
 	if (!I)
 		return
 	if (!src.r_hand && !src.l_hand)
@@ -59,30 +59,30 @@
 	* * tool_flag {int} - See defines/item.dm for valid TOOL_X values
 	* * hand {string} - If set, checks only in specific hand, else checks all hands
 	*
-	* * return {[obj/item] | 0} - Tool that matched flag (and was in specific hand, if specified)
+	* * return {[atom/movable] | 0} - Tool that matched flag (and was in specific hand, if specified)
 	*/
 /mob/proc/find_tool_in_hand(var/tool_flag, var/hand)
 	if (hand)
 		// check specific hand
 		if (hand == "right")
-			var/obj/item/I = src.r_hand
+			var/atom/movable/I = src.r_hand
 			if (I && (I.tool_flags & tool_flag))
 				return src.r_hand
 		else if (hand == "left")
-			var/obj/item/I = src.l_hand
+			var/atom/movable/I = src.l_hand
 			if (I && (I.tool_flags & tool_flag))
 				return src.l_hand
 	else
 		// check both hands
-		var/obj/item/R = src.r_hand
+		var/atom/movable/R = src.r_hand
 		if (R && (R.tool_flags & tool_flag))
 			return src.r_hand
-		var/obj/item/L = src.l_hand
+		var/atom/movable/L = src.l_hand
 		if (L && (L.tool_flags & tool_flag))
 			return src.l_hand
 	return null
 
-/mob/proc/put_in_hand_or_drop(var/obj/item/I)
+/mob/proc/put_in_hand_or_drop(var/atom/movable/I)
 	if (!I)
 		return 0
 	if (!src.put_in_hand(I))
@@ -90,7 +90,7 @@
 		return 1
 	return 1
 
-/mob/proc/put_in_hand_or_eject(var/obj/item/I)
+/mob/proc/put_in_hand_or_eject(var/atom/movable/I)
 	if (!I)
 		return 0
 	if (!src.put_in_hand(I))
@@ -561,7 +561,7 @@
 	else
 		src.add_blood(whose)
 	if (src.equipped())
-		var/obj/item/I = src.equipped()
+		var/atom/movable/I = src.equipped()
 		if (istype(I))
 			I.add_blood(whose)
 	if (prob(15))

@@ -313,6 +313,7 @@
 			qdel(src)
 
 	equipped()
+		. = ..()
 		return src.last_item_bump
 
 	Move(NewLoc, direct)

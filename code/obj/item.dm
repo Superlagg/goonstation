@@ -22,10 +22,7 @@
 	p_class = 1.5
 
 	flags = FPRINT | TABLEPASS
-	var/tool_flags = 0
 	var/tooltip_flags = null
-	var/item_function_flags = null
-	var/force_use_as_tool = 0
 
 	pressure_resistance = 50
 	var/obj/item/master = null
@@ -66,8 +63,6 @@
 	/// Contains the datum which executes the items special, if it has one, when used beyond melee range.
 	var/datum/item_special/special = null
 
-	var/pickup_sfx = 0 //if null, we auto-pick from a list based on w_class
-
 	var/can_disarm = 0
 
 	var/block_hearing_when_worn = HEARING_NORMAL
@@ -76,8 +71,6 @@
 
 	var/obj/item/grab/chokehold = null
 	var/obj/item/grab/special_grab = null
-
-	var/block_vision = 0 //cannot see when worn
 
 	/// Inventory count display. Call create_inventory_counter in New()
 	var/inventory_counter_enabled = 0
@@ -339,6 +332,77 @@
 		special.pixelaction(target,params,user,reach)
 		return 1
 	..()
+
+/obj/item/Eat(mob/M, mob/user)
+	. = ..()
+	if (!iscarbon(M) && !ismobcritter(M))
+		return 0
+	if (M?.bioHolder && !M.bioHolder.HasEffect("mattereater"))
+		if(ON_COOLDOWN(M, "eat", EAT_COOLDOWN))
+			return 0
+	var/edibility_override = SEND_SIGNAL(M, COMSIG_ITEM_CONSUMED_PRE, user, src)
+	if (!src.edible && !(src.material && src.material.edible) && !(edibility_override & FORCE_EDIBILITY))
+		return 0
+
+	if (M == user)
+		M.visible_message("<span class='notice'>[M] takes a bite of [src]!</span>",\
+		"<span class='notice'>You take a bite of [src]!</span>")
+
+		if (src.material && src.material.edible)
+			src.material.triggerEat(M, src)
+
+		if (src.reagents && src.reagents.total_volume)
+			src.reagents.reaction(M, INGEST)
+			SPAWN_DBG(0.5 SECONDS) // Necessary.
+				src.reagents.trans_to(M, src.reagents.total_volume/src.amount)
+
+		playsound(M.loc,"sound/items/eatfood.ogg", rand(10, 50), 1)
+		eat_twitch(M)
+		SPAWN_DBG(1 SECOND)
+			if (!src || !M || !user)
+				return
+			M.visible_message("<span class='alert'>[M] finishes eating [src].</span>",\
+			"<span class='alert'>You finish eating [src].</span>")
+			SEND_SIGNAL(M, COMSIG_ITEM_CONSUMED, user, src)
+			user.u_equip(src)
+			qdel(src)
+		return 1
+
+	else
+		user.tri_message("<span class='alert'><b>[user]</b> tries to feed [M] [src]!</span>",\
+		user, "<span class='alert'>You try to feed [M] [src]!</span>",\
+		M, "<span class='alert'><b>[user]</b> tries to feed you [src]!</span>")
+		logTheThing("combat", user, M, "attempts to feed [constructTarget(M,"combat")] [src] [log_reagents(src)]")
+
+		if (!do_mob(user, M))
+			return 0
+		if (get_dist(user,M) > 1)
+			return 0
+
+		user.tri_message("<span class='alert'><b>[user]</b> feeds [M] [src]!</span>",\
+		user, "<span class='alert'>You feed [M] [src]!</span>",\
+		M, "<span class='alert'><b>[user]</b> feeds you [src]!</span>")
+		logTheThing("combat", user, M, "feeds [constructTarget(M,"combat")] [src] [log_reagents(src)]")
+
+		if (src.material && src.material.edible)
+			src.material.triggerEat(M, src)
+
+		if (src.reagents && src.reagents.total_volume)
+			src.reagents.reaction(M, INGEST)
+			SPAWN_DBG(0.5 SECONDS) // Necessary.
+				src.reagents.trans_to(M, src.reagents.total_volume)
+
+		playsound(M.loc, "sound/items/eatfood.ogg", rand(10, 50), 1)
+		eat_twitch(M)
+		SPAWN_DBG(1 SECOND)
+			if (!src || !M || !user)
+				return
+			M.visible_message("<span class='alert'>[M] finishes eating [src].</span>",\
+			"<span class='alert'>You finish eating [src].</span>")
+			SEND_SIGNAL(M, COMSIG_ITEM_CONSUMED, user, src)
+			user.u_equip(src)
+			qdel(src)
+		return 1
 
 /obj/item/proc/take_damage(brute, burn, tox, disallow_limb_loss)
 	// this is a helper for organs and limbs
@@ -650,7 +714,7 @@
 		src.material.triggerTemp(src ,1500)
 	if (src.burn_possible && src.burn_point <= 1500)
 		if ((isweldingtool(W) && W:try_weld(user,0,-1,0,0)) || (istype(W, /obj/item/clothing/head/cakehat) && W:on) || (istype(W, /obj/item/device/igniter)) || (istype(W, /obj/item/device/light/zippo) && W:on) || (istype(W, /obj/item/match) && (W:on > 0)) || W.burning)
-			src.combust()
+			src.combust() /// SUPERLAGGNOTE mobs runtime here, use mobs to hit flammable
 		else
 			..(W, user)
 	else
@@ -905,74 +969,10 @@
 	return "It is \an [t] item."
 
 /obj/item/attack_hand(mob/user as mob)
-	var/checkloc = src.loc
-	while(checkloc && !istype(checkloc,/turf))
-		if (isliving(checkloc) && checkloc != user)
-			return 0
-		checkloc = checkloc:loc
-
-	if(!src.can_pickup(user))
-		return 0
-
-	src.throwing = 0
-
-	if (isobj(src.loc))
-		var/obj/container = src.loc
-		container.vis_contents -= src
-
-	if (src.loc == user)
-		var/in_pocket = 0
-		if(issilicon(user)) //if it's a borg's shit, stop here
-			return 0
-		if (ishuman(user))
-			var/mob/living/carbon/human/H = user
-			if(H.l_store == src || H.r_store == src)
-				in_pocket = 1
-		if (!cant_self_remove || (!cant_drop && (user.l_hand == src || user.r_hand == src)) || in_pocket == 1)
-			user.u_equip(src)
-		else
-			boutput(user, "<span class='alert'>You can't remove this item.</span>")
-			return 0
-	else
-		//src.pickup(user) //This is called by the later put_in_hand() call
-		if (user.pulling == src)
-			user.pulling = null
-		if (isturf(src.loc))
-			pickup_particle(user,src)
-	if (!user)
-		return 0
-
-	var/area/MA = get_area(user)
-	var/area/OA = get_area(src)
-	if( OA && MA && OA != MA && OA.blocked )
-		boutput( user, "<span class='alert'>You cannot pick up items from outside a restricted area.</span>" )
-		return 0
-
-	var/atom/oldloc = src.loc
-	var/atom/oldloc_sfx = src.loc
-	src.set_loc(user) // this is to fix some bugs with storage items
-	if (istype(oldloc, /obj/item/storage))
-		var/obj/item/storage/S = oldloc
-		S.hud.remove_item(src) // ugh
-		oldloc_sfx = oldloc.loc
-	if (src in bible_contents)
-		bible_contents.Remove(src) // UNF
-		for_by_tcl(bible, /obj/item/storage/bible)
-			bible.hud.remove_item(src)
-	user.put_in_hand_or_drop(src)
-
 	if (src.artifact)
 		if (src.ArtifactSanityCheck())
 			src.ArtifactTouched(user)
-
-	if (hide_attack != 1)
-		if (pickup_sfx)
-			playsound(oldloc_sfx, pickup_sfx, 56, vary=0.2)
-		else
-			playsound(oldloc_sfx, "sound/items/pickup_[max(min(src.w_class,3),1)].ogg", 56, vary=0.2)
-
-	return 1
-
+	. = ..()
 
 //MBC : I had to move some ItemSpecial number changes here to avoid race conditions. is_special flag passed as an arg; If true we take a look at src.special
 /obj/item/attack(mob/M as mob, mob/user as mob, def_zone, is_special = 0)
@@ -1295,15 +1295,6 @@
 
 	..()
 
-/obj/item/proc/on_spin_emote(var/mob/living/carbon/human/user as mob)
-	if ((user.bioHolder && user.bioHolder.HasEffect("clumsy") && prob(50)) || (user.reagents && prob(user.reagents.get_reagent_amount("ethanol") / 2)) || prob(5))
-		. = "<B>[user]</B> [pick("spins", "twirls")] [src] around in [his_or_her(user)] hand, and drops it right on the ground.[prob(10) ? " What an oaf." : null]"
-		user.u_equip(src)
-		src.set_loc(user.loc)
-		JOB_XP(user, "Clown", 1)
-	else
-		. = "<B>[user]</B> [pick("spins", "twirls")] [src] around in [his_or_her(user)] hand."
-
 /obj/item/proc/HY_set_species()
 	return
 
@@ -1378,5 +1369,3 @@
 /obj/item/proc/intent_switch_trigger(mob/user)
 	return
 
-/obj/item/proc/can_pickup(mob/user)
-	return !src.anchored

@@ -358,6 +358,7 @@
 		return 0
 
 	equipped()
+		. = ..()
 		return 0
 
 	click(atom/target)

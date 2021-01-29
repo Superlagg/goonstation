@@ -578,6 +578,7 @@
 		hud.update_tools()
 
 	equipped()
+		. = ..()
 		if (!active_tool)
 			return null
 		return active_tool

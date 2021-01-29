@@ -112,7 +112,7 @@
 		if (I)
 			I.MouseDrop(over_object, src_location, over_location, over_control, params)
 */
-	proc/update()
+	proc/update() /// SUPERLAGGTAGG
 		var x = 1
 		var y = 1 + master.slots
 		var sx = 1
@@ -178,7 +178,7 @@
 			I.tooltip_rebuild = 1
 		master.update_icon()
 
-	proc/add_item(obj/item/I)
+	proc/add_item(obj/item/I) /// SUPERLAGGTAGG
 		update()
 
 	proc/remove_item(obj/item/I)

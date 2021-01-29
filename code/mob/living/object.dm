@@ -103,6 +103,7 @@
 		..()
 
 	equipped()
+		. = ..()
 		if (canattack)
 			return src.item
 		else
@@ -173,6 +174,7 @@
 		return
 
 	attack_hand(mob/user as mob)
+		. = ..()
 		if (user.a_intent == "help")
 			user.visible_message("<span class='alert'>[user] pets [src]!</span>")
 		else

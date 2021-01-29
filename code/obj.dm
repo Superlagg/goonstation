@@ -166,21 +166,6 @@
 		else
 			return null
 
-	proc/handle_internal_lifeform(mob/lifeform_inside_me, breath_request)
-		//Return: (NONSTANDARD)
-		//		null if object handles breathing logic for lifeform
-		//		datum/air_group to tell lifeform to process using that breath return
-		//DEFAULT: Take air from turf to give to have mob process
-		if (breath_request>0)
-			var/datum/gas_mixture/environment = return_air()
-			if (environment)
-				var/breath_moles = TOTAL_MOLES(environment)*BREATH_PERCENTAGE
-				return remove_air(breath_moles)
-			else
-				return remove_air(breath_request)
-		else
-			return null
-
 	proc/initialize()
 
 	attackby(obj/item/I as obj, mob/user as mob)

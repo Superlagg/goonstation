@@ -141,8 +141,8 @@
 
 				//No breath from internal atmosphere so get breath from location
 				if (!breath)
-					if (isobj(owner.loc))
-						var/obj/location_as_object = owner.loc
+					if (ismovable(owner.loc))
+						var/atom/movable/location_as_object = owner.loc
 						breath = location_as_object.handle_internal_lifeform(owner, BREATH_VOLUME)
 					else if (isturf(owner.loc))
 						var/breath_moles = (TOTAL_MOLES(environment)*BREATH_PERCENTAGE)
