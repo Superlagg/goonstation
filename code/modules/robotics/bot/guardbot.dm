@@ -1917,7 +1917,7 @@
 //Buddy handcuff bar thing
 /datum/action/bar/icon/buddy_cuff
 	duration = 30 // zippy zipcuffs
-	interrupt_flags = INTERRUPT_MOVE | INTERRUPT_ACT | INTERRUPT_STUNNED | INTERRUPT_ACTION
+	interrupt_flags = INTERRUPT_STUNNED
 	id = "buddy_cuff"
 	icon = 'icons/obj/items/items.dmi'
 	icon_state = "handcuff"
@@ -1931,14 +1931,14 @@
 
 	onUpdate()
 		..()
-		if (!master || !master.on || master.idle || master.stunned || !IN_RANGE(master, task.arrest_target, 1) || !task.arrest_target || task.arrest_target.hasStatus("handcuffed") || master.moving)
+		if (src.fail_checks())
 			interrupt(INTERRUPT_ALWAYS)
 			return
 
 	onStart()
 		..()
 		task.cuffing = 1
-		if (!master || !master.on || master.idle || master.stunned || !IN_RANGE(master, task.arrest_target, 1) || !task.arrest_target || task.arrest_target.hasStatus("handcuffed") || master.moving)
+		if (src.fail_checks())
 			interrupt(INTERRUPT_ALWAYS)
 			return
 
@@ -1951,10 +1951,8 @@
 
 	onEnd()
 		..()
-		if (!master || !master.on || master.idle || master.stunned || !IN_RANGE(master, task.arrest_target, 1) || !task.arrest_target || task.arrest_target.hasStatus("handcuffed") || master.moving)
-			return
 
-		if (task.arrest_target.hasStatus("handcuffed") || !isturf(task.arrest_target.loc))
+		if (src.fail_checks())
 			task.drop_arrest_target()
 			return
 
@@ -1999,6 +1997,14 @@
 		pdaSignal.transmission_method = TRANSMISSION_RADIO
 		if(transmit_connection != null)
 			transmit_connection.post_signal(master, pdaSignal)
+	
+	proc/fail_checks()
+		if(!master || !master.on || master.idle || master.stunned)
+			return 1
+		if(!task.arrest_target || task.arrest_target.hasStatus("handcuffed"))
+			return 1
+		if(!IN_RANGE(get_turf(master), get_turf(task.arrest_target), 1))
+			return 1
 
 //Robot tools.  Flash boards, batons, etc
 /obj/item/device/guardbot_tool
@@ -2419,7 +2425,7 @@
 				master.remove_current_task()
 				return
 
-			if(istype(src.target, /turf/simulated))
+			if(isturf(src.target))
 				var/obj/machinery/guardbot_dock/dock = locate() in src.target
 				if(dock && dock.loc == master.loc)
 					if(!isnull(dock.current) && dock.current != src)
