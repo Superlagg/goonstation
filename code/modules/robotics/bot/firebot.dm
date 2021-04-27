@@ -210,37 +210,42 @@
 /obj/machinery/bot/firebot/proc/look_for_fire()
 	if(ON_COOLDOWN(src, FIREBOT_SEARCH_COOLDOWN, src.found_cooldown))
 		return
-	for_by_tcl(H, /obj/hotspot) // First search for burning tiles
-		if ((H == src.oldtarget))
-			continue
-		if(IN_RANGE(src, H, 7))
-			if(prob(10))
-				if(src.setup_party)
-					src.speak(pick("IT IS PARTY TIME.","I AM A FAN OF PARTIES", "PARTIES ARE THE FUTURE"))
-				else
-					src.speak(pick("I AM GOING TO MURDER THIS FIRE.","KILL ALL FIRES.","I DIDN'T START THIS, BUT I'M GOING TO END IT.","[TIME >= 30 MINUTES ? "TONIGHT" : "TODAY"] A FIRE DIES."))
-			return H
+	if(src.emagged)
+		for(var/mob/M in mobs)
+			if(IN_RANGE(src, M, 7))
+				return M
+	else
+		for_by_tcl(H, /obj/hotspot) // First search for burning tiles
+			if ((H == src.oldtarget))
+				continue
+			if(IN_RANGE(src, H, 7))
+				if(prob(10))
+					if(src.setup_party)
+						src.speak(pick("IT IS PARTY TIME.","I AM A FAN OF PARTIES", "PARTIES ARE THE FUTURE"))
+					else
+						src.speak(pick("I AM GOING TO MURDER THIS FIRE.","KILL ALL FIRES.","I DIDN'T START THIS, BUT I'M GOING TO END IT.","[TIME >= 30 MINUTES ? "TONIGHT" : "TODAY"] A FIRE DIES."))
+				return H
 
-	for (var/obj/O in by_cat[TR_CAT_BURNING_ITEMS]) // Is anything else on fire?
-		if (O == src.oldtarget)
-			continue
-		if(IN_RANGE(src, O, 7))
-			if(prob(10))
-				if(src.setup_party)
-					src.speak(pick("PARTY SUPPLIES DETECTED. RIGHT ON.","PARTY FAVORS ARE THE BEST FLAVOR.", "[O] PARTY FOUL PROBABILITY: [rand(1, 150)]%. RECTIPARTYING."))
-				else
-					src.speak(pick("[O] BURN POINT TEMPERATURE EXCEEDED.","[O] DOT BURNING GREATER THAN ZERO EQUALS TRUE.","HOT [pick("ANGRY", "BURNING")] [O] IN MY AREA DETECTED.","[TIME >= 30 MINUTES ? "TONIGHT" : "TODAY"] A FIRE DIES."))
-			return O
+		for (var/obj/O in by_cat[TR_CAT_BURNING_ITEMS]) // Is anything else on fire?
+			if (O == src.oldtarget)
+				continue
+			if(IN_RANGE(src, O, 7))
+				if(prob(10))
+					if(src.setup_party)
+						src.speak(pick("PARTY SUPPLIES DETECTED. RIGHT ON.","PARTY FAVORS ARE THE BEST FLAVOR.", "[O] PARTY FOUL PROBABILITY: [rand(1, 150)]%. RECTIPARTYING."))
+					else
+						src.speak(pick("[O] BURN POINT TEMPERATURE EXCEEDED.","[O] DOT BURNING GREATER THAN ZERO EQUALS TRUE.","HOT [pick("ANGRY", "BURNING")] [O] IN MY AREA DETECTED.","[TIME >= 30 MINUTES ? "TONIGHT" : "TODAY"] A FIRE DIES."))
+				return O
 
-	for (var/mob/M in by_cat[TR_CAT_BURNING_MOBS]) // fine I guess we can go extinguish someone
-		if (M == src.oldtarget || M == src.oldtarget || isdead(M))
-			continue
-		if(IN_RANGE(src, M, 7) && (M.getStatusDuration("burning") || (src.emagged && prob(25))))
-			if (src.setup_party)
-				src.speak(pick("YOU NEED TO GET DOWN -- ON THE DANCE FLOOR", "PARTY HARDER", "HAPPY BIRTHDAY.", "YOU ARE NOT PARTYING SUFFICIENTLY.", "NOW CORRECTING PARTY DEFICIENCY."))
-			else
-				src.speak(pick("YOU ARE ON FIRE!", "STOP DROP AND ROLL","THE FIRE IS ATTEMPTING TO FEED FROM YOU! I WILL STOP IT","I WON'T LET YOU BURN AWAY!",5;"Taste the meat, not the heat."))
-			return M
+		for (var/mob/M in by_cat[TR_CAT_BURNING_MOBS]) // fine I guess we can go extinguish someone
+			if (M == src.oldtarget || M == src.oldtarget || isdead(M))
+				continue
+			if(IN_RANGE(src, M, 7) && (M.getStatusDuration("burning") || (src.emagged && prob(25))))
+				if (src.setup_party)
+					src.speak(pick("YOU NEED TO GET DOWN -- ON THE DANCE FLOOR", "PARTY HARDER", "HAPPY BIRTHDAY.", "YOU ARE NOT PARTYING SUFFICIENTLY.", "NOW CORRECTING PARTY DEFICIENCY."))
+				else
+					src.speak(pick("YOU ARE ON FIRE!", "STOP DROP AND ROLL","THE FIRE IS ATTEMPTING TO FEED FROM YOU! I WILL STOP IT","I WON'T LET YOU BURN AWAY!",5;"Taste the meat, not the heat."))
+				return M
 
 
 /obj/machinery/bot/firebot/DoWhileMoving()
